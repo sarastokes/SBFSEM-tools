@@ -5,8 +5,8 @@
 # but for now you'll need the command line
 # click the [3 Python] button on the bottom of the toolbar
 
-# update this variable with filepath and filename
-outputFile = "C:\Users\sarap\Google Drive\MANOOKIN Lab\Electron Microscopy\SBFSEM tools\demo\c127.json"
+# update this variable with filepath and filename (including .json)
+outputFile = "C:\...\c207.json"
 
 # then paste this into the command line
 params = tlp.getDefaultPluginParameters('JSON Export', graph)

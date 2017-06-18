@@ -6,6 +6,8 @@ function s = parseCellData(cellData)
 	% s = parseCellData('c:\users\...\filename.json');
 	%
 	% 5May2017 - SSP - created
+	% 10May2017 - SSP - updated to use local names
+	% 16Jun2017 - SSP - ready, added soma 
 
 	if ischar(cellData) && strcmp(cellData(end-3:end), 'json')
 		fprintf('parsing with loadjson.m...');
@@ -19,9 +21,25 @@ function s = parseCellData(cellData)
 	s.parseDate = datestr(now);
 	s.tulipData.edgesNumber = cellData.graph.edgesNumber;
 	s.tulipData.nodesNumber = cellData.graph.nodesNumber;
+	% init soma structure - assumes largest radius cell is the soma
+	s.soma.viewSize = 0;
 
 	% get all the fieldnames with locations
 	s.nodeList = fieldnames(cellData.graph.properties.LocationInViking.nodesValues);
+
+	s.initFlag = true;
+	% local synapse name
+	s.typeData.names = cell(1,1);
+	% each synapse gets a unique parent ID
+	s.typeData.parents = cell(1,1);
+	% total found
+	s.typeData.count = 0;
+	% total with unique parent IDs
+	s.typeData.uniqueCount = 0;
+	% node id is number in structure - easier to work with than char IDs
+	s.typeData.nodeIDs = cell(1,1);
+	% one node id per unique synapse
+	s.typeData.uniqueNodes = cell(1,1);
 
 	for ii = 1:length(s.nodeList)
 		s.nodes(ii).nodeName = s.nodeList{ii};
@@ -33,15 +51,11 @@ function s = parseCellData(cellData)
 
 		% structure tags will be combined with synapse type to get a single specific synapse variable. both will be kept, for now at least
 		if isfield(cellData.graph.properties.StructureTags.nodesValues, s.nodeList{ii})
-			s.nodes(ii).structureTags = cellData.graph.properties.StructureTags.nodesValues.(s.nodeList{ii});
+			s.nodes(ii).synTag = cellData.graph.properties.StructureTags.nodesValues.(s.nodeList{ii});
 		else
-			s.nodes(ii).structureTags = cellData.graph.properties.StructureTags.nodeDefault;
+			s.nodes(ii).synTag = cellData.graph.properties.StructureTags.nodeDefault;
 		end
-
-		if ~strcmp(s.nodes(ii).synType, 'cell')
-			s = synCounter(s, s.nodes(ii).synType, s.nodes(ii).parentID, ii);
-		end
-
+			
 		% get vector from XYZ location string
 		loc = cellData.graph.properties.LocationInViking.nodesValues.(s.nodeList{ii});
 		loc(regexp(loc, '[XYZ:]')) = [];
@@ -53,7 +67,28 @@ function s = parseCellData(cellData)
 		viewSize = cellData.graph.properties.viewSize.nodesValues.(s.nodeList{ii});
 		viewSize = viewSize(2:end-4);
 		viewSize = regexp(viewSize, ',', 'split');
-		s.nodes(ii).viewSize = cellfun(@str2double, viewSize);
+		viewSize = cellfun(@str2double, viewSize);
+		% often viewSize is the same value --> radius
+		if viewSize(1) == viewSize(2)
+			s.nodes(ii).viewSize = viewSize(1);
+		else
+			s.nodes(ii).viewSize = viewSize;
+		end
+
+		% the localName combines info from StructureTags and Type into 1 field
+		s.nodes(ii).localName = getLocalName(s.nodes(ii).synType, s.nodes(ii).synTag);
+		% synCounter keeps track of synapses
+		if ~strcmp(s.nodes(ii).localName, 'cell')
+			s = synCounter(s, s.nodes(ii).localName, s.nodes(ii).parentID, ii);
+		else
+			% Assuming the 'cell' type is the soma... (TODO: clean up code)
+			if viewSize > s.soma.viewSize
+				s.soma.viewSize = viewSize;
+				s.soma.locationXYZ = s.nodes(ii).locationXYZ;
+				s.soma.nodeID = ii;
+				s.soma.nodeName = s.nodeList{ii};
+			end
+		end
 
 		% s.nodes(ii).terminal = cellData.graph.properties.Terminal.nodesValues;
 
@@ -76,41 +111,58 @@ function s = parseCellData(cellData)
 			s.nodes(ii).numLinked = 0;
 		end
 	end
+
+	% each unique synapse has a different parent ID.
+	% synapses spanning multiple sections should share a parent ID
 	s.typeData.uniqueParents = cellfun(@unique, s.typeData.parents, 'UniformOutput', 0);
 
-	% % keep only the synapses the cell acutally has
-	% [~,ind] = find(s.typeData.count);
-	% s.typeData = structfun(@(x) (x(1,ind)), s.typeData, 'UniformOutput', false);
+	% no need to save this
+	s = rmfield(s, 'initFlag');
+	
+	% print synapse data to cmd line
+	cellStats(s);
 end
 
-%% support functions
-	function s = appendType(s, localName)
-		% local synapse name
-		s.typeData.names = cat(2, s.typeData.names, localName);
-		% each synapse gets a unique parent ID
-		s.typeData.parents = cat(2, s.typeData.parents, []);
-		% total found
-		s.typeData.count = cat(2, s.typeData.count, 0);
-		% total with unique parent IDs
-		s.typeData.uniqueCount = cat(2, s.typeData.uniqueCount, 0);
+%% ------------------------------------------------- support functions ----
 
+	function s = appendType(s, localName)
+		% % local synapse name
+			s.typeData.names = cat(2, s.typeData.names, localName);
+		% each synapse gets a unique parent ID
+			s.typeData.parents{1, end+1} = [];
+		% total found
+			s.typeData.count = cat(2, s.typeData.count, 0);
+		% total with unique parent IDs
+			s.typeData.uniqueCount = cat(2, s.typeData.uniqueCount, 0);
 		% node id is number in structure - easier to work with than char IDs
-		s.typeData.nodeIDs = cat(2, s.typeData.nodeIDs, []);
-		s.typeData.uniqueNodes = cat(2, s.typeData.uniqueNodes, []);
+			s.typeData.nodeIDs{1, end+1} = [];
+		% one node id per unique synapse
+			s.typeData.uniqueNodes{1, end+1} = [];
 	end
 
 	function s = synCounter(s, localName, parentID, nodeInd)
-			ind = find(ismember(s.typeData.names, localName));
+			if s.initFlag 
+				fprintf('new synapse type %s\n', localName);
+				s.typeData.names{1} = localName; 
+				ind = 1; s.initFlag = false;
+			else
+				ind = find(ismember(s.typeData.names, localName));
+			end
 			if isempty(ind)
 				% catch the ones i'm forgetting
 				fprintf('new synapse type %s\n', localName);
 				s = appendType(s, localName);
+				ind = find(ismember(s.typeData.names, localName));
 			end
 			% this can be condensed once we figure out the info typically needed
 			s.typeData.count(ind) = s.typeData.count(ind) + 1;
-			if isempty(s.typeData.parents{ind}) || isempty(find(s.typeData.parents{ind}==parentID))
+			if isempty(s.typeData.parents{ind})
 				s.typeData.uniqueCount(ind) = s.typeData.uniqueCount(ind) + 1;
-				s.typeData.uniqueNodes{ind} = cat(2, s.typeData.uniqueNodes{ind}, nodeInd);
+				s.typeData.uniqueNodes{1, ind} = nodeInd;
+			end
+			if isempty(find(s.typeData.parents{ind} == parentID))
+					s.typeData.uniqueCount(ind) = s.typeData.uniqueCount(ind) + 1;
+					s.typeData.uniqueNodes{1, ind} = cat(2, s.typeData.uniqueNodes{1,ind}, nodeInd);
 			end
 			s.typeData.parents{ind} = cat(2, s.typeData.parents{ind}, parentID);
 			s.typeData.nodeIDs{ind} = cat(2, s.typeData.nodeIDs{ind}, nodeInd);
