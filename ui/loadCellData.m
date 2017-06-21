@@ -1,8 +1,9 @@
-function handles = loadCellData(handles, cellData)
+function [handles,titlestr] = loadCellData(handles, cellData)
 	% loads cell data into GUI
 
 
 	handles.ed.cellNum.String = num2str(cellData.cellNum);
+	titlestr = handles.ed.cellNum.String;
 	handles.ed.annotator.String = cellData.annotator;
 	set(handles.lst.source, 'Value', find(ismember(handles.lst.source.String, cellData.source)));
 	if ~isempty(cellData.cellType)
@@ -13,9 +14,12 @@ function handles = loadCellData(handles, cellData)
 				'Enable', 'on');
 			if ~isempty(cellData.subType)
 				set(handles.lst.subtype, 'Value', find(ismember(handles.lst.subtype.String, cellData.subType)));
+				titlestr = [titlestr ' ' cellData.subType];
 			end
 		end
+		titlestr = [titlestr ' ' cellData.cellType];
 	end
+
 
 	handles.cb.on = cellData.onoff(1);
 	handles.cb.off = cellData.onoff(2);

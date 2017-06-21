@@ -6,7 +6,7 @@ function StructureColors = getStructureColors()
 
   StructureColors = containers.Map;
   StructureColors('unknown') = [0.5 0.5 0.5];
-  StructureColors('gap junction') = rgb('yellow');
+  StructureColors('gap junction') = rgb('pastel blue'); 
   StructureColors('bip conv pre') = rgb('electric blue');
   StructureColors('bip conv post') = rgb('aquamarine');
   StructureColors('ribbon pre') = rgb('green');
