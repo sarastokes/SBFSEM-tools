@@ -12,9 +12,9 @@ function StructureColors = getStructureColors()
   StructureColors('ribbon pre') = rgb('green');
   StructureColors('ribbon post') = rgb('greenish');
   StructureColors('conv pre') = rgb('light red');
-  StructureColors('conv post') = rgb('orange');
-  StructureColors('hc bc pre') = rgb('salmon');
-  StructureColors('hc bc post') = rgb('salmon');
+  StructureColors('conv post') = rgb('light orange');
+  StructureColors('hc bc pre') = rgb('bright lavender');
+  StructureColors('hc bc post') = rgb('bright lavender');
 
   StructureColors('terminal') = rgb('pink');
   StructureColors('off edge') = rgb('peach');
