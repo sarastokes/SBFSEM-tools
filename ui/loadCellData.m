@@ -21,8 +21,8 @@ function [handles,titlestr] = loadCellData(handles, cellData)
 	end
 
 
-	handles.cb.on = cellData.onoff(1);
-	handles.cb.off = cellData.onoff(2);
+	handles.cb.onPol.Value = cellData.onoff(1);
+	handles.cb.offPol.Value = cellData.onoff(2);
 
 	strata = 1:5;
 	for ii = 1:5

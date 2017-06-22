@@ -9,5 +9,5 @@ outputFile = "C:\...\filename.json"
 
 # then paste this into the command line
 params = tlp.getDefaultPluginParameters('JSON Export', graph)
-success = tlp.exportGraph('JSON Export', graph, OutputFile, params)
+success = tlp.exportGraph('JSON Export', graph, outputFile, params)
 

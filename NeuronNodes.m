@@ -123,17 +123,22 @@ methods
 		cellInfoTab = uix.Panel('Parent', obj.handles.tabLayout,...
 			'Padding', 5,...
 			'Title', 'Cell Info');
-		tabOne = uix.Panel('Parent', obj.handles.tabLayout,...
-			'Padding', 5,...
-			'Title', '3D plot');
-		obj.handles.ax = axes('Parent', tabOne);
-		tabTwo = uix.Panel('Parent', obj.handles.tabLayout,...
-			'Padding', 5,...
-			'Title', 'Histogram');
+		plotTab = uix.Panel('Parent', obj.handles.tabLayout,...
+			'Padding', 5);
+		obj.handles.ax.d3plot = axes('Parent', plotTab);
+		tabTab = uix.Panel('Parent', obj.handles.tabLayout,...
+			'Padding', 5);
+		obj.handles.histTabs = uix.TabPanel('Parent', tabTab,...
+			'Padding', 5);
+		somaTab = uix.Panel('Parent', obj.handles.histTabs);
+		zTab = uix.Panel('Parent', obj.handles.histTabs);
 
-		obj.handles.barOne = axes('Parent', tabTwo);
-		obj.handles.tabLayout.TabTitles = {'Cell Info','3D plot', 'Histogram'};
+		obj.handles.ax.soma = axes('Parent', somaTab);
+		obj.handles.ax.z = axes('Parent', zTab);
+		obj.handles.tabLayout.TabTitles = {'Cell Info','3D plot', 'Histograms'};
+		obj.handles.histTabs.TabTitles = {'Soma', 'Z-axis'};
 		obj.handles.tabLayout.Selection = 1;
+		obj.handles.histTabs.Selection = 1;
 
 %% create the UI panel (left) -------------------------------------
 		uiLayout = uix.VBox('Parent', mainLayout,...
@@ -150,17 +155,6 @@ methods
 			'FontName', 'Segoe UI', 'FontSize', 10,...
 			'CellEditCallback', @obj.onEdit_synTable);
 
-%% ---------------------------------------------- bin setup -------
-		histLayout = uix.HBox('Parent', uiLayout);
-		obj.handles.lst.histType = uicontrol('Parent', histLayout,...
-			'Style', 'list',... 
-			'String', {'soma', 'z-axis', 'x-axis', 'y-axis'});
-		obj.handles.pb.histType = uicontrol('Parent', histLayout,...
-			'Style', 'push',...
-			'String', {'<html>change<br/>histogram:'},...
-			'Callback', @obj.onSelected_histType);
-		set(histLayout, 'Widths', [-1 -1]);
-
 %% ---------------------------------------------- 3d plot setup ----
 		obj.handles.cb.addSkeleton = uicontrol('Parent', uiLayout,...
 			'Style', 'checkbox',...
@@ -172,6 +166,11 @@ methods
 			'String', 'Add soma',...
 			'Value', 1,...
 			'Callback', @obj.onSelected_addSoma);
+		obj.handles.cb.normHist = uicontrol('Parent', uiLayout,...
+			'Style', 'checkbox',...
+			'String', 'Normalize histogram',...
+			'Value', 0,...
+			'Callback', @obj.onSelected_normHist);
 
 		obj.handles.tx.azelInc = uicontrol('Parent', uiLayout,...
 			'Style', 'text',...
@@ -262,9 +261,9 @@ methods
 		end
 		% 5
 		polarityLayout = uix.HBox('Parent', infoGrid);
-		obj.handles.cb.on = uicontrol('Parent', polarityLayout,...
+		obj.handles.cb.onPol = uicontrol('Parent', polarityLayout,...
 			'Style', 'checkbox', 'String', 'ON');
-		obj.handles.cb.off = uicontrol('Parent', polarityLayout,...
+		obj.handles.cb.offPol = uicontrol('Parent', polarityLayout,...
 			'Style', 'checkbox', 'String', 'OFF');
 		% 6
 		obj.handles.ed.notes = uicontrol('Parent', infoGrid,...
@@ -291,6 +290,7 @@ methods
 
 		% setup some final callbacks
 		set(obj.handles.tabLayout, 'SelectionChangedFcn', @obj.onChanged_tab);
+		set(obj.handles.histTabs, 'SelectionChangedFcn', @obj.onChanged_histTab);
 	end % openGUI
 
 %% ------------------------------------------------ 3d plot callbacks -----
@@ -313,7 +313,7 @@ methods
 			end
 			obj.wrapAzel();
 			obj.updateAzelDisplay();
-			view(obj.handles.ax, obj.azel);
+			view(obj.handles.ax.d3plot, obj.azel);
 		end
 	end
 	function onEdit_synTable(obj, src,eventdata)
@@ -355,27 +355,33 @@ methods
 		switch obj.handles.tabLayout.Selection
 		case 1 
 			set(obj.handles.tx.enableKeys,...
-				'Visibe', 'off');
+				'Visible', 'off');
 		case 2
 			set(obj.handles.tx.enableKeys,... 
 				'Visible', 'on',...
 				'String', 'Click here to enable arrow keys');
 			set(obj.handles.cb.addSoma, 'Enable', 'on');
-			set(obj.handles.cb.addSkeleton, 'Enable', 'off');
+			set(obj.handles.cb.addSkeleton, 'Enable', 'on');
 		case 3
 			set(obj.handles.tx.enableKeys,...
 				'Visible', 'on',...
 				'String', 'Edit bin numbers in table');
+			set(obj.handles.cb.normHist, 'Enable', 'on');
 		end
 	end % onChanged_tab
 
-	function onSelected_histType(obj,~,~)
-		switch obj.handles.lst.histType.String{obj.handles.lst.histType.Value}
-		case 'soma'
-		case 'z-axis'
-		case 'x-axis'
-		case 'y-axis'
-		end
+	function onChanged_histTab(obj,~,~)
+		switch obj.handles.histTabs.Selection
+		case 1 % soma plot
+			for ii = 1:length(obj.synData.names)
+				obj.handles.synTable.Data{ii,5} = obj.handles.numBins(1,ii);
+			end
+		case 2 % z-axis plot
+			for ii = 1:length(obj.synData.names)
+				obj.handles.synTable.Data{ii,5} = obj.handles.numBins(2,ii);
+			end
+	end
+
 	end % onSelected_histType
 %% -------------------------------------------------- menu callbacks ------
     function onMenu_saveCell(obj,~,~)
@@ -406,9 +412,9 @@ methods
     		warndlg('Need an active figure!');
     		return;
     	case 2
-    		axHandle = obj.handles.ax;
+    		axHandle = obj.handles.ax.d3plot;
     	case 3
-    		axHandle = obj.handles.barOne;
+    		axHandle = obj.handles.ax.soma;
     	end
     	fig = figure('Color', 'w');
     	hh = copyobj(axHandle, fig);
@@ -463,8 +469,8 @@ methods
     	obj.cellData.subType = obj.handles.lst.subtype.String{obj.handles.lst.subtype.Value};
     	obj.cellData.annotator = get(obj.handles.ed.annotator, 'String');
     	obj.cellData.source = obj.handles.lst.source.String{obj.handles.lst.source.Value};
-    	obj.cellData.onoff(1) = obj.handles.cb.on.Value;
-    	obj.cellData.onoff(2) = obj.handles.cb.off.Value;
+    	obj.cellData.onoff(1) = obj.handles.cb.onPol.Value;
+    	obj.cellData.onoff(2) = obj.handles.cb.offPol.Value;
 
     	inputTypes = {'lmcone', 'scone', 'rod'};
     	for ii = 1:length(inputTypes)
@@ -503,12 +509,14 @@ methods
 	function addSyn(obj, whichSyn)
 		set(obj.handles.lines(whichSyn), 'Visible', 'on');
 		set(obj.handles.somaBins(whichSyn), 'Visible', 'on');
+		set(obj.handles.zBins(whichSyn), 'Visible', 'on');
 	end % addSyn
 
 	function rmSyn(obj, whichSyn)
 		set(obj.handles.lines(whichSyn), 'Visible', 'off');
 		set(obj.handles.somaBins(whichSyn), 'Visible', 'off');
-	end % rmSyn
+		set(obj.handles.somaBins(whichSyn), 'Visible', 'off');
+	end % rmSyn - TODO: consolidate with addSyn
     
 	function deltaSomaHist(obj, synInd)
 		% TODO: expand to all bar plots
