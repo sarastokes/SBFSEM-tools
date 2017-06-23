@@ -21,14 +21,16 @@ function localName = getLocalName(synType, synTag)
 					case 'bipolar;conventional;glutamate'
 						localName = 'bip conv post';
 				end % tag switch
-			case 'plaque-like post'
-				localName = 'hc bc post';
-			case 'plaque-like pre'
-				localName = 'hc bc pre';
+			case {'plaque-like post', 'plaque-like pre'}
+				localName = 'gaba fwd';
 			case 'gap junction'
 				localName = 'gap junction';
       case 'cell'
         localName = 'cell';
+      case 'touch'
+      	localName = 'touch';
+      case {'cistern pre','cistern post'}
+      	localName = 'denosome';
       case 'unknown'
         localName = 'unknown';
       otherwise

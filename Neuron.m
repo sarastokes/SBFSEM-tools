@@ -1,10 +1,9 @@
-classdef NeuronNodes < handle
+classdef Neuron < handle
 	% Analysis and graphs based only on nodes, without edges
 
 properties
     % this comes from tulip too but could edit if needed
     somaNode % largest "cell" node
-
     cellData
     fname
     saveDir
@@ -12,17 +11,19 @@ end
 
 properties (SetAccess = private, GetAccess = public)
 % these are properties parsed from tulip data
-    nodeList % all nodes
-    skeleton % just the "cell" nodes
+  nodeList % all nodes
+  skeleton % just the "cell" nodes
 	nodeData % nodeData consists of containers.Map bins for each property (the
 	% columns in Tulip). The properties included are: LocationInViking,
 	% LocationID, ParentID, StructureType, Tags, ViewSize, OffEdge and
 	% Terminal. See parseNodes.m for more details
 
 	synData % this contains data about each synapse type in the cell
-    tulipData % currently not using, might get rid of
+  tulipData % currently not using, might get rid of
 	parseDate % date .tlp or .tlpx file created
 	analysisDate % date run thru NeuronNodes
+	connectivityDate % date added connectivity
+	conData % connectivity data
 end
 
 properties
@@ -34,63 +35,90 @@ properties
 end
 
 methods
-	function obj = NeuronNodes(cellData)
+	function obj = Neuron(cellData, cellNum)
+
+		obj.json2Neuron(cellData);
+		if nargin < 2
+	    answer = inputdlg('Input the cell number:',... 
+  	  	'Cell number dialog box', 1);
+	    cellNum = answer{1};
+	  end
+
+    obj.cellData = struct();
+    obj.cellData.flag = false;
+    obj.cellData.cellNum = cellNum;
+    obj.cellData.cellType = [];
+    obj.cellData.subType = [];
+    obj.cellData.annotator = [];
+    obj.cellData.source = [];
+    obj.cellData.onoff = [0 0];
+    obj.cellData.strata = zeros(1,5);
+    obj.cellData.inputs = zeros(1,3);
+    obj.cellData.notes = [];
+	end % constructor
+
+  function updateData(obj, dataFile)
+  	obj.json2Neuron(dataFile)
+  	fprintf('updated underlying data\n');
+  end % update data
+
+	function json2Neuron(obj, cellData)
 		% detect input type
 		if ischar(cellData) && strcmp(cellData(end-3:end), 'json') %#ok<ALIGN>
 			fprintf('parsing with loadjson.m...');
 			cellData = loadjson(cellData);
 			fprintf('parsed\n');
-            cellData = parseNodes(cellData);
-        elseif isstruct(cellData) && isfield(cellData, 'version')
-            cellData = parseNodes(cellData);
-        elseif isstruct(cellData) && isfield(cellData, 'somaNode')
-            fprintf('already parsed from parseNodes.m\n');
-        else % could also supply output from loadjson..
+      cellData = parseNodes(cellData);
+    elseif isstruct(cellData) && isfield(cellData, 'version')
+      cellData = parseNodes(cellData);
+    elseif isstruct(cellData) && isfield(cellData, 'somaNode')
+      fprintf('already parsed from parseNodes.m\n');
+    else % could also supply output from loadjson..
 			warndlg('input filename as string or struct from loadjson()');
-            return;
-        end
+      return;
+    end
 
-        % move to obj properties (this allows cellData output to be used
-        % independently of NeuronNodes object too
-        obj.fname = cellData.fileName;
-        obj.parseDate = cellData.parseDate;
-        obj.analysisDate = datestr(now);
+    % move to obj properties (this allows cellData output to be used
+    % independently of NeuronNodes object too
+    obj.fname = cellData.fileName;
+    obj.parseDate = cellData.parseDate;
+    obj.analysisDate = datestr(now);
 
-        obj.nodeList = cellData.nodeList;
+    obj.nodeList = cellData.nodeList;
 
-        obj.synData = cellData.typeData;
-        obj.tulipData = cellData.tulipData;
-        obj.nodeData = cellData.props;
+    obj.synData = cellData.typeData;
+    obj.tulipData = cellData.tulipData;
+    obj.nodeData = cellData.props;
 
-        obj.skeleton = cellData.skeleton;
-        obj.somaNode = cellData.somaNode;
+    obj.skeleton = cellData.skeleton;
+    obj.somaNode = cellData.somaNode;
+  end % json2neuron
 
-        obj.cellData = struct();
-        obj.cellData.flag = false;
-        obj.cellData.cellNum = [];
-        obj.cellData.cellType = [];
-        obj.cellData.subType = [];
-        obj.cellData.annotator = [];
-        obj.cellData.source = [];
-        obj.cellData.onoff = [0 0];
-        obj.cellData.strata = zeros(1,5);
-        obj.cellData.inputs = zeros(1,3);
-        obj.cellData.notes = [];
+	function addConnectivity(obj, connectivityFile)
+		if ischar(connectivityFile)
+			obj.conData = parseConnectivity(connectivityFile);
+		elseif isstruct(connectivityFile)
+			obj.conData = connectivityFile;
+		end
+	end % addConnectivity
 
-	end % constructor
+%------------------------------------------------------------------
+%% -------------------------------------------------- GUI setup ---
+%------------------------------------------------------------------
 
 	function openGUI(obj)
-        % this creates the GUI and all the plots. Each plot object is
-        % created then set to invisible except for soma.
-		obj.fh = figure('Name', 'Cell Plot Figure',...
+    % this creates the GUI and all the plots. Each plot object is
+    % created then set to invisible except for soma.
+		obj.fh = figure(...
+			'Name', sprintf('Cell %u',num2str(obj.cellData.cellNum)),...
 			'Color', 'w',...
 			'DefaultUicontrolFontName', 'Segoe UI',...
 			'DefaultUicontrolFontSize', 10,...
 			'DefaultAxesFontName', 'Segoe UI',...
 			'DefaultAxesFontSize', 10,...
 			'NumberTitle', 'off',...
-			'MenuBar', 'none', 'Toolbar', 'none',...
-			'KeyPressFcn', @obj.onPress_key);
+			'MenuBar', 'none',... 
+			'Toolbar', 'none');
 
 %% -------------------------------------------------- menu bar ----
 		mh.file = uimenu('Parent', obj.fh,...
@@ -102,9 +130,15 @@ methods
 			'Label', 'Analysis');
 		mh.reports = uimenu('Parent', obj.fh,...
 			'Label', 'Reports');
+		mh.overview = uimenu('Parent', obj.fh,...
+			'Label', 'Synapse Overview',...
+			'Callback', @obj.onReport_synapseOverview);
 		mh.unknown = uimenu('Parent', mh.reports,...
 			'Label', 'Unknown synapses',...
 			'Callback', @obj.onReport_unknown);
+        mh.incomplete = uimenu('Parent', mh.reports,...
+            'Label', 'Incomplete branches',...
+            'Callback', @obj.onReport_incomplete);
 		mh.export = uimenu('Parent', obj.fh,...
 			'Label', 'Export');
 		mh.fig = uimenu('Parent', mh.export,...
@@ -118,24 +152,28 @@ methods
 			'Spacing', 5);
 
 		obj.handles.tabLayout = uix.TabPanel('Parent', mainLayout,...
-			'Padding', 5);
+			'Padding', 5, 'FontName', 'Segoe UI');
 
 		cellInfoTab = uix.Panel('Parent', obj.handles.tabLayout,...
-			'Padding', 5,...
-			'Title', 'Cell Info');
+			'Padding', 5);
 		plotTab = uix.Panel('Parent', obj.handles.tabLayout,...
 			'Padding', 5);
 		obj.handles.ax.d3plot = axes('Parent', plotTab);
 		tabTab = uix.Panel('Parent', obj.handles.tabLayout,...
 			'Padding', 5);
-		obj.handles.histTabs = uix.TabPanel('Parent', tabTab,...
+		contactTab = uix.Panel('Parent', obj.handles.tabLayout,...
 			'Padding', 5);
+		renderTab = uix.Panel('Parent', obj.handles.tabLayout,...
+			'Padding', 5);
+		obj.handles.histTabs = uix.TabPanel('Parent', tabTab,...
+			'Padding', 5, 'FontName', 'Segoe UI');
 		somaTab = uix.Panel('Parent', obj.handles.histTabs);
 		zTab = uix.Panel('Parent', obj.handles.histTabs);
 
 		obj.handles.ax.soma = axes('Parent', somaTab);
-		obj.handles.ax.z = axes('Parent', zTab);
-		obj.handles.tabLayout.TabTitles = {'Cell Info','3D plot', 'Histograms'};
+		obj.handles.ax.z = axes('Parent', zTab,...
+			'YDir', 'reverse');
+		obj.handles.tabLayout.TabTitles = {'Cell Info','3D plot', 'Histograms', 'Connectivity', 'Renders'};
 		obj.handles.histTabs.TabTitles = {'Soma', 'Z-axis'};
 		obj.handles.tabLayout.Selection = 1;
 		obj.handles.histTabs.Selection = 1;
@@ -157,20 +195,21 @@ methods
 
 %% ---------------------------------------------- 3d plot setup ----
 		obj.handles.cb.addSkeleton = uicontrol('Parent', uiLayout,...
-			'Style', 'checkbox',...
+			'Style', 'checkbox', 'Visible', 'off',...
 			'String', 'Add skeleton plot',...
 			'Callback', @obj.onChanged_addSkeleton);
 
 		obj.handles.cb.addSoma = uicontrol('Parent', uiLayout,...
 			'Style', 'checkbox',...
 			'String', 'Add soma',...
-			'Value', 1,...
+			'Value', 1, 'Visible', 'off',...
 			'Callback', @obj.onSelected_addSoma);
-		obj.handles.cb.normHist = uicontrol('Parent', uiLayout,...
+
+		obj.handles.cb.showCon = uicontrol('Parent', uiLayout,...
 			'Style', 'checkbox',...
-			'String', 'Normalize histogram',...
-			'Value', 0,...
-			'Callback', @obj.onSelected_normHist);
+			'String', 'Show connectivity',...
+			'Value', 0, 'Visible', 'off',...
+			'Callback', @obj.onSelected_showConnectivity);
 
 		obj.handles.tx.azelInc = uicontrol('Parent', uiLayout,...
 			'Style', 'text',...
@@ -182,11 +221,25 @@ methods
 
  		set(mainLayout, 'Widths', [-1.5 -1]);
 		% set(viewLayout, 'Widths', [-1 -1]);
-		set(uiLayout, 'Heights', [-4 -1 -1 -1 -1 -1]);
+		set(uiLayout, 'Heights', [-4 -1 -1 -1 -1]);
 
 		% graph all the synapses then set Visibile to off except soma
 		obj = populatePlots(obj);
-
+%% -------------------------------------------------- render tab ----------
+		renderLayout = uix.VBox('Parent', renderTab,...
+			'Spacing', 5);
+		obj.handles.ax.render = axes('Parent', renderLayout);
+		renderUiLayout = uix.HBox('Parent', renderLayout);
+		obj.handles.lst.renders = uicontrol('Parent', renderUiLayout,...
+			'Style', 'listbox');
+		obj.handles.pb.showRender = uicontrol('Parent', renderUiLayout,...
+			'Style', 'push',...
+			'String', '<html>show<br/>render',...
+			'Callback', @obj.onSelected_showRender);
+		set(renderLayout, 'Heights', [-4 -1]);
+		set(renderUiLayout, 'Widths', [-5 -1]);
+		renderList = populateRenders(obj.cellData.cellNum);
+		set(obj.handles.lst.renders, 'String', renderList);
 %% -------------------------------------------------- cell info tab -------
 		infoLayout = uix.Panel('Parent', cellInfoTab,...
 			'Padding', 5);
@@ -198,7 +251,8 @@ methods
 		uicontrol('Parent', basicLayout,... 
 			'Style', 'text', 'String', 'Cell number:');
 		obj.handles.ed.cellNum = uicontrol('Parent', basicLayout,...
-			'Style', 'edit', 'String', 'c100');
+			'Style', 'edit',... 
+			'String', num2str(obj.cellData.cellNum));
 		uicontrol('Parent', basicLayout,...
 			'Style', 'text', 'String', 'Annotator:');
 		obj.handles.ed.annotator = uicontrol('Parent', basicLayout,...
@@ -292,7 +346,14 @@ methods
 		set(obj.handles.tabLayout, 'SelectionChangedFcn', @obj.onChanged_tab);
 		set(obj.handles.histTabs, 'SelectionChangedFcn', @obj.onChanged_histTab);
 	end % openGUI
-
+%% ------------------------------------------------ render callbacks -----
+	function onSelected_showRender(obj,~,~)
+		imName = obj.handles.lst.renders.String{obj.handles.lst.renders.Value};
+        imName = [getFilepaths('render') imName];
+		im = imread(imName);
+		imshow(im(:,:,1:3), 'Parent', obj.handles.ax.render,... 
+			'InitialMagnification', 'fit');
+	end % onSelected_showRender
 %% ------------------------------------------------ 3d plot callbacks -----
 	function onPress_key(obj, ~, eventdata)
 		% TODO: attach this to something else
@@ -315,7 +376,8 @@ methods
 			obj.updateAzelDisplay();
 			view(obj.handles.ax.d3plot, obj.azel);
 		end
-	end
+	end % onPress_key
+
 	function onEdit_synTable(obj, src,eventdata)
 		tableData = src.Data;
 		tableInd = eventdata.Indices;
@@ -333,13 +395,13 @@ methods
 		src.Data = tableData; % update table
 	end % onEdit_synTable
 
-    function onChanged_addSkeleton(obj,~,~)
-    	if get(obj.handles.cb.addSkeleton, 'Value') == 1
-    		set(obj.handles.skeletonLine, 'Visible', 'on');
-	    else
-	    	set(obj.handles.skeletonLine, 'Visible', 'off');
-	    end
-    end % addSkeleton
+  function onChanged_addSkeleton(obj,~,~)
+  	if get(obj.handles.cb.addSkeleton, 'Value') == 1
+  		set(obj.handles.skeletonLine, 'Visible', 'on');
+    else
+    	set(obj.handles.skeletonLine, 'Visible', 'off');
+    end
+  end % onSelected_addSkeleton
 
 	function onSelected_addSoma(obj,~,~)
 		if get(obj.handles.cb.addSoma, 'Value') == 1
@@ -347,26 +409,33 @@ methods
 		else
 			set(obj.handles.somaLine, 'Visible', 'off');
 		end
-	end % addSoma
+	end % onSelected_addSoma
+
+	function onSelected_showConnectivity(obj,~,~)
+	end % onSelected_showConnectivity
+
 %% ---------------------------------------------- histogram callbacks -----
 	function onChanged_tab(obj,~,~)
-			set(obj.handles.cb.addSoma, 'Enable', 'off');
-			set(obj.handles.cb.addSkeleton, 'Enable', 'off');
+		set(obj.handles.cb.addSoma, 'Visible', 'off');
+		set(obj.handles.cb.addSkeleton, 'Visible', 'off');
+          set(obj.handles.tx.azelInc, 'Visible', 'off');
+		set(obj.handles.tx.enableKeys,...
+			'Visible', 'off');
+		set(obj.handles.cb.showCon, 'Visible', 'off');
 		switch obj.handles.tabLayout.Selection
 		case 1 
-			set(obj.handles.tx.enableKeys,...
-				'Visible', 'off');
 		case 2
 			set(obj.handles.tx.enableKeys,... 
 				'Visible', 'on',...
 				'String', 'Click here to enable arrow keys');
-			set(obj.handles.cb.addSoma, 'Enable', 'on');
-			set(obj.handles.cb.addSkeleton, 'Enable', 'on');
+            set(obj.handles.tx.azelInc, 'Visible', 'on');
+			set(obj.handles.cb.addSoma, 'Visible', 'on');
+			set(obj.handles.cb.addSkeleton, 'Visible', 'on');
+			set(obj.handles.cb.showCon, 'Visible', 'on');
 		case 3
 			set(obj.handles.tx.enableKeys,...
 				'Visible', 'on',...
 				'String', 'Edit bin numbers in table');
-			set(obj.handles.cb.normHist, 'Enable', 'on');
 		end
 	end % onChanged_tab
 
@@ -380,9 +449,8 @@ methods
 			for ii = 1:length(obj.synData.names)
 				obj.handles.synTable.Data{ii,5} = obj.handles.numBins(2,ii);
 			end
-	end
-
-	end % onSelected_histType
+		end
+	end % onChanged_histTab
 %% -------------------------------------------------- menu callbacks ------
     function onMenu_saveCell(obj,~,~)
         % this will actually create and save a new object without all the
@@ -449,6 +517,28 @@ methods
 	    	return;
 	    end
     end % onReport_unknown
+    
+    function onReport_incomplete(obj,~,~)
+        % get the OffEdge nodes
+    end % onReport_incomplete
+
+    function onReport_synapseOverview(obj,~,~)
+    	selection = questdlg('Save synapse overview?',...
+    		'Save dialog',...
+    		'Yes', 'No', 'Yes');
+    	switch selection 
+	    case 'Yes'
+	    	fid = fopen(sprintf('c%u_overview.txt', obj.cellData.cellNum), 'w');
+	    	fprintf(fid, 'c%u Synapses:\n', obj.cellData.cellNum);
+	    	for ii = 1:length(obj.synData.names)
+	    		fprintf(fid, '%u - %s\n', obj.synData.uniqueCount(ii), obj.synData.names{ii});
+	    	end
+	    	fprintf(fid, '\ngenerated on %s', datestr(now));
+ 		   	fclose(fid);
+ 		   case 'No'
+ 		   	return;
+ 		   end
+    end % onReport_synapseOverview
 %% ---------------------------------------------- cellData callbacks ------
     function onSelected_getSubtypes(obj,~,~)
         cType = obj.handles.lst.cellType.String{obj.handles.lst.cellType.Value};
@@ -515,7 +605,7 @@ methods
 	function rmSyn(obj, whichSyn)
 		set(obj.handles.lines(whichSyn), 'Visible', 'off');
 		set(obj.handles.somaBins(whichSyn), 'Visible', 'off');
-		set(obj.handles.somaBins(whichSyn), 'Visible', 'off');
+		set(obj.handles.zBins(whichSyn), 'Visible', 'off');
 	end % rmSyn - TODO: consolidate with addSyn
     
 	function deltaSomaHist(obj, synInd)
@@ -523,12 +613,21 @@ methods
 		if nargin < 2
 			synInd = 1:length(obj.synData.names);
 		end
-
-		for ii = 1:length(synInd)
-			[counts binCenters] = obj.getHist(obj.somaDist{synInd(ii), 1}, obj.handles.synTable.Data{synInd(ii),5});
-			set(obj.handles.somaBins(synInd(ii)),...
-				'XData', binCenters, 'YData', counts);
-		end
+		switch obj.handles.histTabs.Selection
+		case 1
+			for ii = 1:length(synInd)
+				[counts, binCenters] = obj.getHist(obj.somaDist{synInd(ii), 1}, obj.handles.synTable.Data{synInd(ii),5});
+				set(obj.handles.somaBins(synInd(ii)),...
+					'XData', binCenters, 'YData', counts);
+			end
+		case 2
+			for ii = 1:length(synInd)
+				synDir = getSynNodes(obj.synData, obj.synData.names{ii});
+				z = getDim(obj.nodeData, synDir, 'Z');
+				[counts, binCenters] = obj.getHist(z, obj.handles.synTable.Data{ii,1});
+				set(obj.handles.zBins(ii), 'XData', counts, 'YData', binCenters);
+			end
+		end 
    end % deltaSomaHist
     
 	function wrapAzel(obj)

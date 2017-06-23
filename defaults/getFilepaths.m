@@ -11,11 +11,18 @@ function x = getFilepaths(dirType)
 	% 'inferior' subfolders: 'C:\...\data'
 	saveDir = '';
     
-    % file path where you export .json files (could be the same...)
+    % file path where you export .json files
     jsonDir = '';
     
     % if you're going to be exporting to .csv, fill in a default:
     exportDir = '';
+
+    % to import blender renders
+    
+    renderDir = 'C:\Users\sarap\Google Drive\NEITZ Lab\Electron Microscopy Rm\Blender Images\new figures\';
+    if ~isdir(renderDir)
+        renderDir = 'C:\Users\brian\Google Drive\NEITZ Lab\Electron Microscopy Rm\Blender Images\new figures\';
+    end
     
     switch dirType
         case 'save'
@@ -24,4 +31,6 @@ function x = getFilepaths(dirType)
             x = jsonDir;
         case 'export'
             x = exportDir;
+        case 'render'
+            x = renderDir;
     end

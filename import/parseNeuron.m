@@ -1,10 +1,12 @@
-function s = parseNodes(cellData)
+function s = parseNeuron(cellData)
 	% INPUT: json file exported from tulip (see tulip2json.py)
 	% 		cellData 		filepath + name as string
 	%
 	% 5May2017 - SSP - created
 	% 10May2017 - SSP - updated to use local names
 	% 16Jun2017 - SSP - added containers.Map, renamed to parseNodesEdges.m
+	% 22Jun2017 - SSP - changed to table structure
+
 
 	if ischar(cellData) && strcmp(cellData(end-3:end), 'json')
 		fprintf('parsing with loadjson.m...');
@@ -26,21 +28,20 @@ function s = parseNodes(cellData)
 	s.nodeList = fieldnames(cellData.graph.properties.LocationInViking.nodesValues);
 	s.skeleton = cell(1,1);
 
-	% init containers
-	s.props.nameMap = containers.Map;
-	s.props.iiMap = containers.Map;
-	s.props.sizeMap = containers.Map;
-	s.props.idMap = containers.Map;
-	s.props.uniqueMap = containers.Map;
-	s.props.parentMap = containers.Map;
-	s.props.xyzMap = containers.Map; 
-	s.props.synTagMap = containers.Map;
-	s.props.synTypeMap = containers.Map;
-	s.props.localNameMap = containers.Map;
-	s.props.offEdgeMap = containers.Map;
-	s.props.terminalMap = containers.Map;
-	s.props.linkMap = containers.Map;
+	% init the table variables
+	XYZ = [];
+	LocationID = [];
+	LocalName = cell(1,1);
+	ParentID = [];
+	SynType = cell(1,1);
+	SynTag = cell(1,1);
+	Size = [];
+	Unique = [];
+	OffEdge = [];
+	Terminal = [];
+	UUID = cell(1,1);
 
+	% init the synapse variables
 	initFlag = true;
 	% local synapse name
 	s.typeData.names = cell(1,1);
@@ -54,73 +55,83 @@ function s = parseNodes(cellData)
 	s.typeData.nodeIDs = cell(1,1);
 	% one node id per unique synapse
 	s.typeData.uniqueNodes = cell(1,1); 
-
+	% track unique parentIDs
 	parentList = [];
+
+	% save some space
+	c = cellData.graph.properties;
 
 	for ii = 1:length(s.nodeList)
 		nodeName = char(s.nodeList{ii});
-		s.props.nameMap(nodeName) = nodeName;
-		s.props.iiMap(nodeName) = ii;
-		s.props.parentMap(nodeName) =  str2double(cellData.graph.properties.ParentID.nodesValues.(s.nodeList{ii}));
+		UUID = cat(1, UUID, nodeName);
+		p = str2double(c.ParentID.nodesValues.(nodeName));
+		ParentID = cat(1, ParentID, p);
 
-		if isempty(intersect(s.props.parentMap(nodeName), parentList))
-			parentList = [parentList, s.props.parentMap(nodeName)]; %#ok<AGROW>
-			s.props.uniqueMap(nodeName) = true;
-		end
-		
-		s.props.idMap(nodeName) = str2double(cellData.graph.properties.LocationID.nodesValues.(s.nodeList{ii}));
-
-		s.props.synTypeMap(nodeName) =  lower(cellData.graph.properties.Type.nodesValues.(s.nodeList{ii}));
-		% display(s.props.synTypeMap(nodeName));
-		if isfield(cellData.graph.properties.StructureTags.nodesValues, nodeName);
-			s.props.synTagMap(nodeName) = cellData.graph.properties.StructureTags.nodesValues.(nodeName);
+		if isempty(intersect(p, parentList))
+			parentList = [parentList, p];
+			Unique = cat(1, Unique, true);
 		else
-			s.props.synTagMap(nodeName) = cellData.graph.properties.StructureTags.nodeDefault;
+			Unique = cat(1, Unique, false);
 		end
 
-		viewSize = cellData.graph.properties.viewSize.nodesValues.(s.nodeList{ii});
-		viewSize = viewSize(2:end-4);
-		viewSize = regexp(viewSize, ',', 'split');
-		viewSize = cellfun(@str2double, viewSize);
-		s.props.sizeMap(nodeName) = viewSize(1);
+		LocationID = cat(1, LocationID, str2double(c.LocationID.nodesValues.(nodeName)));
+		
+		SynType = cat(1, SynType, lower(c.Type.nodesValues.(nodeName)));
+		if isfield(c.StructureTags.nodesValues, nodeName)
+			SynTag = cat(1, SynTag, c.StructureTags.nodesValues.(nodeName));
+		else
+			SynTag = cat(1, SynTag, '_');
+		end
 
-		localName = getLocalName(s.props.synTypeMap(nodeName), s.props.synTagMap(nodeName));
+		LocalName = cat(1, LocalName, getLocalName(SynType{end}, SynTag{end}));
 
-		if ~strcmp(localName, 'cell')
-			s = synCounter(s, localName, s.props.parentMap(nodeName), nodeName);
+		sz = c.viewSize.nodesValues.(nodeName);
+		sz = sz(2:end-4);
+		sz = regexp(sz, ',', 'split');
+		Size = cat(1, Size, str2double(sz(1)));
+
+		if ~strcmp(LocalName{end}, 'cell')
+			s = synCounter(s, LocalName{end}, ParentID(end), nodeName);
 		else
 			s.skeleton = cat(2, s.skeleton, nodeName);
-			if viewSize(1) > somaSize
+			if Size(end, 1) > somaSize
 				s.somaNode = nodeName;
-				somaSize = viewSize(1);
+				somaSize = Size(end, 1);
 			end
 		end
 
-		loc = cellData.graph.properties.LocationInViking.nodesValues.(nodeName);
+		loc = c.LocationInViking.nodesValues.(nodeName);
 		loc(regexp(loc, '[XYZ:]')) = [];
 		loc = regexp(loc, ' ', 'split');
-		s.props.xyzMap(nodeName) = cellfun(@str2double, loc);
+		XYZ = cat(1, XYZ, cellfun(@str2double, loc));
 
-		if isfield(cellData.graph.properties.OffEdge.nodesValues, nodeName)
-			s.props.offEdgeMap(nodeName) = true;
-		end
-		if isfield(cellData.graph.properties.Terminal.nodesValues, nodeName)
-			s.props.terminalMap(nodeName) = true;
-		end
-
-		if isfield(cellData.graph.properties.NumLinkedStructures, nodeName)
-			s.props.linkMap(nodeName) = str2double(cellData.graph.properties.NumLinkedStructures.nodesValues.(nodeName));
+		if isfield(c.OffEdge.nodesValues, nodeName)
+			OffEdge = cat(1, OffEdge, true);
 		else
-			s.props.linkMap(nodeName) = 0;
+			OffEdge = cat(1, OffEdge, false);
 		end
-	end
+
+		if isfield(c.Terminal.nodesValues, nodeName)
+			Terminal = cat(1, Terminal, true);
+		else
+			Terminal = cat(1, Terminal, false);
+		end
+	end % node loop
+
 	% each unique synapse has a different parent ID.
 	% synapses spanning multiple sections should share a parent ID
 	s.typeData.uniqueParents = cellfun(@unique, s.typeData.parents, 'UniformOutput', 0);
 
-	% print synapse data to cmd line
-	cellStats(s);
 
+	SynTag(1,:) = []; SynType(1,:) = [];
+	LocalName(1,:) = []; UUID(1,:) = [];
+
+	% arrange the data table
+	s.dataTable = table(LocationID, LocalName, XYZ,... 
+		ParentID, SynType, SynTag, Size,... 
+		Unique, OffEdge, Terminal, UUID);
+
+	cellStats(s);
 
 %% ------------------------------------------------- support functions ----
 
@@ -168,3 +179,4 @@ function s = parseNodes(cellData)
 			s.typeData.nodeIDs{ind} = cat(2, s.typeData.nodeIDs{ind}, nodeName);
 	end % synCounter
 end % parseNodesEdges
+

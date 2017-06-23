@@ -2,6 +2,7 @@ function s = parseConnectivity(connectivityFile)
 	% parse connectivity json file
 	%
 	% 21Jun2017 - SSP - created
+	% 22Jun2017 - fixed edge value error
 
 	if ischar(connectivityFile) && strcmp(connectivityFile(end-3:end), 'json')
 		fprintf('parsing with loadjson.m...');
@@ -42,7 +43,7 @@ function s = parseConnectivity(connectivityFile)
 	for ii = 1:length(s.nodeList)
 		nodeName = s.nodeList{ii};
 		s.props.nnameMap(nodeName) = nodeName;
-		s.props.idMap(nodeName) = num2str(hops.graph.properties.ID.nodesValues.(nodeName));
+		s.props.idMap(nodeName) = str2double(hops.graph.properties.ID.nodesValues.(nodeName));
 		s.props.nlabelMap(nodeName) = hops.graph.properties.viewLabel.nodesValues.(nodeName);
 	end % nodeList loop
 
@@ -60,8 +61,9 @@ function s = parseConnectivity(connectivityFile)
 		edgeVal = zeros(length(numVal),2);
 
 		for ii = 1:length(numVal)
-			tmp{numVal(ii)}(regexp(tmp{numVal(ii)}, ' ')) = [];
-			x = regexp(tmp{numVal(ii)}, ' ', 'split');
+			% tmp{numVal(ii)}(regexp(tmp{numVal(ii)}, ' ')) = [];
+			tmp{numVal(ii)} = deblank(tmp{numVal(ii)});
+			x = regexp(tmp{numVal(ii)}, '->', 'split');
 			x = cellfun(@str2double, x);
 			edgeVal(ii,:) = x;
 		end
@@ -73,10 +75,12 @@ function s = parseConnectivity(connectivityFile)
 		s.props.sourceMap(edgeName) = str2double(hops.graph.properties.Source.edgesValues.(edgeName));
 		s.props.targetMap(edgeName) = str2double(hops.graph.properties.Target.edgesValues.(edgeName));
 
-		if isfield(hops.graph.properties.IsLoop.edgesValues, edgeName)
-			s.props.loopMap(edgeName) = true;
-		else
-			s.props.loopMap(edgeName) = false;
+		if isfield(hops.graph.properties.IsLoop, 'edgesValues')
+			if isfield(hops.graph.properties.IsLoop.edgesValues, edgeName)
+				s.props.loopMap(edgeName) = true;
+			else
+				s.props.loopMap(edgeName) = false;
+			end
 		end
 
 		if strcmp(hops.graph.properties.Directional.edgesValues.(edgeName), 'True')

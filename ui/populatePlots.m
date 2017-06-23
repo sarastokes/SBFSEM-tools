@@ -37,14 +37,14 @@ function obj = populatePlots(obj)
 		obj.handles.synTable.Data{ii,5} = length(bins);
 
 		% z-axis plot
-		[counts binCenters] = obj.getHist(xyz(3,:));
+		[counts, binCenters] = obj.getHist(xyz(3,:));
 		obj.handles.zBins(ii) = line('Parent', obj.handles.ax.z,...
-			'XData', binCenters, 'YData', counts,...
+			'XData', counts, 'YData', binCenters,...
 			'Color', sc(obj.synData.names{ii}),...
 			'LineWidth', 2);
 		set(obj.handles.zBins(ii), 'Visible', 'off');
-		xlabel(obj.handles.ax.z, 'slice (z-axis)'); 
-		ylabel(obj.handles.ax.z, 'synapse counts');
+		xlabel(obj.handles.ax.z, 'synapse counts');
+		ylabel(obj.handles.ax.z, 'slice (z-axis)'); 
 		obj.handles.numBins(2,ii) = length(binCenters + 1);
 	end
 
