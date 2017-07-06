@@ -22,8 +22,12 @@ properties (SetAccess = private, GetAccess = public)
   tulipData % currently not using, might get rid of
 	parseDate % date .tlp or .tlpx file created
 	analysisDate % date run thru NeuronNodes
+
 	connectivityDate % date added connectivity
 	conData % connectivity data
+
+	dataTable % new struct - dual for debugging
+	synList
 end
 
 properties
@@ -39,28 +43,32 @@ methods
 
 		obj.json2Neuron(cellData);
 		if nargin < 2
-	    answer = inputdlg('Input the cell number:',... 
-  	  	'Cell number dialog box', 1);
-	    cellNum = answer{1};
-	  end
+	    	answer = inputdlg('Input the cell number:',... 
+  	  			'Cell number dialog box', 1);
+	    	cellNum = answer{1};
+	  	end
 
-    obj.cellData = struct();
-    obj.cellData.flag = false;
-    obj.cellData.cellNum = cellNum;
-    obj.cellData.cellType = [];
-    obj.cellData.subType = [];
-    obj.cellData.annotator = [];
-    obj.cellData.source = [];
-    obj.cellData.onoff = [0 0];
-    obj.cellData.strata = zeros(1,5);
-    obj.cellData.inputs = zeros(1,3);
-    obj.cellData.notes = [];
+	    obj.cellData = struct();
+	    obj.cellData.flag = false;
+	    obj.cellData.cellNum = str2double(cellNum);
+	    obj.cellData.cellType = [];
+	    obj.cellData.subType = [];
+	    obj.cellData.annotator = [];
+	    obj.cellData.source = [];
+	    obj.cellData.onoff = [0 0];
+	    obj.cellData.strata = zeros(1,5);
+	    obj.cellData.inputs = zeros(1,3);
+	    obj.cellData.notes = [];
+
+    	rows = ~strcmp(obj.dataTable.LocalName, 'cell') & obj.dataTable.Unique == 1;
+		synTable = obj.dataTable(rows,:);
+		[~, obj.synList] = findgroups(synTable.LocalName); 
 	end % constructor
 
-  function updateData(obj, dataFile)
-  	obj.json2Neuron(dataFile)
-  	fprintf('updated underlying data\n');
-  end % update data
+	function updateData(obj, dataFile)
+		obj.json2Neuron(dataFile)
+		fprintf('updated underlying data\n');
+	end % update data
 
 	function json2Neuron(obj, cellData)
 		% detect input type
@@ -68,31 +76,38 @@ methods
 			fprintf('parsing with loadjson.m...');
 			cellData = loadjson(cellData);
 			fprintf('parsed\n');
-      cellData = parseNodes(cellData);
-    elseif isstruct(cellData) && isfield(cellData, 'version')
-      cellData = parseNodes(cellData);
-    elseif isstruct(cellData) && isfield(cellData, 'somaNode')
-      fprintf('already parsed from parseNodes.m\n');
-    else % could also supply output from loadjson..
+
+	  		dualData = parseNeuron(cellData);
+	  		obj.dataTable = dualData.dataTable;
+	  		fprintf('dual parseNeuron.m completed\n')
+
+	  		cellData = parseNodes(cellData);
+	  		fprintf('parseNodes.m completed\n');
+
+		elseif isstruct(cellData) && isfield(cellData, 'version')
+	  		cellData = parseNodes(cellData);
+		elseif isstruct(cellData) && isfield(cellData, 'somaNode')
+	  		fprintf('already parsed from parseNodes.m\n');
+		else % could also supply output from loadjson..
 			warndlg('input filename as string or struct from loadjson()');
-      return;
-    end
+	  		return
+		end
 
-    % move to obj properties (this allows cellData output to be used
-    % independently of NeuronNodes object too
-    obj.fname = cellData.fileName;
-    obj.parseDate = cellData.parseDate;
-    obj.analysisDate = datestr(now);
+		% move to obj properties (this allows cellData output to be used
+		% independently of NeuronNodes object too
+		obj.fname = cellData.fileName;
+		obj.parseDate = cellData.parseDate;
+		obj.analysisDate = datestr(now);
 
-    obj.nodeList = cellData.nodeList;
+		obj.nodeList = cellData.nodeList;
 
-    obj.synData = cellData.typeData;
-    obj.tulipData = cellData.tulipData;
-    obj.nodeData = cellData.props;
+		obj.synData = cellData.typeData;
+		obj.tulipData = cellData.tulipData;
+		obj.nodeData = cellData.props;
 
-    obj.skeleton = cellData.skeleton;
-    obj.somaNode = cellData.somaNode;
-  end % json2neuron
+		obj.skeleton = cellData.skeleton;
+		obj.somaNode = cellData.somaNode;
+	end % json2neuron
 
 	function addConnectivity(obj, connectivityFile)
 		if ischar(connectivityFile)
@@ -100,6 +115,7 @@ methods
 		elseif isstruct(connectivityFile)
 			obj.conData = connectivityFile;
 		end
+		fprintf('added connectivity\n');
 	end % addConnectivity
 
 %------------------------------------------------------------------
@@ -110,7 +126,7 @@ methods
     % this creates the GUI and all the plots. Each plot object is
     % created then set to invisible except for soma.
 		obj.fh = figure(...
-			'Name', sprintf('Cell %u',num2str(obj.cellData.cellNum)),...
+			'Name', sprintf('Cell %u',obj.cellData.cellNum),...
 			'Color', 'w',...
 			'DefaultUicontrolFontName', 'Segoe UI',...
 			'DefaultUicontrolFontSize', 10,...
@@ -182,8 +198,9 @@ methods
 		uiLayout = uix.VBox('Parent', mainLayout,...
 			'Spacing', 1, 'Padding', 5);
 %% -------------------------------------------synapse setup -------
-		tableData = populateSynData(obj.synData);
 
+		tableData = populateSynData(obj.dataTable);
+		
 		obj.handles.synTable = uitable('Parent', uiLayout);
 		set(obj.handles.synTable, 'Data', tableData,...
 			'ColumnName', {'Plot', 'Synapse Type', 'N', ' ', 'Bins'},...
@@ -194,6 +211,20 @@ methods
 			'CellEditCallback', @obj.onEdit_synTable);
 
 %% ---------------------------------------------- 3d plot setup ----
+		clipLayout = uix.HBox('Parent', uiLayout);
+		obj.handles.tx.clip = uicontrol('Parent', clipLayout,...
+			'Style', 'Text',...
+			'String', 'Clip view around soma:');
+		obj.handles.cb.aboveSoma = uicontrol('Parent', clipLayout,...
+			'Style', 'checkbox',...
+			'String', 'Above',...
+			'Callback', @obj.clipBySoma);
+		obj.handles.cb.belowSoma = uicontrol('Parent', clipLayout,...
+			'Style', 'checkbox',...
+			'String', 'Below',...
+			'Callback', @obj.clipBySoma);
+		set(clipLayout, 'Widths', [-1.5 -1 -1]);
+
 		obj.handles.cb.addSkeleton = uicontrol('Parent', uiLayout,...
 			'Style', 'checkbox', 'Visible', 'off',...
 			'String', 'Add skeleton plot',...
@@ -221,7 +252,7 @@ methods
 
  		set(mainLayout, 'Widths', [-1.5 -1]);
 		% set(viewLayout, 'Widths', [-1 -1]);
-		set(uiLayout, 'Heights', [-4 -1 -1 -1 -1]);
+		set(uiLayout, 'Heights', [-4 -1 -1 -1 -1 -1 -1]);
 
 		% graph all the synapses then set Visibile to off except soma
 		obj = populatePlots(obj);
@@ -329,7 +360,6 @@ methods
 
 		set(infoGrid, 'Widths', [-1 -1], 'Heights',[-2 -3 -1 -1 -1 -1 -1]);
 
-
 		% check out cell info
 		if obj.cellData.flag
 			[obj.handles, titlestr] = loadCellData(obj.handles, obj.cellData);
@@ -411,7 +441,24 @@ methods
 		end
 	end % onSelected_addSoma
 
-	function onSelected_showConnectivity(obj,~,~)
+	function clipBySoma(obj, ~, ~)
+		somaXYZ = getSomaXYZ(obj);
+		% get ZLim
+		xyz = obj.dataTable.XYZ;
+		zBounds = [min(xyz(:,3)) max(xyz(:,3))];
+
+		% reset the axis limit
+		obj.handles.ax.d3plot.ZLim = zBounds;
+		% modify based on checkboxes
+		if obj.handles.cb.aboveSoma.Value == 1
+			obj.handles.ax.d3plot.ZLim(1) = somaXYZ(3);
+		elseif obj.handles.cb.belowSoma.Value == 1
+			obj.handles.ax.d3plot.ZLim(2) = somaXYZ(3);
+		end	
+	end % clipBySoma	
+
+	function onSelected_showConnectivity(obj, ~, ~)
+		% i think this will be a table for now
 	end % onSelected_showConnectivity
 
 %% ---------------------------------------------- histogram callbacks -----
@@ -442,11 +489,11 @@ methods
 	function onChanged_histTab(obj,~,~)
 		switch obj.handles.histTabs.Selection
 		case 1 % soma plot
-			for ii = 1:length(obj.synData.names)
+			for ii = 1:length(obj.synList)
 				obj.handles.synTable.Data{ii,5} = obj.handles.numBins(1,ii);
 			end
 		case 2 % z-axis plot
-			for ii = 1:length(obj.synData.names)
+			for ii = 1:length(obj.synList)
 				obj.handles.synTable.Data{ii,5} = obj.handles.numBins(2,ii);
 			end
 		end
@@ -530,8 +577,8 @@ methods
 	    case 'Yes'
 	    	fid = fopen(sprintf('c%u_overview.txt', obj.cellData.cellNum), 'w');
 	    	fprintf(fid, 'c%u Synapses:\n', obj.cellData.cellNum);
-	    	for ii = 1:length(obj.synData.names)
-	    		fprintf(fid, '%u - %s\n', obj.synData.uniqueCount(ii), obj.synData.names{ii});
+	    	for ii = 1:length(obj.synList)
+	    		fprintf(fid, '%u - %s\n', obj.synData.uniqueCount(ii), obj.synList{ii});
 	    	end
 	    	fprintf(fid, '\ngenerated on %s', datestr(now));
  		   	fclose(fid);
@@ -611,21 +658,20 @@ methods
 	function deltaSomaHist(obj, synInd)
 		% TODO: expand to all bar plots
 		if nargin < 2
-			synInd = 1:length(obj.synData.names);
+			synInd = 1:length(obj.synList);
 		end
 		switch obj.handles.histTabs.Selection
-		case 1
+		case 1 % soma distance histogram
 			for ii = 1:length(synInd)
 				[counts, binCenters] = obj.getHist(obj.somaDist{synInd(ii), 1}, obj.handles.synTable.Data{synInd(ii),5});
-				set(obj.handles.somaBins(synInd(ii)),...
+				set(obj.handles.somaBins(ii),...
 					'XData', binCenters, 'YData', counts);
 			end
-		case 2
+		case 2 % z-axis histogram
 			for ii = 1:length(synInd)
-				synDir = getSynNodes(obj.synData, obj.synData.names{ii});
-				z = getDim(obj.nodeData, synDir, 'Z');
-				[counts, binCenters] = obj.getHist(z, obj.handles.synTable.Data{ii,1});
-				set(obj.handles.zBins(ii), 'XData', counts, 'YData', binCenters);
+				xyz = getSynXYZ(obj.dataTable, obj.synList{synInd(ii)});
+				[counts, binCenters] = obj.getHist(xyz(:, 3), obj.handles.synTable.Data{synInd(ii),5});
+				set(obj.handles.zBins(synInd(ii)), 'XData', counts, 'YData', binCenters);
 			end
 		end 
    end % deltaSomaHist

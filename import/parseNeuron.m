@@ -37,6 +37,7 @@ function s = parseNeuron(cellData)
 	SynTag = cell(1,1);
 	Size = [];
 	Unique = [];
+    SynNum = [];
 	OffEdge = [];
 	Terminal = [];
 	UUID = cell(1,1);
@@ -57,6 +58,7 @@ function s = parseNeuron(cellData)
 	s.typeData.uniqueNodes = cell(1,1); 
 	% track unique parentIDs
 	parentList = [];
+    uInd = 0;
 
 	% save some space
 	c = cellData.graph.properties;
@@ -67,12 +69,15 @@ function s = parseNeuron(cellData)
 		p = str2double(c.ParentID.nodesValues.(nodeName));
 		ParentID = cat(1, ParentID, p);
 
-		if isempty(intersect(p, parentList))
-			parentList = [parentList, p];
-			Unique = cat(1, Unique, true);
-		else
-			Unique = cat(1, Unique, false);
-		end
+        if isempty(intersect(p, parentList))
+            parentList = [parentList, p]; %#ok<AGROW>
+            Unique = cat(1, Unique, 1);
+            % increment the unique synapse count
+            uInd = uInd + 1;
+        else
+            Unique = cat(1, Unique, 0);
+        end
+        SynNum = cat(1, SynNum, uInd);
 
 		LocationID = cat(1, LocationID, str2double(c.LocationID.nodesValues.(nodeName)));
 		
@@ -81,10 +86,10 @@ function s = parseNeuron(cellData)
 			SynTag = cat(1, SynTag, c.StructureTags.nodesValues.(nodeName));
 		else
 			SynTag = cat(1, SynTag, '_');
-		end
-
-		LocalName = cat(1, LocalName, getLocalName(SynType{end}, SynTag{end}));
-
+        end
+        
+        LocalName = cat(1, LocalName, getLocalName(SynType{end}, SynTag{end}));
+ 
 		sz = c.viewSize.nodesValues.(nodeName);
 		sz = sz(2:end-4);
 		sz = regexp(sz, ',', 'split');
@@ -129,7 +134,7 @@ function s = parseNeuron(cellData)
 	% arrange the data table
 	s.dataTable = table(LocationID, LocalName, XYZ,... 
 		ParentID, SynType, SynTag, Size,... 
-		Unique, OffEdge, Terminal, UUID);
+		Unique, SynNum, OffEdge, Terminal, UUID);
 
 	cellStats(s);
 

@@ -2,32 +2,49 @@ function obj = populatePlots(obj)
 	% create GUI plots
 	% 
 	% 21Jun2017 - SSP - moved from methods
+	% 5Jul2017 - SSP - rewrote for struct->table
 
+	T = obj.dataTable;
 	sc = getStructureColors();
-	somaXYZ = obj.nodeData.xyzMap(obj.somaNode);
-	numSyn = length(obj.synData.names);
+
+	% get soma location
+	somaXYZ = getSomaXYZ(obj);
+
+	% throw out cell body and syn multi nodes
+	rows = ~strcmp(T.LocalName, 'cell') & T.Unique == 1;
+	% make a new table with only unique synapses
+	synTable = T(rows, :);
+	% group by LocalName
+	[G, names] = findgroups(synTable.LocalName);
+	% how many synapse types
+	numSyn = numel(names);
+
 	obj.handles.numBins = zeros(2, numSyn);
 	obj.somaDist = cell(numSyn, 1);
+
 	% plot the synapses
 	for ii = 1:numSyn
 		% synapse 3d plot
-		synDir = getSynNodes(obj.synData, obj.synData.names{ii});
-		xyz = getDim(obj.nodeData, synDir, 'XYZ');
+		xyz = getSynXYZ(T, names{ii});
+		
+		% synRow = strcmp(T.LocalName, names{ii}) & T.Unique == 1;
+		% xyz = table2array(T(synRow, 'XYZ'));
+
 		obj.handles.lines(ii) = line('Parent', obj.handles.ax.d3plot,...
-			'XData', xyz(1,:), 'YData', xyz(2,:), 'ZData', xyz(3,:),...
-			'Color', sc(obj.synData.names{ii}),...
+			'XData', xyz(:,1), 'YData', xyz(:,2), 'ZData', xyz(:,3),...
+			'Color', sc(names{ii}),...
 			'Marker', '.', 'MarkerSize', 10,...
 			'LineStyle', 'none');
 		set(obj.handles.lines(ii), 'Visible', 'off');
 
 		% synapse distance histograms
-		obj.somaDist{ii,1} = FastEuclid3d(somaXYZ, xyz');
+		obj.somaDist{ii,1} = FastEuclid3d(somaXYZ, xyz);
 		[counts, bins] = histcounts(obj.somaDist{ii,1});
 		binInc = bins(2) - bins(1);
 		cent = bins(1:end-1) + binInc/2;
 		obj.handles.somaBins(ii) = line('Parent', obj.handles.ax.soma,...
 			'XData', cent, 'YData', counts,...
-			'Color', sc(obj.synData.names{ii}),...
+			'Color', sc(names{ii}),...
 			'LineWidth', 2);
 		set(obj.handles.somaBins(ii), 'Visible', 'off');
 		xlabel(obj.handles.ax.soma, 'distance from soma');
@@ -37,10 +54,10 @@ function obj = populatePlots(obj)
 		obj.handles.synTable.Data{ii,5} = length(bins);
 
 		% z-axis plot
-		[counts, binCenters] = obj.getHist(xyz(3,:));
+		[counts, binCenters] = obj.getHist(xyz(:,3));
 		obj.handles.zBins(ii) = line('Parent', obj.handles.ax.z,...
 			'XData', counts, 'YData', binCenters,...
-			'Color', sc(obj.synData.names{ii}),...
+			'Color', sc(names{ii}),...
 			'LineWidth', 2);
 		set(obj.handles.zBins(ii), 'Visible', 'off');
 		xlabel(obj.handles.ax.z, 'synapse counts');
@@ -50,12 +67,8 @@ function obj = populatePlots(obj)
 
 
 	% plot the cell's skeleton
-	xyz = [];
-	for ii = 1:length(obj.skeleton)
-    	if ~isempty(obj.skeleton{1,ii})
-    		xyz = [xyz; obj.nodeData.xyzMap(obj.skeleton{1,ii})];
-    	end
-    end
+    skelRow = strcmp(T.LocalName, 'cell');
+    xyz = table2array(T(skelRow, 'XYZ'));
     obj.handles.skeletonLine = line('Parent', obj.handles.ax.d3plot,...
     	'XData', xyz(:,1), 'YData', xyz(:,2), 'ZData', xyz(:,3),...
        	'Marker', '.', 'MarkerSize', 4, 'Color', [0.2 0.2 0.2],...
