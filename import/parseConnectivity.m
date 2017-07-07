@@ -30,7 +30,8 @@ function s = parseConnectivity(connectivityFile)
 	Source = [];
 	Target = [];
 	Dir = [];
-	ParentIDs = [];
+	Weight = [];
+	ParentIDs = cell(1,1);
 	EdgeUUID = cell(1,1);
 	EdgeName = cell(1,1);
 	EdgeType = cell(1,1);
@@ -59,6 +60,7 @@ function s = parseConnectivity(connectivityFile)
 		else
 			numVal = 1:length(tmp);
 		end
+
 		edgeVal = zeros(length(numVal),2);
 
 		for jj = 1:length(numVal)
@@ -67,12 +69,12 @@ function s = parseConnectivity(connectivityFile)
 			x = cellfun(@str2double, x);
 			edgeVal(jj,:) = x;
 		end
-		% s.props.evalMap(edgeName) = edgeVal;
-		ParentIDs = cat(1, ParentIDs, x);
+		ParentIDs = cat(1, ParentIDs, edgeVal);
+		Weight = cat(1, Weight, size(edgeVal, 1));
 
 		% s.props.etypeMap(edgeName) = hops.graph.properties.edgeType.edgesValues.(edgeName);
 		EdgeType = cat(1, EdgeType, hops.graph.properties.edgeType.edgesValues.(edgeName));
-		EdgeName = cat(1, EdgeName, getLocalName(hops.graph.properties.viewLabel.edgesValues.(edgeName)));
+		EdgeName = cat(1, EdgeName, hops.graph.properties.viewLabel.edgesValues.(edgeName));
 
 		Source = cat(1, Source, str2double(hops.graph.properties.Source.edgesValues.(edgeName)));
 		Target = cat(1, Target, str2double(hops.graph.properties.Target.edgesValues.(edgeName)));
@@ -98,8 +100,9 @@ function s = parseConnectivity(connectivityFile)
 	EdgeType(1,:) = [];
 	NodeLabel(1,:) = [];
 	NodeUUID(1,:) = [];
+	ParentIDs(1,:) = [];
 
 	% make the output tables
-	s.edgeTable = table(Source, Target, Dir, EdgeName, ParentIDs, EdgeType, EdgeUUID);
+	s.edgeTable = table(Source, Target, Dir, EdgeName, Weight, ParentIDs, EdgeType, EdgeUUID);
 	s.nodeTable = table(CellID, NodeLabel, NodeUUID);
 

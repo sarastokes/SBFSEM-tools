@@ -1,0 +1,18 @@
+\BOOKMARK [1][-]{section.1}{Installation}{}% 1
+\BOOKMARK [1][-]{section.2}{Import}{}% 2
+\BOOKMARK [2][-]{subsection.2.1}{Import a neuron}{section.2}% 3
+\BOOKMARK [2][-]{subsection.2.2}{Add connectivity map}{section.2}% 4
+\BOOKMARK [1][-]{section.3}{Reports}{}% 5
+\BOOKMARK [1][-]{section.4}{Save}{}% 6
+\BOOKMARK [1][-]{section.5}{Export}{}% 7
+\BOOKMARK [2][-]{subsection.5.1}{CSV}{section.5}% 8
+\BOOKMARK [2][-]{subsection.5.2}{Plots}{section.5}% 9
+\BOOKMARK [1][-]{section.6}{Organization}{}% 10
+\BOOKMARK [1][-]{section.7}{GUI}{}% 11
+\BOOKMARK [2][-]{subsection.7.1}{CellData and the Cell Info Tab}{section.7}% 12
+\BOOKMARK [3][-]{subsubsection.7.1.1}{Cell Types}{subsection.7.1}% 13
+\BOOKMARK [2][-]{subsection.7.2}{3D Plot}{section.7}% 14
+\BOOKMARK [2][-]{subsection.7.3}{Histograms}{section.7}% 15
+\BOOKMARK [1][-]{section.8}{Configuration}{}% 16
+\BOOKMARK [2][-]{subsection.8.1}{Plot Style}{section.8}% 17
+\BOOKMARK [2][-]{subsection.8.2}{Default directories}{section.8}% 18

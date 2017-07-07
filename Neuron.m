@@ -13,8 +13,7 @@ properties (SetAccess = private, GetAccess = public)
 % these are properties parsed from tulip data
   nodeList % all nodes
   skeleton % just the "cell" nodes
-	nodeData % nodeData consists of containers.Map bins for each property (the
-	% columns in Tulip). The properties included are: LocationInViking,
+	dataTable % The properties included are: LocationInViking,
 	% LocationID, ParentID, StructureType, Tags, ViewSize, OffEdge and
 	% Terminal. See parseNodes.m for more details
 
@@ -26,7 +25,6 @@ properties (SetAccess = private, GetAccess = public)
 	connectivityDate % date added connectivity
 	conData % connectivity data
 
-	dataTable % new struct - dual for debugging
 	synList
 end
 
@@ -43,24 +41,24 @@ methods
 
 		obj.json2Neuron(cellData);
 		if nargin < 2
-	    	answer = inputdlg('Input the cell number:',... 
-  	  			'Cell number dialog box', 1);
-	    	cellNum = answer{1};
-	  	end
+    	answer = inputdlg('Input the cell number:',... 
+	  			'Cell number dialog box', 1);
+    	cellNum = answer{1};
+  	end
 
-	    obj.cellData = struct();
-	    obj.cellData.flag = false;
-	    obj.cellData.cellNum = str2double(cellNum);
-	    obj.cellData.cellType = [];
-	    obj.cellData.subType = [];
-	    obj.cellData.annotator = [];
-	    obj.cellData.source = [];
-	    obj.cellData.onoff = [0 0];
-	    obj.cellData.strata = zeros(1,5);
-	    obj.cellData.inputs = zeros(1,3);
-	    obj.cellData.notes = [];
+    obj.cellData = struct();
+    obj.cellData.flag = false;
+    obj.cellData.cellNum = str2double(cellNum);
+    obj.cellData.cellType = [];
+    obj.cellData.subType = [];
+    obj.cellData.annotator = [];
+    obj.cellData.source = [];
+    obj.cellData.onoff = [0 0];
+    obj.cellData.strata = zeros(1,5);
+    obj.cellData.inputs = zeros(1,3);
+    obj.cellData.notes = [];
 
-    	rows = ~strcmp(obj.dataTable.LocalName, 'cell') & obj.dataTable.Unique == 1;
+    rows = ~strcmp(obj.dataTable.LocalName, 'cell') & obj.dataTable.Unique == 1;
 		synTable = obj.dataTable(rows,:);
 		[~, obj.synList] = findgroups(synTable.LocalName); 
 	end % constructor
@@ -72,20 +70,17 @@ methods
 
 	function json2Neuron(obj, cellData)
 		% detect input type
-		if ischar(cellData) && strcmp(cellData(end-3:end), 'json') %#ok<ALIGN>
+		if ischar(cellData) && strcmp(cellData(end-3:end), 'json')
 			fprintf('parsing with loadjson.m...');
 			cellData = loadjson(cellData);
 			fprintf('parsed\n');
 
-	  		dualData = parseNeuron(cellData);
-	  		obj.dataTable = dualData.dataTable;
-	  		fprintf('dual parseNeuron.m completed\n')
-
-	  		cellData = parseNodes(cellData);
-	  		fprintf('parseNodes.m completed\n');
+	  		cellData = parseNeuron(cellData);
+	  		obj.dataTable = cellData.dataTable;
 
 		elseif isstruct(cellData) && isfield(cellData, 'version')
-	  		cellData = parseNodes(cellData);
+	  		%cellData = parseNodes(cellData);
+	  		cellData = parseNeuron(cellData);
 		elseif isstruct(cellData) && isfield(cellData, 'somaNode')
 	  		fprintf('already parsed from parseNodes.m\n');
 		else % could also supply output from loadjson..
@@ -103,7 +98,6 @@ methods
 
 		obj.synData = cellData.typeData;
 		obj.tulipData = cellData.tulipData;
-		obj.nodeData = cellData.props;
 
 		obj.skeleton = cellData.skeleton;
 		obj.somaNode = cellData.somaNode;
@@ -122,7 +116,7 @@ methods
 %% -------------------------------------------------- GUI setup ---
 %------------------------------------------------------------------
 
-	function openGUI(obj)
+	function openUI(obj)
     % this creates the GUI and all the plots. Each plot object is
     % created then set to invisible except for soma.
 		obj.fh = figure(...
@@ -135,6 +129,10 @@ methods
 			'NumberTitle', 'off',...
 			'MenuBar', 'none',... 
 			'Toolbar', 'none');
+		pos = obj.fh.Position;
+		pos(3) = pos(3) * 1.25;
+		pos(4) = pos(4) * 1.1;
+		obj.fh.Position = pos;
 
 %% -------------------------------------------------- menu bar ----
 		mh.file = uimenu('Parent', obj.fh,...
@@ -146,22 +144,20 @@ methods
 			'Label', 'Analysis');
 		mh.reports = uimenu('Parent', obj.fh,...
 			'Label', 'Reports');
-		mh.overview = uimenu('Parent', obj.fh,...
+		mh.overview = uimenu('Parent', mh.reports,...
 			'Label', 'Synapse Overview',...
 			'Callback', @obj.onReport_synapseOverview);
 		mh.unknown = uimenu('Parent', mh.reports,...
 			'Label', 'Unknown synapses',...
 			'Callback', @obj.onReport_unknown);
-        mh.incomplete = uimenu('Parent', mh.reports,...
-            'Label', 'Incomplete branches',...
-            'Callback', @obj.onReport_incomplete);
 		mh.export = uimenu('Parent', obj.fh,...
 			'Label', 'Export');
-		mh.fig = uimenu('Parent', mh.export,...
-			'Label', 'Export current figure',...
-			'Callback', @obj.onMenu_exportFig);
-		mh.csv = uimenu('Parent', mh.export,...
-			'Label', 'Export as CSV');
+		mh.connectivityTable = uimenu('Parent', mh.export,...
+			'Label', 'Export network as CSV',...
+            'Callback', @obj.onReport_connectivityTable);
+        mh.neuronTable = uimenu('Parent', mh.export,...
+            'Label', 'Export neuron to Excel',...
+            'Callback', @obj.onReport_neuronTable);
 
 %% ------------------------------------------------ tab panels ----
 		mainLayout = uix.HBoxFlex('Parent', obj.fh,...
@@ -211,19 +207,20 @@ methods
 			'CellEditCallback', @obj.onEdit_synTable);
 
 %% ---------------------------------------------- 3d plot setup ----
-		clipLayout = uix.HBox('Parent', uiLayout);
-		obj.handles.tx.clip = uicontrol('Parent', clipLayout,...
+		obj.handles.clipLayout = uix.HBox('Parent', uiLayout);
+		obj.handles.tx.clip = uicontrol('Parent', obj.handles.clipLayout,...
 			'Style', 'Text',...
 			'String', 'Clip view around soma:');
-		obj.handles.cb.aboveSoma = uicontrol('Parent', clipLayout,...
+		obj.handles.cb.aboveSoma = uicontrol('Parent', obj.handles.clipLayout,...
 			'Style', 'checkbox',...
 			'String', 'Above',...
 			'Callback', @obj.clipBySoma);
-		obj.handles.cb.belowSoma = uicontrol('Parent', clipLayout,...
+		obj.handles.cb.belowSoma = uicontrol('Parent', obj.handles.clipLayout,...
 			'Style', 'checkbox',...
 			'String', 'Below',...
 			'Callback', @obj.clipBySoma);
-		set(clipLayout, 'Widths', [-1.5 -1 -1]);
+		set(obj.handles.clipLayout, 'Widths', [-1.5 -1 -1]);
+		set(obj.handles.clipLayout, 'Visible', 'off');
 
 		obj.handles.cb.addSkeleton = uicontrol('Parent', uiLayout,...
 			'Style', 'checkbox', 'Visible', 'off',...
@@ -236,26 +233,63 @@ methods
 			'Value', 1, 'Visible', 'off',...
 			'Callback', @obj.onSelected_addSoma);
 
-		obj.handles.cb.showCon = uicontrol('Parent', uiLayout,...
-			'Style', 'checkbox',...
-			'String', 'Show connectivity',...
-			'Value', 0, 'Visible', 'off',...
-			'Callback', @obj.onSelected_showConnectivity);
+		obj.handles.pb.findConnectivity = uicontrol('Parent', uiLayout,...
+			'Style', 'pushbutton',...
+			'String', 'Load connectivity',...
+			'Visible', 'off',...
+			'Callback', @obj.onSelected_loadConnectivity);
 
-		obj.handles.tx.azelInc = uicontrol('Parent', uiLayout,...
+		obj.handles.sliderLayout = uix.HBox('Parent', uiLayout);
+		azimuthLayout = uix.VBox('Parent', obj.handles.sliderLayout);
+		elevationLayout = uix.VBox('Parent', obj.handles.sliderLayout);
+
+		% continuously updating sliders for 3d graph control
+		uicontrol('Parent', azimuthLayout,...
 			'Style', 'text',...
-			'String', '');
-		obj.handles.tx.enableKeys = uicontrol('Parent', uiLayout,...
-			'Style', 'text', 'String', 'Click here to enable arrow keys',...
-			'KeyPressFcn', @obj.onPress_key);
-		obj.updateAzelDisplay();
+			'String', 'Azimuth: ');
+		obj.handles.sl.azimuth = uicontrol('Parent', azimuthLayout,...
+			'Style', 'slider',...
+			'Min', 0, 'Max', 360,...
+			'SliderStep', [0.0417 0.125],...
+			'Value', obj.azel(1));
+		obj.handles.jScrollOne = findjobj(obj.handles.sl.azimuth);
+		set(obj.handles.jScrollOne, 'AdjustmentValueChangedCallback', @obj.onChanged_azimuth);
+
+		uicontrol('Parent', elevationLayout,...
+			'Style', 'text',...
+			'String', 'Elevation: ');
+		obj.handles.sl.elevation = uicontrol('Parent', elevationLayout,...
+			'Style', 'slider',...
+			'Min', 0, 'Max', 360,...
+			'SliderStep', [0.0417 0.125],...
+			'Value', obj.azel(2));
+		obj.handles.jScrollTwo = findjobj(obj.handles.sl.elevation);
+		set(obj.handles.jScrollTwo, 'AdjustmentValueChangedCallback', @obj.onChanged_elevation);
 
  		set(mainLayout, 'Widths', [-1.5 -1]);
 		% set(viewLayout, 'Widths', [-1 -1]);
-		set(uiLayout, 'Heights', [-4 -1 -1 -1 -1 -1 -1]);
+		set(uiLayout, 'Heights', [-4 -1 -1 -1 -1 -1]);
+
+		set(obj.handles.sliderLayout, 'Visible', 'off');
 
 		% graph all the synapses then set Visibile to off except soma
 		obj = populatePlots(obj);
+%% --------------------------------------------- connectivity tab ---------
+		obj.handles.ax.adj = axes('Parent', contactTab); 
+		if ~isempty(obj.conData)
+			% this is an asymmetric graph
+			adjMat = weightedAdjacencyMatrix(obj.conData.contacts, obj.conData.edgeTable.Weight);
+			pcolor(obj.handles.ax.adj, adjMat);
+			axis(obj.handles.ax.adj, 'square');
+			set(obj.handles.ax.adj,...
+				'XTickLabelRotation', 90,...
+				'XTickLabel', obj.conData.nodeTable.CellID,...
+				'XTick', 1:length(adjMat),...
+				'YTickLabel', obj.conData.nodeTable.CellID,...
+				'YTick', 1:length(adjMat),...
+				'FontSize', 7);
+		end
+
 %% -------------------------------------------------- render tab ----------
 		renderLayout = uix.VBox('Parent', renderTab,...
 			'Spacing', 5);
@@ -384,29 +418,17 @@ methods
 		imshow(im(:,:,1:3), 'Parent', obj.handles.ax.render,... 
 			'InitialMagnification', 'fit');
 	end % onSelected_showRender
+
 %% ------------------------------------------------ 3d plot callbacks -----
-	function onPress_key(obj, ~, eventdata)
-		% TODO: attach this to something else
-		if obj.handles.tabLayout.Selection == 2
-			switch eventdata.Character
-			case 'j' % azimuth
-				obj.azel = setAzimuth(obj.azel, obj.azelInc, 'down');
-			case 'l'
-				obj.azel = setAzimuth(obj.azel, obj.azelInc, 'up');
-			case 'k' % elevation
-				obj.azel = setElevation(obj.azel, obj.azelInc, 'down');
-			case 'i'
-				obj.azel = setElevation(obj.azel, obj.azelInc, 'up');
-			case 'u' % increment
-				obj.azelInc = obj.azelInc - 2.5;
-			case 'p'
-				obj.azelInc = obj.azelInc + 2.5;
-			end
-			obj.wrapAzel();
-			obj.updateAzelDisplay();
-			view(obj.handles.ax.d3plot, obj.azel);
-		end
-	end % onPress_key
+	function onChanged_azimuth(obj, ~, ~)
+		obj.azel(1) = get(obj.handles.sl.azimuth, 'Value');
+		view(obj.handles.ax.d3plot, obj.azel);
+	end % onChanged_azimuth
+
+	function onChanged_elevation(obj, ~, ~)
+		obj.azel(2) = get(obj.handles.sl.elevation, 'Value');
+		view(obj.handles.ax.d3plot, obj.azel);
+	end % onChanged_elevation
 
 	function onEdit_synTable(obj, src,eventdata)
 		tableData = src.Data;
@@ -457,32 +479,35 @@ methods
 		end	
 	end % clipBySoma	
 
-	function onSelected_showConnectivity(obj, ~, ~)
-		% i think this will be a table for now
-	end % onSelected_showConnectivity
+	function onSelected_loadConnectivity(obj, ~, ~)
+		dataDir = getFilepaths('data');
+		if ~isempty(dataDir)
+			cd(dataDir);
+		end
+
+		[fileName, filePath] = uigetfile('*.json', 'Pick a network:');
+
+		obj.addConnectivity([filePath, fileName]);
+	end % onSelected_loadConnectivity
 
 %% ---------------------------------------------- histogram callbacks -----
 	function onChanged_tab(obj,~,~)
 		set(obj.handles.cb.addSoma, 'Visible', 'off');
 		set(obj.handles.cb.addSkeleton, 'Visible', 'off');
-          set(obj.handles.tx.azelInc, 'Visible', 'off');
-		set(obj.handles.tx.enableKeys,...
-			'Visible', 'off');
-		set(obj.handles.cb.showCon, 'Visible', 'off');
+		set(obj.handles.pb.findConnectivity, 'Visible', 'off');
+		set(obj.handles.sliderLayout, 'Visible', 'off');
+		set(obj.handles.clipLayout, 'Visible', 'off');
+
 		switch obj.handles.tabLayout.Selection
 		case 1 
 		case 2
-			set(obj.handles.tx.enableKeys,... 
-				'Visible', 'on',...
-				'String', 'Click here to enable arrow keys');
-            set(obj.handles.tx.azelInc, 'Visible', 'on');
+			set(obj.handles.clipLayout, 'Visible', 'on');
+			set(obj.handles.sliderLayout, 'Visible', 'on');
 			set(obj.handles.cb.addSoma, 'Visible', 'on');
 			set(obj.handles.cb.addSkeleton, 'Visible', 'on');
-			set(obj.handles.cb.showCon, 'Visible', 'on');
 		case 3
-			set(obj.handles.tx.enableKeys,...
-				'Visible', 'on',...
-				'String', 'Edit bin numbers in table');
+		case 4
+			set(obj.handles.pb.findConnectivity, 'Visible', 'on');
 		end
 	end % onChanged_tab
 
@@ -509,7 +534,7 @@ methods
         switch selection
         case 'Yes'
 	        newNeuron = obj;
-	        obj.saveDir = getFilepaths('save');
+	        obj.saveDir = getFilepaths('data');
 	        newNeuron.handles = [];
 	        newNeuron.fh = [];
 	        uisave('newNeuron', sprintf('c%u.mat', obj.cellData.cellNum));
@@ -520,54 +545,72 @@ methods
 	      end
     end % onMenu_saveCell
 
-    function onMenu_exportFig(obj,~,~)
-    	% get the current axis handle
-    	switch obj.handles.tabLayout.Selection
-    	case 1
-    		warndlg('Need an active figure!');
-    		return;
-    	case 2
-    		axHandle = obj.handles.ax.d3plot;
-    	case 3
-    		axHandle = obj.handles.ax.soma;
-    	end
-    	fig = figure('Color', 'w');
-    	hh = copyobj(axHandle, fig);
-    	set(hh, 'Position', get(0, 'DefaultAxesPosition'));
-    end % onMenu_exportFig
-
     function onReport_unknown(obj,~,~)
-    	synDir = getSynNodes(obj.synData, 'unknown');
-    	locID = zeros(1, length(synDir));
+    	r = strcmp(obj.dataTable, 'unknown') == 1;
+    	newTable = obj.dataTable(r,:);
 
-    	for ii = 1:length(synDir)
-	    	locID(1,ii) = obj.nodeData.idMap(synDir{ii});
-	    end
-    	fprintf('found %u unknown synapses\n', length(locID));
+    	fprintf('found %u unknown synapses\n', size(newTable, 1));
 	    selection = questdlg(...
-	    	sprintf('Save %u unknown synapses?', length(locID)),... 
+	    	sprintf('Save %u unknown synapses?', size(newTable, 1)),... 
 	    	'Save Dialog',...
-	    'Yes', 'No', 'Yes');
+	    	'Yes', 'No', 'Yes');
 	    switch selection
 	    case 'Yes'
-	    	if isempty(obj.cellData.cellNum)
-	    		warndlg('Set cell number first!');
-	    		fprintf('no cell number found, no save\n');
-	    		return;
-	    	else 
-	    		fid = fopen(sprintf('c%u unknown.txt', obj.cellData.cellNum), 'w');
-	    		fprintf(fid, '%u \n', locID);
-	    		fclose(fid);
-	    		fprintf('%u unknown synapses saved\n', length(locID));
-	    	end
+    		fid = fopen(sprintf('c%u unknown.txt', obj.cellData.cellNum), 'w');
+    		fprintf(fid, '%u \n', locID);
+    		fclose(fid);
+    		fprintf('%u unknown synapses saved\n', length(locID));
 	    case 'No'
 	    	return;
 	    end
     end % onReport_unknown
     
-    function onReport_incomplete(obj,~,~)
-        % get the OffEdge nodes
-    end % onReport_incomplete
+    function onReport_connectivityTable(obj,~,~)
+    	% save connectivity table as .csv or .txt
+	    if ~isempty(getFilepaths('data'))
+	    	cd(getFilepaths('data'));
+	    end
+	    dataDir = uigetdir(cd, 'Pick a directory');
+      if isempty(dataDir)
+      	return;
+      end
+    	selection = questdlg('File format?',...
+    		'Save dialog',...
+    		'Excel', 'Text', 'Excel');
+    	switch selection 
+	    case 'Excel'
+      	fileName = [dataDir filesep sprintf('c%u_networkEdges.xls', obj.cellData.cellNum)];
+        xlswrite(fileName, table2cell(obj.conData.edgeTable));
+        fileName = [dataDir filesep sprintf('c%u_networkNodes.xls', obj.cellData.cellNum)];
+        xlswrite(fileName, table2cell(obj.conData.nodeTable));
+	    case 'Text'
+        obj.conData.edgeTable
+        obj.conData.nodeTable
+	    end        
+       fprintf('saved!\n');
+    end % onReport_connectivityTable
+
+    function onReport_neuronTable(obj, ~, ~)
+    	% save neuron table to excel
+    	if ~isempty(getFilepaths('data'))
+	    	cd(getFilepaths('data'));
+	    end
+	    dataDir = uigetdir(cd, 'Pick a directory');
+      if isempty(dataDir)
+      	return;
+      end
+    	selection = questdlg('File format?',...
+    		'Save dialog',...
+    		'Excel', 'Text', 'Excel');
+    	switch selection 
+	    case 'Excel'
+      	fileName = [dataDir filesep sprintf('c%u_dataTable.xls', obj.cellData.cellNum)];
+        xlswrite(fileName, table2cell(obj.dataTable));
+	    case 'Text'
+        obj.dataTable
+	    end        
+       fprintf('saved!\n');      
+    end % onReport_neuronTable
 
     function onReport_synapseOverview(obj,~,~)
     	selection = questdlg('Save synapse overview?',...
@@ -575,10 +618,15 @@ methods
     		'Yes', 'No', 'Yes');
     	switch selection 
 	    case 'Yes'
+	    	r = ~strcmp(obj.dataTable.LocalName, 'cell') & obj.dataTable.Unique == 1;
+	    	newTable = obj.dataTable(r,:);
+	    	[G, names] = findgroups(newTable.LocalName);
+	    	numUnique = splitapply(@numel, newTable.LocalName, G);
+
 	    	fid = fopen(sprintf('c%u_overview.txt', obj.cellData.cellNum), 'w');
 	    	fprintf(fid, 'c%u Synapses:\n', obj.cellData.cellNum);
-	    	for ii = 1:length(obj.synList)
-	    		fprintf(fid, '%u - %s\n', obj.synData.uniqueCount(ii), obj.synList{ii});
+	    	for ii = 1:length(names)
+	    		fprintf(fid, '%u - %s\n', numUnique(ii), names{ii});
 	    	end
 	    	fprintf(fid, '\ngenerated on %s', datestr(now));
  		   	fclose(fid);
@@ -675,25 +723,6 @@ methods
 			end
 		end 
    end % deltaSomaHist
-    
-	function wrapAzel(obj)
-		% keep azimuth,elevation between 0-360. the view() function doesn't
-		% mind unwrapped values but this keeps them nice for display
-		for ii = 1 : 2
-			if obj.azel(1,ii) >= 360
-				obj.azel(1,ii) = obj.azel(1,ii) - 360;
-			elseif obj.azel(1,ii) < 0
-				obj.azel(1,ii) = obj.azel(1,ii) + 360;
-			end
-		end
-	end % wrapAzel
-
-	function updateAzelDisplay(obj)
-		set(obj.handles.tx.azelInc, 'String',...
-			sprintf('Azimuth = %.1f, Elevation = %.1f, Increment = %.1f',...
-			obj.azel, obj.azelInc));
-	end % updateAzelDisplay
-
 end % methods
 
 %% ------------------------------------------------- support functions ----

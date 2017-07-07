@@ -110,17 +110,19 @@ function s = parseNeuron(cellData)
 		loc = regexp(loc, ' ', 'split');
 		XYZ = cat(1, XYZ, cellfun(@str2double, loc));
 
-		if isfield(c.OffEdge.nodesValues, nodeName)
-			OffEdge = cat(1, OffEdge, true);
-		else
-			OffEdge = cat(1, OffEdge, false);
-		end
-
-		if isfield(c.Terminal.nodesValues, nodeName)
-			Terminal = cat(1, Terminal, true);
-		else
-			Terminal = cat(1, Terminal, false);
-		end
+        if isfield(c.OffEdge, 'nodesValues')
+    		if isfield(c.OffEdge.nodesValues, nodeName)
+        		OffEdge = cat(1, OffEdge, true);
+            else
+                OffEdge = cat(1, OffEdge, false);
+            end
+        end
+        
+        if isfield(c.Terminal, 'nodesValues') && isfield(c.Terminal.nodesValues, nodeName)
+            Terminal = cat(1, Terminal, true);
+        else
+            Terminal = cat(1, Terminal, false);
+        end
 	end % node loop
 
 	% each unique synapse has a different parent ID.

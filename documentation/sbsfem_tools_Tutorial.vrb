@@ -1,0 +1,14 @@
+\frametitle{Connectivity}
+To add connectivity data, save a network map in Tulip as a JSON file, as described above. Then in Matlab:
+\begin{lstlisting}[language=matlab]
+c207.addConnectivity('c207hops.json');\end{lstlisting}
+\vskip10pt
+\begin{columns}
+\column[]{0.5\textwidth}
+\includegraphics[height=0.4\textheight]{c6800_network}
+\vskip10pt
+Connectivity for the AII AC.
+\column[]{0.5\textwidth}
+The connectivity matrix is weighted by the number of unique synapses between two cells (dark blue for 0 synapses). Directed synapses will only register a contact from the pre $\rightarrow$ post-synaptic neuron.
+\end{columns}
+
