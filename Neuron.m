@@ -152,12 +152,15 @@ methods
 			'Callback', @obj.onReport_unknown);
 		mh.export = uimenu('Parent', obj.fh,...
 			'Label', 'Export');
+		mh.figExp = uimenu('Parent', mh.export,...
+			'Label', 'Open figure outside UI',...
+			'Callback', @obj.onExport_figure);
 		mh.connectivityTable = uimenu('Parent', mh.export,...
-			'Label', 'Export network as CSV',...
-            'Callback', @obj.onReport_connectivityTable);
-        mh.neuronTable = uimenu('Parent', mh.export,...
-            'Label', 'Export neuron to Excel',...
-            'Callback', @obj.onReport_neuronTable);
+			'Label', 'Export network',...
+      'Callback', @obj.onExport_connectivityTable);
+    mh.neuronTable = uimenu('Parent', mh.export,...
+      'Label', 'Export neuron',...
+      'Callback', @obj.onExport_neuronTable);
 
 %% ------------------------------------------------ tab panels ----
 		mainLayout = uix.HBoxFlex('Parent', obj.fh,...
@@ -565,7 +568,7 @@ methods
 	    end
     end % onReport_unknown
     
-    function onReport_connectivityTable(obj,~,~)
+    function onExport_connectivityTable(obj,~,~)
     	% save connectivity table as .csv or .txt
 	    if ~isempty(getFilepaths('data'))
 	    	cd(getFilepaths('data'));
@@ -588,9 +591,9 @@ methods
         obj.conData.nodeTable
 	    end        
        fprintf('saved!\n');
-    end % onReport_connectivityTable
+    end % onExport_connectivityTable
 
-    function onReport_neuronTable(obj, ~, ~)
+    function onExport_neuronTable(obj, ~, ~)
     	% save neuron table to excel
     	if ~isempty(getFilepaths('data'))
 	    	cd(getFilepaths('data'));
@@ -610,7 +613,36 @@ methods
         obj.dataTable
 	    end        
        fprintf('saved!\n');      
-    end % onReport_neuronTable
+    end % onExport_neuronTable
+
+    function onExport_figure(obj, ~, ~)
+    	switch obj.handles.tabLayout.Selection
+    	case 2 % 3d plot
+    		ax = obj.handles.ax.d3plot;
+    	case 3
+    		if obj.handles.histTabs.Selection == 1 % soma dist
+    			ax = obj.handles.ax.soma;
+    		else
+    			ax = obj.handles.ax.z;
+    		end
+    	case 4
+    		ax = obj.handles.ax.adj;
+    	case 5
+    		ax = obj.handles.ax.render;
+    	otherwise
+    		warndlg('No graph in current window!');
+    	end
+    	% get only the visible components
+	    newAxes = copyobj(ax, figure);
+	    set(newAxes, 'ActivePositionProperty', 'outerposition')
+			set(newAxes, 'Units', 'normalized')
+			set(newAxes, 'OuterPosition', [0 0 1 1])
+			set(newAxes, 'Position', [0.1300 0.1100 0.7750 0.8150])
+			title(newAxes, ['c' num2str(obj.cellData.cellNum)]);
+			% get rid of invisible lines
+	    lines = findall(ax, 'Type', 'Line', 'Visible', 'off');
+	    lines = [];
+    end % onExport_figure
 
     function onReport_synapseOverview(obj,~,~)
     	selection = questdlg('Save synapse overview?',...
