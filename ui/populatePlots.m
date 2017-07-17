@@ -26,10 +26,6 @@ function obj = populatePlots(obj)
 	for ii = 1:numSyn
 		% synapse 3d plot
 		xyz = getSynXYZ(T, names{ii});
-		
-		% synRow = strcmp(T.LocalName, names{ii}) & T.Unique == 1;
-		% xyz = table2array(T(synRow, 'XYZ'));
-
 		obj.handles.lines(ii) = line('Parent', obj.handles.ax.d3plot,...
 			'XData', xyz(:,1), 'YData', xyz(:,2), 'ZData', xyz(:,3),...
 			'Color', sc(names{ii}),...
@@ -38,7 +34,7 @@ function obj = populatePlots(obj)
 		set(obj.handles.lines(ii), 'Visible', 'off');
 
 		% synapse distance histograms
-		obj.somaDist{ii,1} = FastEuclid3d(somaXYZ, xyz);
+		obj.somaDist{ii,1} = fastEuclid3d(somaXYZ, xyz);
 		[counts, bins] = histcounts(obj.somaDist{ii,1});
 		binInc = bins(2) - bins(1);
 		cent = bins(1:end-1) + binInc/2;
@@ -68,12 +64,22 @@ function obj = populatePlots(obj)
 
 	% plot the cell's skeleton
     skelRow = strcmp(T.LocalName, 'cell');
-    xyz = table2array(T(skelRow, 'XYZ'));
+    xyz = table2array(T(skelRow, 'XYZum'));
     obj.handles.skeletonLine = line('Parent', obj.handles.ax.d3plot,...
     	'XData', xyz(:,1), 'YData', xyz(:,2), 'ZData', xyz(:,3),...
        	'Marker', '.', 'MarkerSize', 4, 'Color', [0.2 0.2 0.2],...
        	'LineStyle', 'none');
     set(obj.handles.skeletonLine, 'Visible', 'off');
+
+    % stratification histogram
+    [counts, bins] = histcounts(xyz(:,3));
+    binInc = bins(2) - bins(1);
+    cent = bins(1:end-1) + binInc/2;
+    obj.handles.skeletonBins = line('Parent', obj.handles.ax.z,...
+    	'XData', counts, 'YData', cent,...
+    	'LineWidth', 2, 'Color', 'k',...
+    	'Visible', 'off');
+
 
     % plot the soma - keep it visible
     obj.handles.somaLine = line('Parent', obj.handles.ax.d3plot,...

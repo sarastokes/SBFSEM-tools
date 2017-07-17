@@ -1,4 +1,4 @@
-function distFromSoma = FastEuclid3d(somaXYZ, targetXYZ)
+function distFromSoma = fastEuclid3d(somaXYZ, targetXYZ)
 	% Fast fcn for distance between 2 points
 	% INPUTS:
 	%		somaXYZ			main location (1x3)

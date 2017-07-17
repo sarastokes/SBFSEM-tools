@@ -15,14 +15,18 @@ function StructureColors = getStructureColors()
   StructureColors('conv post') = rgb('light orange');
   StructureColors('touch') = rgb('aqua');
   
+  StructureColors('triad basal') = rgb('light red');
+  StructureColors('nontriad basal') = rgb('dark red');
+  StructureColors('marginal basal') = rgb('dark red');
+
   StructureColors('hc bc pre') = rgb('bright lavender');
   StructureColors('hc bc post') = rgb('bright lavender');
   StructureColors('gaba fwd') = rgb('bright lavender');
   
 
-  StructureColors('denosome') = rgb('azure');
-  StructureColors('denosome post') = rgb('azure');
-  StructureColors('denosome pre') = rgb('azure');
+  StructureColors('desmosome') = rgb('azure');
+  StructureColors('desmosome post') = rgb('azure');
+  StructureColors('desmosome pre') = rgb('azure');
 
   StructureColors('terminal') = rgb('pink');
   StructureColors('off edge') = rgb('peach');

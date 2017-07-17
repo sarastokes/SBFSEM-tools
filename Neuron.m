@@ -32,27 +32,46 @@ properties
 	fh
 	handles
 	azel = [0 90]% current azimuth + elevation view
-	azelInc = 22.5
 	somaDist
 end
 
 methods
-	function obj = Neuron(cellData, cellNum)
+	function obj = Neuron(cellData, cellNum, source)
 
-		obj.json2Neuron(cellData);
+		% get the source if not provided
+		if nargin == 3
+			switch lower(source)
+				case {'temporal', 't'}
+					source = 'temporal';
+				case {'inferior', 'i'}
+					source = 'inferior';
+				otherwise
+					source = obj.getSource();
+			end
+		else
+			source = obj.getSource();
+		end
+
+		% parse the neuron
+		obj.json2Neuron(cellData, source);
+		% create the cellData structure		
+	    obj.cellData = struct();
+	
+		% get the cell number
 		if nargin < 2
-    	answer = inputdlg('Input the cell number:',... 
-	  			'Cell number dialog box', 1);
-    	cellNum = answer{1};
-  	end
+	    	answer = inputdlg('Input the cell number:',... 
+		  			'Cell number dialog box', 1);
+	    	cellNum = answer{1};
+		    obj.cellData.cellNum = str2double(cellNum);
+		else
+			obj.cellData.cellNum = cellNum;
+  		end
 
-    obj.cellData = struct();
     obj.cellData.flag = false;
-    obj.cellData.cellNum = str2double(cellNum);
     obj.cellData.cellType = [];
     obj.cellData.subType = [];
     obj.cellData.annotator = [];
-    obj.cellData.source = [];
+    obj.cellData.source = source;
     obj.cellData.onoff = [0 0];
     obj.cellData.strata = zeros(1,5);
     obj.cellData.inputs = zeros(1,3);
@@ -61,26 +80,32 @@ methods
     rows = ~strcmp(obj.dataTable.LocalName, 'cell') & obj.dataTable.Unique == 1;
 		synTable = obj.dataTable(rows,:);
 		[~, obj.synList] = findgroups(synTable.LocalName); 
+
 	end % constructor
+
+%% ------------------------------------------------ setup functions -----
+	function source = getSource(obj)
+		answer = questdlg('Which block?',...
+			'tissue source dialog',...
+			'inferior', 'temporal', 'inferior');
+		source = answer;
+	end % getSource
 
 	function updateData(obj, dataFile)
 		obj.json2Neuron(dataFile)
 		fprintf('updated underlying data\n');
 	end % update data
 
-	function json2Neuron(obj, cellData)
+	function json2Neuron(obj, cellData, source)
 		% detect input type
 		if ischar(cellData) && strcmp(cellData(end-3:end), 'json')
 			fprintf('parsing with loadjson.m...');
 			cellData = loadjson(cellData);
 			fprintf('parsed\n');
-
-	  		cellData = parseNeuron(cellData);
+	  		cellData = parseNeuron(cellData, source);
 	  		obj.dataTable = cellData.dataTable;
-
 		elseif isstruct(cellData) && isfield(cellData, 'version')
-	  		%cellData = parseNodes(cellData);
-	  		cellData = parseNeuron(cellData);
+	  		cellData = parseNeuron(cellData, source);
 		elseif isstruct(cellData) && isfield(cellData, 'somaNode')
 	  		fprintf('already parsed from parseNodes.m\n');
 		else % could also supply output from loadjson..
@@ -88,8 +113,6 @@ methods
 	  		return
 		end
 
-		% move to obj properties (this allows cellData output to be used
-		% independently of NeuronNodes object too
 		obj.fname = cellData.fileName;
 		obj.parseDate = cellData.parseDate;
 		obj.analysisDate = datestr(now);
@@ -188,7 +211,8 @@ methods
 		obj.handles.ax.soma = axes('Parent', somaTab);
 		obj.handles.ax.z = axes('Parent', zTab,...
 			'YDir', 'reverse');
-		obj.handles.tabLayout.TabTitles = {'Cell Info','3D plot', 'Histograms', 'Connectivity', 'Renders'};
+		obj.handles.tabLayout.TabTitles = {'Cell Info', '3D plot',... 
+			'Histograms', 'Connectivity', 'Renders'};
 		obj.handles.histTabs.TabTitles = {'Soma', 'Z-axis'};
 		obj.handles.tabLayout.Selection = 1;
 		obj.handles.histTabs.Selection = 1;
@@ -236,11 +260,23 @@ methods
 			'Value', 1, 'Visible', 'off',...
 			'Callback', @obj.onSelected_addSoma);
 
+		obj.handles.cb.usePix = uicontrol('Parent', uiLayout,...
+			'Style', 'checkbox',...
+			'String', 'use microns',...
+			'Value', 0, 'Visible', 'off',...
+			'Callback', @obj.onSelected_usePix);
+
 		obj.handles.pb.findConnectivity = uicontrol('Parent', uiLayout,...
 			'Style', 'pushbutton',...
 			'String', 'Load connectivity',...
 			'Visible', 'off',...
 			'Callback', @obj.onSelected_loadConnectivity);
+
+		obj.handles.cb.limitDegrees = uicontrol('Parent', uiLayout,...
+			'Style', 'checkbox',...
+			'String', 'Limit to 1 degree',...
+			'Visible', 'off',...
+			'Callback', @obj.onChanged_limitDegrees);
 
 		obj.handles.sliderLayout = uix.HBox('Parent', uiLayout);
 		azimuthLayout = uix.VBox('Parent', obj.handles.sliderLayout);
@@ -256,7 +292,8 @@ methods
 			'SliderStep', [0.0417 0.125],...
 			'Value', obj.azel(1));
 		obj.handles.jScrollOne = findjobj(obj.handles.sl.azimuth);
-		set(obj.handles.jScrollOne, 'AdjustmentValueChangedCallback', @obj.onChanged_azimuth);
+		set(obj.handles.jScrollOne,... 
+			'AdjustmentValueChangedCallback', @obj.onChanged_azimuth);
 
 		uicontrol('Parent', elevationLayout,...
 			'Style', 'text',...
@@ -267,11 +304,12 @@ methods
 			'SliderStep', [0.0417 0.125],...
 			'Value', obj.azel(2));
 		obj.handles.jScrollTwo = findjobj(obj.handles.sl.elevation);
-		set(obj.handles.jScrollTwo, 'AdjustmentValueChangedCallback', @obj.onChanged_elevation);
+		set(obj.handles.jScrollTwo,... 
+			'AdjustmentValueChangedCallback', @obj.onChanged_elevation);
 
  		set(mainLayout, 'Widths', [-1.5 -1]);
 		% set(viewLayout, 'Widths', [-1 -1]);
-		set(uiLayout, 'Heights', [-4 -1 -1 -1 -1 -1]);
+		set(uiLayout, 'Heights', [-4 -1 -1 -1 -1 -1 -1 -1]);
 
 		set(obj.handles.sliderLayout, 'Visible', 'off');
 
@@ -292,7 +330,6 @@ methods
 				'YTick', 1:length(adjMat),...
 				'FontSize', 7);
 		end
-
 %% -------------------------------------------------- render tab ----------
 		renderLayout = uix.VBox('Parent', renderTab,...
 			'Spacing', 5);
@@ -354,7 +391,12 @@ methods
 		uicontrol('Parent', sourceLayout,... 
 			'Style', 'text', 'String', 'Source');
 		obj.handles.lst.source = uicontrol('Parent', sourceLayout,...
-			'Style', 'list', 'String', {'unknown', 'Temporal', 'Inferior'});
+			'Style', 'list', 'String', {'temporal', 'inferior'});
+		if strcmp(obj.cellData.source, 'temporal')
+			obj.handles.lst.source.Value = 1;
+		else
+			obj.handles.lst.source.Value = 2;
+		end
 		set(sourceLayout, 'Heights', [-1 -3]);
 		% 2
 		subTypeLayout = uix.VBox('Parent', infoGrid);
@@ -413,6 +455,11 @@ methods
 		set(obj.handles.tabLayout, 'SelectionChangedFcn', @obj.onChanged_tab);
 		set(obj.handles.histTabs, 'SelectionChangedFcn', @obj.onChanged_histTab);
 	end % openGUI
+
+%-------------------------------------------------------------------------
+%% --------------------------------------------------------- callbacks ---
+%-------------------------------------------------------------------------
+
 %% ------------------------------------------------ render callbacks -----
 	function onSelected_showRender(obj,~,~)
 		imName = obj.handles.lst.renders.String{obj.handles.lst.renders.Value};
@@ -423,6 +470,19 @@ methods
 	end % onSelected_showRender
 
 %% ------------------------------------------------ 3d plot callbacks -----
+	function onSelected_usePix(obj, ~, ~)
+		set(obj.handles.ax.d3plot,...
+			'XTickLabel', obj.micronXY(obj.handles.ax.d3plot.XTickLabel),...
+			'YTickLabel', obj.micronXY(obj.handles.ax.d3plot.YTickLabel),...
+			'ZTickLabel', obj.micronZ(obj.handles.ax.d3plot.ZTickLabel));
+		set(obj.handles.ax.soma,...
+			'XTickLabel', obj.micronXY(obj.handles.ax.soma.XTickLabel),...
+			'YTickLabel', obj.micronXY(obj.handles.ax.soma.YTickLabel));
+		set(obj.handles.ax.z,...
+			'XTickLabel', obj.micronXY(obj.handles.ax.z.XTickLabel),...
+			'YTickLabel', obj.micronZ(obj.handles.ax.z.YTickLabel));
+	end % onSelected_usePix
+
 	function onChanged_azimuth(obj, ~, ~)
 		obj.azel(1) = get(obj.handles.sl.azimuth, 'Value');
 		view(obj.handles.ax.d3plot, obj.azel);
@@ -450,13 +510,15 @@ methods
 		src.Data = tableData; % update table
 	end % onEdit_synTable
 
-  function onChanged_addSkeleton(obj,~,~)
-  	if get(obj.handles.cb.addSkeleton, 'Value') == 1
-  		set(obj.handles.skeletonLine, 'Visible', 'on');
-    else
-    	set(obj.handles.skeletonLine, 'Visible', 'off');
-    end
-  end % onSelected_addSkeleton
+	function onChanged_addSkeleton(obj,~,~)
+		if get(obj.handles.cb.addSkeleton, 'Value') == 1
+			set(obj.handles.skeletonLine, 'Visible', 'on');
+			set(obj.handles.skeletonBins, 'Visible', 'on');
+		else
+			set(obj.handles.skeletonLine, 'Visible', 'off');
+			set(obj.handles.skeletonBins, 'Visible', 'off');
+		end
+	end % onSelected_addSkeleton
 
 	function onSelected_addSoma(obj,~,~)
 		if get(obj.handles.cb.addSoma, 'Value') == 1
@@ -481,6 +543,33 @@ methods
 			obj.handles.ax.d3plot.ZLim(2) = somaXYZ(3);
 		end	
 	end % clipBySoma	
+%% ----------------------------------------------- network callbacks -----
+
+	function onChanged_limitDegrees(obj, ~,~)
+		% this is totally repetitive, fix at some point
+		if get(obj.handles.cb.limitDegrees, 'Value') == 1
+			% find only the contacts containing target neuron
+			cellNode = find(obj.conData.nodeTable.CellID == obj.cellData.cellNum);
+			hasNeuron = bsxfun(@eq, cellNode, obj.conData.contacts);
+			ind = find(sum(hasNeuron, 2));
+			adjMat = weightedAdjacencyMatrix(obj.conData.contacts(ind,:),... 
+                obj.conData.edgeTable.Weight(ind,:));
+		else
+			adjMat = weightedAdjacencyMatrix(obj.conData.contacts,... 
+                obj.conData.edgeTable.Weight);
+		end
+
+		cla(obj.handles.ax.adj);
+		pcolor(obj.handles.ax.adj, adjMat);
+		axis(obj.handles.ax.adj, 'square');
+		set(obj.handles.ax.adj,...
+			'XTickLabelRotation', 90,...
+			'XTickLabel', obj.conData.nodeTable.CellID,...
+			'XTick', 1:length(adjMat),...
+			'YTickLabel', obj.conData.nodeTable.CellID,...
+			'YTick', 1:length(adjMat),...
+			'FontSize', 7);
+	end % onChanged_limitDegrees
 
 	function onSelected_loadConnectivity(obj, ~, ~)
 		dataDir = getFilepaths('data');
@@ -500,6 +589,8 @@ methods
 		set(obj.handles.pb.findConnectivity, 'Visible', 'off');
 		set(obj.handles.sliderLayout, 'Visible', 'off');
 		set(obj.handles.clipLayout, 'Visible', 'off');
+		set(obj.handles.cb.limitDegrees, 'Visible', 'off');
+		set(obj.handles.cb.usePix, 'Visible', 'off');
 
 		switch obj.handles.tabLayout.Selection
 		case 1 
@@ -508,9 +599,14 @@ methods
 			set(obj.handles.sliderLayout, 'Visible', 'on');
 			set(obj.handles.cb.addSoma, 'Visible', 'on');
 			set(obj.handles.cb.addSkeleton, 'Visible', 'on');
+			set(obj.handles.cb.usePix, 'Visible', 'on');
+
 		case 3
+			set(obj.handles.cb.usePix, 'Visible', 'on');
+			set(obj.handles.cb.addSkeleton, 'Visible', 'on');
 		case 4
 			set(obj.handles.pb.findConnectivity, 'Visible', 'on');
+			set(obj.handles.cb.limitDegrees, 'Visible', 'on');
 		end
 	end % onChanged_tab
 
@@ -640,8 +736,8 @@ methods
 			set(newAxes, 'Position', [0.1300 0.1100 0.7750 0.8150])
 			title(newAxes, ['c' num2str(obj.cellData.cellNum)]);
 			% get rid of invisible lines
-	    lines = findall(ax, 'Type', 'Line', 'Visible', 'off');
-	    lines = [];
+	    lines = findall(newAxes, 'Type', 'Line', 'Visible', 'off');
+	    delete(lines);
     end % onExport_figure
 
     function onReport_synapseOverview(obj,~,~)
@@ -719,9 +815,11 @@ methods
     	set(obj.handles.tx.cellData, 'String', 'Cell data added!');
 
     end % onSelected_addCellData
-%% ------------------------------------------------- setup functions ------
-	% \ui\populatePlots
-	% \ui\populateSynData
+
+%--------------------------------------------------------------------------
+%% -------------------------------------------------------- functions -----
+%--------------------------------------------------------------------------
+
 %% ------------------------------------------------- plot functions -------
 	function addSyn(obj, whichSyn)
 		set(obj.handles.lines(whichSyn), 'Visible', 'on');
@@ -774,6 +872,31 @@ methods (Static)
 		binInc = bins(2)-bins(1);
 		binCenters = bins(1:end-1) + binInc/2;
 	end % getHist
+
+	function normXYZ = normXYZ(xyz)
+		xyz = bsxfun(@minus, xyz, min(xyz));
+	end % normXYZ
+
+	function z = micronZ(z, source)
+		switch source
+		case 'inferior'
+			z = z .* 90;
+		case 'temporal'
+			z = z .* 70;
+		end
+	end % micronZ
+
+	function xy = micronXY(xy)
+		xy = xy .* 5; % pix --> nm
+		xy = xy ./ 1000; % nm --> um
+	end % micronXY
+
+	function xyz = pix2micron(xyz)
+		% 5nm to 1 pix
+		xyz = 5 .* xyz;
+		% 1000 nm to 1 micron
+		xyz = xyz ./ 1000;
+	end % pix2micron
 
 end % static methods
 end % classdef

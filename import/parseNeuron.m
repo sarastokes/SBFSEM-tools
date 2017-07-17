@@ -1,12 +1,13 @@
-function s = parseNeuron(cellData)
+function s = parseNeuron(cellData, source)
 	% INPUT: json file exported from tulip (see tulip2json.py)
 	% 		cellData 		filepath + name as string
+	%		source			'inferior', 'temporal'
 	%
 	% 5May2017 - SSP - created
 	% 10May2017 - SSP - updated to use local names
 	% 16Jun2017 - SSP - added containers.Map, renamed to parseNodesEdges.m
 	% 22Jun2017 - SSP - changed to table structure
-
+	% 16Jul2017 - SSP - added source requirement, XYZ units
 
 	if ischar(cellData) && strcmp(cellData(end-3:end), 'json')
 		fprintf('parsing with loadjson.m...');
@@ -82,13 +83,17 @@ function s = parseNeuron(cellData)
 		LocationID = cat(1, LocationID, str2double(c.LocationID.nodesValues.(nodeName)));
 		
 		SynType = cat(1, SynType, lower(c.Type.nodesValues.(nodeName)));
-		if isfield(c.StructureTags.nodesValues, nodeName)
-			SynTag = cat(1, SynTag, c.StructureTags.nodesValues.(nodeName));
-		else
-			SynTag = cat(1, SynTag, '_');
+        if isfield(c.StructureTags, 'nodesValues') && isfield(c.StructureTags.nodesValues, nodeName)
+            SynTag = cat(1, SynTag, c.StructureTags.nodesValues.(nodeName));
+        else
+            SynTag = cat(1, SynTag, '_');
         end
         
-        LocalName = cat(1, LocalName, getLocalName(SynType{end}, SynTag{end}));
+        try
+           LocalName = cat(1, LocalName, getLocalName(SynType{end}, SynTag{end}));
+        catch
+            fprintf('No local name assigned for %s, %s\n', SynType{end}, SynTag{end});
+        end
  
 		sz = c.viewSize.nodesValues.(nodeName);
 		sz = sz(2:end-4);
@@ -110,12 +115,10 @@ function s = parseNeuron(cellData)
 		loc = regexp(loc, ' ', 'split');
 		XYZ = cat(1, XYZ, cellfun(@str2double, loc));
 
-        if isfield(c.OffEdge, 'nodesValues')
-    		if isfield(c.OffEdge.nodesValues, nodeName)
-        		OffEdge = cat(1, OffEdge, true);
-            else
-                OffEdge = cat(1, OffEdge, false);
-            end
+        if isfield(c.OffEdge, 'nodesValues') && isfield(c.OffEdge.nodesValues, nodeName)
+            OffEdge = cat(1, OffEdge, true);
+        else
+            OffEdge = cat(1, OffEdge, false);
         end
         
         if isfield(c.Terminal, 'nodesValues') && isfield(c.Terminal.nodesValues, nodeName)
@@ -132,9 +135,16 @@ function s = parseNeuron(cellData)
 
 	SynTag(1,:) = []; SynType(1,:) = [];
 	LocalName(1,:) = []; UUID(1,:) = [];
+	s.skeleton(:,1) = [];
+	switch lower(source)
+		case 'temporal'
+			XYZum = bsxfun(@times, XYZ, [0.005 0.005 0.07]);
+		case 'inferior'
+			XYZum = bsxfun(@times, XYZ, [0.005 0.005 0.09]);
+	end
 
 	% arrange the data table
-	s.dataTable = table(LocationID, LocalName, XYZ,... 
+	s.dataTable = table(LocationID, LocalName, XYZ, XYZum,... 
 		ParentID, SynType, SynTag, Size,... 
 		Unique, SynNum, OffEdge, Terminal, UUID);
 
