@@ -8,19 +8,12 @@ function adjMat = weightedAdjacencyMatrix(contacts, weight)
 	%
 	% 6Jul2017 - SSP - created
 
-	entries = max(size(contacts));
+	adjMat = zeros(max(max(contacts)));
 
-	adjMat = zeros(entries, entries);
-
-	if nargin < 2
-		if size(contacts,2) == 3
-			weight = contacts(:, 3);
-		else
-			error('use adjacencyMatrix.m');
-			return;
-		end
+	if nargin < 2 && size(contacts,2) == 3
+		weight = contacts(:, 3);
 	end
 
-	for ii = 1:entries
+	for ii = 1:size(contacts)
 		adjMat(contacts(ii,1), contacts(ii,2)) = weight(ii);
 	end

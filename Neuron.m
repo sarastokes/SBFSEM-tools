@@ -127,11 +127,13 @@ methods
 	end % json2neuron
 
 	function addConnectivity(obj, connectivityFile)
+		% add something to check for overwrite?
 		if ischar(connectivityFile)
 			obj.conData = parseConnectivity(connectivityFile);
 		elseif isstruct(connectivityFile)
 			obj.conData = connectivityFile;
 		end
+		obj.connectivityDate = datestr(now);
 		fprintf('added connectivity\n');
 	end % addConnectivity
 
@@ -315,6 +317,7 @@ methods
 
 		% graph all the synapses then set Visibile to off except soma
 		obj = populatePlots(obj);
+
 %% --------------------------------------------- connectivity tab ---------
 		obj.handles.ax.adj = axes('Parent', contactTab); 
 		if ~isempty(obj.conData)
@@ -569,6 +572,12 @@ methods
 			'YTickLabel', obj.conData.nodeTable.CellID,...
 			'YTick', 1:length(adjMat),...
 			'FontSize', 7);
+
+		if get(obj.handles.cb.limitDegrees, 'Value') == 1
+			set(obj.handles.ax.adj,...
+				'XTickLabel', obj.conData.nodeTable.CellID(ind,:),...
+				'YTickLabel', obj.conData.nodeTable.CellID(ind,:));
+		end
 	end % onChanged_limitDegrees
 
 	function onSelected_loadConnectivity(obj, ~, ~)

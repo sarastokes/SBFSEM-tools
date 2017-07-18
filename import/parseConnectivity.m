@@ -38,6 +38,7 @@ function s = parseConnectivity(connectivityFile)
 	Loop = [];
 
 	NodeLabel = cell(1,1);
+	NodeTag = cell(1,1);
 	NodeUUID = cell(1,1);
 	CellID = [];
 
@@ -45,7 +46,14 @@ function s = parseConnectivity(connectivityFile)
 		nodeName = s.nodeList{ii};
 		NodeUUID = cat(1, NodeUUID, nodeName);
 		CellID = cat(1, CellID, str2double(hops.graph.properties.ID.nodesValues.(nodeName)));
-		NodeLabel = cat(1, NodeLabel, char(hops.graph.properties.viewLabel.nodesValues.(nodeName)));
+
+		label = char(hops.graph.properties.viewLabel.nodesValues.(nodeName));
+		NodeLabel = cat(1, NodeLabel, label);
+		if any(isletter(label))
+			NodeTag = cat(1, NodeTag, label(isletter(label)));
+		else
+			NodeTag = cat(1, NodeTag, label);
+		end
 	end % nodeList loop
 
 	for ii = 1:length(s.edgeList)
@@ -101,8 +109,9 @@ function s = parseConnectivity(connectivityFile)
 	NodeLabel(1,:) = [];
 	NodeUUID(1,:) = [];
 	ParentIDs(1,:) = [];
+	NodeTag(1,:) = [];
 
 	% make the output tables
 	s.edgeTable = table(Source, Target, Dir, EdgeName, Weight, ParentIDs, EdgeType, EdgeUUID);
-	s.nodeTable = table(CellID, NodeLabel, NodeUUID);
+	s.nodeTable = table(CellID, NodeTag, NodeLabel, NodeUUID);
 
