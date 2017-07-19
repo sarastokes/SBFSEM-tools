@@ -6,7 +6,7 @@ function StructureColors = getStructureColors()
 
   StructureColors = containers.Map;
   StructureColors('unknown') = [0.5 0.5 0.5];
-  StructureColors('gap junction') = rgb('pastel blue'); 
+  StructureColors('gap junction') = rgb('light blue'); 
   StructureColors('bip conv pre') = rgb('electric blue');
   StructureColors('bip conv post') = rgb('aquamarine');
   StructureColors('ribbon pre') = rgb('green');
@@ -33,6 +33,6 @@ function StructureColors = getStructureColors()
   StructureColors('conventional') = rgb('light red');
 
   % RC1
-  StructureColors('endocytosis') = rgb('light blue');
+  StructureColors('endocytosis') = rgb('light teal');
   StructureColors('postsynapse') = rgb('light orange');
   StructureColors('conventional') = rgb('light red');

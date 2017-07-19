@@ -43,8 +43,6 @@ function obj = populatePlots(obj)
 			'Color', sc(names{ii}),...
 			'LineWidth', 2);
 		set(obj.handles.somaBins(ii), 'Visible', 'off');
-		xlabel(obj.handles.ax.soma, 'distance from soma');
-		ylabel(obj.handles.ax.soma, 'synapse count');
 		obj.handles.numBins(1,ii) = length(bins);
 		tableData = get(obj.handles.synTable, 'Data');
 		obj.handles.synTable.Data{ii,5} = length(bins);
@@ -56,11 +54,13 @@ function obj = populatePlots(obj)
 			'Color', sc(names{ii}),...
 			'LineWidth', 2);
 		set(obj.handles.zBins(ii), 'Visible', 'off');
-		xlabel(obj.handles.ax.z, 'synapse counts');
-		ylabel(obj.handles.ax.z, 'slice (z-axis)'); 
 		obj.handles.numBins(2,ii) = length(binCenters + 1);
 	end
 
+		xlabel(obj.handles.ax.z, 'synapse counts');
+		ylabel(obj.handles.ax.z, 'slice (z-axis)'); 
+		xlabel(obj.handles.ax.soma, 'distance from soma');
+		ylabel(obj.handles.ax.soma, 'synapse count');
 
 	% plot the cell's skeleton
     skelRow = strcmp(T.LocalName, 'cell');
