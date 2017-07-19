@@ -1,4 +1,4 @@
-function xyz = getMicronXY(xyz, normFlag)
+function xyz = getMicronsXY(xyz, source, normFlag)
 	% get microns from pixel location in viking (XY)
 	% INPUTS:
 	%	xyz			location in viking in pixels
@@ -11,8 +11,13 @@ function xyz = getMicronXY(xyz, normFlag)
 		normFlag = false;
 	end
 
-	% 5nm per pixel
-	xyz = 5 .* xyz; % nm
+	if strcmp(source, 'rc1')
+		% 2.18nm per pixel
+		xyz = 2.18 .* xyz;
+	else
+		% 5nm per pixel
+		xyz = 5 .* xyz; % nm
+	end
 	xyz = xyz ./ 1000; % um
 
 	if normFlag

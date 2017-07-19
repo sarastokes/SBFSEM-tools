@@ -23,10 +23,16 @@ function StructureColors = getStructureColors()
   StructureColors('hc bc post') = rgb('bright lavender');
   StructureColors('gaba fwd') = rgb('bright lavender');
   
-
+  StructureColors('adherens') = rgb('azure');
   StructureColors('desmosome') = rgb('azure');
   StructureColors('desmosome post') = rgb('azure');
   StructureColors('desmosome pre') = rgb('azure');
 
   StructureColors('terminal') = rgb('pink');
   StructureColors('off edge') = rgb('peach');
+  StructureColors('conventional') = rgb('light red');
+
+  % RC1
+  StructureColors('endocytosis') = rgb('light blue');
+  StructureColors('postsynapse') = rgb('light orange');
+  StructureColors('conventional') = rgb('light red');

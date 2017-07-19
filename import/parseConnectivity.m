@@ -35,6 +35,7 @@ function s = parseConnectivity(connectivityFile)
 	EdgeUUID = cell(1,1);
 	EdgeName = cell(1,1);
 	EdgeType = cell(1,1);
+	LocalName = cell(1,1);
 	Loop = [];
 
 	NodeLabel = cell(1,1);
@@ -83,6 +84,22 @@ function s = parseConnectivity(connectivityFile)
 		% s.props.etypeMap(edgeName) = hops.graph.properties.edgeType.edgesValues.(edgeName);
 		EdgeType = cat(1, EdgeType, hops.graph.properties.edgeType.edgesValues.(edgeName));
 		EdgeName = cat(1, EdgeName, hops.graph.properties.viewLabel.edgesValues.(edgeName));
+		% improve later
+		switch EdgeName{end}
+			case {'Plaque-like Post', 'Plaque-like Pre'}
+				n = 'gaba fwd';
+			case {'Cistern Pre', 'Cistern Post'}
+				n = 'desmosome';
+			case 'BC Conventional Synapse'
+				n = 'bc conv';
+			case 'Ribbon Synapse'
+				n = 'ribbon';
+			case 'Conventional'
+				n = 'conv';
+			otherwise
+				n = lower(EdgeName{end});
+		end
+		LocalName = cat(1, LocalName, n);
 
 		Source = cat(1, Source, str2double(hops.graph.properties.Source.edgesValues.(edgeName)));
 		Target = cat(1, Target, str2double(hops.graph.properties.Target.edgesValues.(edgeName)));
@@ -110,8 +127,9 @@ function s = parseConnectivity(connectivityFile)
 	NodeUUID(1,:) = [];
 	ParentIDs(1,:) = [];
 	NodeTag(1,:) = [];
+	LocalName(1,:) = [];
 
 	% make the output tables
-	s.edgeTable = table(Source, Target, Dir, EdgeName, Weight, ParentIDs, EdgeType, EdgeUUID);
+	s.edgeTable = table(Source, Target, Dir, LocalName, EdgeName, Weight, ParentIDs, EdgeType, EdgeUUID);
 	s.nodeTable = table(CellID, NodeTag, NodeLabel, NodeUUID);
 

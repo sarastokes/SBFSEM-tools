@@ -33,6 +33,8 @@ function localName = getLocalName(synType, synTag)
 					localName = 'nontriad basal';
 				case 'mnta'
 					localName = 'marginal basal';
+				otherwise
+					localName = 'postsynapse';
 			end % tag switch
 		case {'plaque-like post', 'plaque-like pre'}
 			localName = 'gaba fwd';
@@ -51,6 +53,8 @@ function localName = getLocalName(synType, synTag)
 			end
 		case {'cistern pre','cistern post', 'adherens'}
 			localName = 'desmosome';
+		case 'endocytosis'
+			localName = 'endocytosis';
 		case 'unknown'
 			localName = 'unknown';
 		case 'cell'

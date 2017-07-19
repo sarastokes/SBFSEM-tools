@@ -45,7 +45,10 @@ methods
 					source = 'temporal';
 				case {'inferior', 'i'}
 					source = 'inferior';
+				case {'rc1', 'r'}
+					source = 'rc1';
 				otherwise
+					warndlg('valid source names: (temporal, t), (inferior, i), (rc1, r)');
 					source = obj.getSource();
 			end
 		else
@@ -87,7 +90,7 @@ methods
 	function source = getSource(obj)
 		answer = questdlg('Which block?',...
 			'tissue source dialog',...
-			'inferior', 'temporal', 'inferior');
+			'inferior', 'temporal', 'rc1', 'inferior');
 		source = answer;
 	end % getSource
 
@@ -262,12 +265,6 @@ methods
 			'Value', 1, 'Visible', 'off',...
 			'Callback', @obj.onSelected_addSoma);
 
-		obj.handles.cb.usePix = uicontrol('Parent', uiLayout,...
-			'Style', 'checkbox',...
-			'String', 'use microns',...
-			'Value', 0, 'Visible', 'off',...
-			'Callback', @obj.onSelected_usePix);
-
 		obj.handles.pb.findConnectivity = uicontrol('Parent', uiLayout,...
 			'Style', 'pushbutton',...
 			'String', 'Load connectivity',...
@@ -311,7 +308,7 @@ methods
 
  		set(mainLayout, 'Widths', [-1.5 -1]);
 		% set(viewLayout, 'Widths', [-1 -1]);
-		set(uiLayout, 'Heights', [-4 -1 -1 -1 -1 -1 -1 -1]);
+		set(uiLayout, 'Heights', [-4 -1 -1 -1 -1 -1 -1]);
 
 		set(obj.handles.sliderLayout, 'Visible', 'off');
 
@@ -394,11 +391,14 @@ methods
 		uicontrol('Parent', sourceLayout,... 
 			'Style', 'text', 'String', 'Source');
 		obj.handles.lst.source = uicontrol('Parent', sourceLayout,...
-			'Style', 'list', 'String', {'temporal', 'inferior'});
-		if strcmp(obj.cellData.source, 'temporal')
+			'Style', 'list', 'String', {'temporal', 'inferior', 'rc1'});
+		switch obj.cellData.source % fix later
+		case 'temporal'
 			obj.handles.lst.source.Value = 1;
-		else
+		case 'inferior'
 			obj.handles.lst.source.Value = 2;
+		case 'rc1'
+			obj.handles.lst.source.Value = 3;
 		end
 		set(sourceLayout, 'Heights', [-1 -3]);
 		% 2
@@ -473,19 +473,6 @@ methods
 	end % onSelected_showRender
 
 %% ------------------------------------------------ 3d plot callbacks -----
-	function onSelected_usePix(obj, ~, ~)
-		set(obj.handles.ax.d3plot,...
-			'XTickLabel', obj.micronXY(obj.handles.ax.d3plot.XTickLabel),...
-			'YTickLabel', obj.micronXY(obj.handles.ax.d3plot.YTickLabel),...
-			'ZTickLabel', obj.micronZ(obj.handles.ax.d3plot.ZTickLabel));
-		set(obj.handles.ax.soma,...
-			'XTickLabel', obj.micronXY(obj.handles.ax.soma.XTickLabel),...
-			'YTickLabel', obj.micronXY(obj.handles.ax.soma.YTickLabel));
-		set(obj.handles.ax.z,...
-			'XTickLabel', obj.micronXY(obj.handles.ax.z.XTickLabel),...
-			'YTickLabel', obj.micronZ(obj.handles.ax.z.YTickLabel));
-	end % onSelected_usePix
-
 	function onChanged_azimuth(obj, ~, ~)
 		obj.azel(1) = get(obj.handles.sl.azimuth, 'Value');
 		view(obj.handles.ax.d3plot, obj.azel);
@@ -599,7 +586,6 @@ methods
 		set(obj.handles.sliderLayout, 'Visible', 'off');
 		set(obj.handles.clipLayout, 'Visible', 'off');
 		set(obj.handles.cb.limitDegrees, 'Visible', 'off');
-		set(obj.handles.cb.usePix, 'Visible', 'off');
 
 		switch obj.handles.tabLayout.Selection
 		case 1 
@@ -608,10 +594,7 @@ methods
 			set(obj.handles.sliderLayout, 'Visible', 'on');
 			set(obj.handles.cb.addSoma, 'Visible', 'on');
 			set(obj.handles.cb.addSkeleton, 'Visible', 'on');
-			set(obj.handles.cb.usePix, 'Visible', 'on');
-
 		case 3
-			set(obj.handles.cb.usePix, 'Visible', 'on');
 			set(obj.handles.cb.addSkeleton, 'Visible', 'on');
 		case 4
 			set(obj.handles.pb.findConnectivity, 'Visible', 'on');

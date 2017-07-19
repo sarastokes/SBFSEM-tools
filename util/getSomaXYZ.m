@@ -11,7 +11,7 @@ function xyz = getSomaXYZ(obj, micronFlag)
 	row = strcmp(obj.dataTable.UUID, obj.somaNode);
 	% get the XYZ values
 	if micronFlag
-		xyz = table2array(obj.dataTable(row, 'XYZ'));
-	else
 		xyz = table2array(obj.dataTable(row, 'XYZum'));
+	else
+		xyz = table2array(obj.dataTable(row, 'XYZ'));
 	end
