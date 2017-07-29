@@ -79,6 +79,7 @@ function obj = populatePlots(obj)
     	'XData', counts, 'YData', cent,...
     	'LineWidth', 2, 'Color', 'k',...
     	'Visible', 'off');
+    set(obj.handles.tx.skelBins, 'String', num2str(length(cent)));
 
 
     % plot the soma - keep it visible

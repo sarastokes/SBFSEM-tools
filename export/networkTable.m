@@ -1,10 +1,33 @@
-function T = networkTable(neuron)
+function T = networkTable(g, varargin)
 	% generate an easy to read network table
+	% INPUTS: 
+	%		g					neuron or struct from parseConnectivity
+	% OPTIONAL:
+	%		saveFlag		[false]		save to cd as .xls
+	%		synFlag			[false]		no unknown, desmosome, adherens
+	%		nameFlag
+	%		threshold		[1]				cutoff for synapse weight
+	%	OUTPUT:
+	%		T 										network table
+	%
 	%
 	% 18Jul2017 - SSP - created
 
-	eT = neuron.conData.edgeTable;
-	nT = neuron.conData.nodeTable;
+	if ~isstruct(neuron)
+		g = g.conData;
+	end
+
+	ip = inputParser();
+	ip.addParameter('saveFlag', false, @islogical);
+	ip.addParameter('synFlag', false, @islogical);
+	ip.addParameter('nameFlag', false, @islogical);
+	ip.addParameter('threshold', 1, @isnumeric);
+	ip.parse(varargin{:});
+	saveFlag = ip.Results.saveFlag;
+	thresh = ip.Results.threshold;
+
+	eT = conData.edgeTable;
+	nT = conData.nodeTable;
 	nodeN = nT.CellID;
 
 
@@ -56,5 +79,24 @@ function T = networkTable(neuron)
 		'VariableNames', {'A', 'B', 'N',... 
 		'A_name', 'B_name', 'Synapse',... 
 		'Dir', 'A_num', 'B_num'});
+
+	if thresh > 0
+		r = T.Weight > thresh;
+		T = T(r,:);
+	end
+
+	if ip.Results.synFlag
+		r =  isempty(~strfind({'unknown', 'adherens', 'desmosome'}, T.LocalName))
+		T = T(r,:);
+	end
+
+	if saveFlag
+		xlswrite(sprintf('c%u_networkTable.xls', table2cell(T));
+	end
+
+	if onlyNamed
+		r = ~strcmp(T.SourceLabel, '-') & ~strcmp(T.TargetLabel, '-');
+		T = T(r,:);
+	end
 
 	fprintf('removed %u undirected partners\n', size(eT, 1) - length(included))
