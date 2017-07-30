@@ -1,13 +1,14 @@
 function s = parseNeuron(cellData, source)
 	% INPUT: json file exported from tulip (see tulip2json.py)
 	% 		cellData 		filepath + name as string
-	%		source			'inferior', 'temporal', 'rc1'
+	%			source			'inferior', 'temporal', 'rc1'
 	%
 	% 5May2017 - SSP - created
 	% 10May2017 - SSP - updated to use local names
 	% 16Jun2017 - SSP - added containers.Map, renamed to parseNodesEdges.m
 	% 22Jun2017 - SSP - changed to table structure
 	% 16Jul2017 - SSP - added source requirement, XYZ units, RC1 support
+	% 29Jul2017 - SSP - cell node size to microns
 
 	if ischar(cellData) && strcmp(cellData(end-3:end), 'json')
 		fprintf('parsing with loadjson.m...');
@@ -139,10 +140,13 @@ function s = parseNeuron(cellData, source)
 	switch lower(source)
 		case 'temporal'
 			XYZum = bsxfun(@times, XYZ, [0.005 0.005 0.07]);
+			Size = 5e-3 .* Size;
 		case 'inferior'
 			XYZum = bsxfun(@times, XYZ, [0.005 0.005 0.09]);
+			Size = 5e-3 .* Size;
 		case 'rc1'
-			XYZum = bsxfun(@times, XYZ, [0.00218 0.00218 0.08])
+			XYZum = bsxfun(@times, XYZ, [0.00218 0.00218 0.08]);
+			Size = 2.18e-3 .* Size;
 	end
 
 	% arrange the data table

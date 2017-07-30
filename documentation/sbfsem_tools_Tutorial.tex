@@ -41,9 +41,6 @@
 }
 \lstset{style=mystyle}
 
-
-
-
 \begin{document}
 % --------------------------------------------------- Slide --
 	\maketitle
@@ -69,6 +66,17 @@
 	\begin{itemize}
 		\item Compare neurons
 		\item Additional network analysis
+	\end{itemize}
+\end{frame}
+% --------------------------------------------------- Slide --
+\begin{frame}
+	\frametitle{Changes}
+	Some changes since the first release:
+	\begin{itemize}
+		\item All display units are now in microns
+		\item Stratification histogram (use the Add Cell Skeleton checkbox while the Z-axis histogram is active)
+		\item Export current figure to a new window\\ \texttt{[Menu -> Export -> ]}
+		\item Plot soma mosaic with \texttt{vissoma.m}
 	\end{itemize}
 \end{frame}
 % --------------------------------------------------- Slide --
@@ -119,16 +127,20 @@ success = tlp.exportGraph('JSON Export', graph, outputFile, params)\end{lstlisti
 	Load in the JSON file and create a Neuron object:
 	\begin{lstlisting}[language=matlab]
 c207 = Neuron('c207.json');\end{lstlisting}
-	A dialog box will ask for the cell number. To avoid that, include the cell number while creating the Neuron object:
+	A dialog box will ask for the cell number and source (temporal, inferior, rc1). To avoid that, include them while creating the Neuron object:
 	\begin{lstlisting}[language=matlab]
-c207 = Neuron('c207.json', 207);\end{lstlisting}
-	Open up the UI:
+% output = Neuron(filename, cellNumber, source);
+c207 = Neuron('c207.json', 207, 'temporal');\end{lstlisting}
+	To update the underlying data for an existing Neuron:
+	\begin{lstlisting}[language=matlab]
+c207.updateData('c207.json');\end{lstlisting}
+	Open up the user interface:
 	\begin{lstlisting}[language=matlab]
 c207.openUI;\end{lstlisting}
 \end{frame}
 % --------------------------------------------------- Slide --
-	\section{User Interface}
-	\subsection{Cell Info}
+\section{User Interface}
+\subsection{Cell Info}
 % --------------------------------------------------- Slide --
 	\begin{frame}
 		\frametitle{Cell Info Panel}
@@ -139,9 +151,8 @@ c207.openUI;\end{lstlisting}
 		\end{itemize}
 			After changing any of the attributes on the Cell Info Panel, make sure to press the \texttt{[Add to cell data]} button. This will make sure your changes are reflected next time you open the UI.\\
 	\end{frame}
-% --------------------------------------------------- Slide --
-	
-	\subsection{3d plot}
+% --------------------------------------------------- Slide --	
+\subsection{3d plot}
 % --------------------------------------------------- Slide --
 \begin{frame}
 	\frametitle{3d plot}
@@ -171,7 +182,7 @@ c207.openUI;\end{lstlisting}
 				\item Distance from soma
 				\item Section number (z-axis)
 			\end{itemize}
-		Use the Synapse Table to edit the number of bins.
+		Use the Synapse Table to edit the number of bins. Add the cell skeleton to see dendrite stratification.
 		\column[]{0.5\textwidth}
 			\includegraphics[width=\textwidth]{c6800_histZ}
 		\vskip3pt
@@ -194,7 +205,15 @@ c207.addConnectivity('c207hops.json');\end{lstlisting}
 		\column[]{0.5\textwidth}
 		The connectivity matrix is weighted by the number of unique synapses between two cells (dark blue for 0 synapses). Directed synapses will only register a contact from the pre $\rightarrow$ post-synaptic neuron.
 	\end{columns}
-
+\end{frame}
+% --------------------------------------------------- Slide --
+\begin{frame}[fragile]
+	\frametitle{Connectivity}
+	The network data is split into edges and nodes, each with their own table. The tables can be exported to Excel as \texttt{.csv} or as a text file from the UI menu bar.\\
+	\vskip10pt
+	To print a easily readable table to the command line use the networkTable function
+\begin{lstlisting}[language=matlab]
+networkTable(c207);\end{lstlisting}
 \end{frame}
 % --------------------------------------------------- Slide --
 \subsection{Renders}
@@ -211,6 +230,16 @@ c207.addConnectivity('c207hops.json');\end{lstlisting}
 		I also include other helpful images. For example, a comparison of the ON-smooth cell I reconstructed to a macular ON-smooth cell I filled.
 	\end{columns}
 \end{frame}
+\subsection{Reports}
+	\begin{frame}
+		\frametitle{Reports}
+		This is pretty limited... Right now you can generate two reports:
+		\begin{itemize} 
+			\item Location IDs of unknown synapses
+			\item An overview of all synapse types
+		\end{itemize}
+		The report name is auto-generated and will overwrite any existing reports of the same type for that neuron.\\Let me know any other reports that would be of use.
+	\end{frame}
 % --------------------------------------------------- Slide --
 \section{Save}
 % --------------------------------------------------- Slide --	
@@ -222,17 +251,6 @@ c207.addConnectivity('c207hops.json');\end{lstlisting}
 		\begin{block}{Save Neuron}
 			To save the Neuron object itself, go to \texttt{File-->Save Cell}. Use the UI (not the command line) for saving neurons as this method produces a more compact file size.\\ Note: this is separate from the Cell Info panel save. Also, this will close the UI.  
 		\end{block}
-	\end{frame}
-
-	\section{Reports}
-	\begin{frame}
-		\frametitle{Reports}
-		This is pretty limited... Right now you can generate two reports:
-		\begin{itemize} 
-			\item Location IDs of unknown synapses
-			\item An overview of all synapse types
-		\end{itemize}
-		 The report name is auto-generated and will overwrite any existing reports of the same type for that neuron.\\Let me know any other reports that would be of use.
 	\end{frame}
 % --------------------------------------------------- Slide --
 % --------------------------------------------------- Slide --
@@ -246,20 +264,40 @@ c207.addConnectivity('c207hops.json');\end{lstlisting}
 	\end{itemize}
 \end{frame}
 % --------------------------------------------------- Slide --
-
-	\section{Configuration}
+\section{Configuration}
 % --------------------------------------------------- Slide --	
-	\begin{frame}
-		\frametitle{Configuration}
-			These are found in the \texttt{defaults} folder.
-			\begin{enumerate}
-				\item \textbf{Directories} - to save time navigating to the correct directory each time, edit \texttt{getFilepaths.m}
-				\item \textbf{Cell types and subtypes} - go to \texttt{getCellTypes.m} and \texttt{getCellSubtypes.m}. Let me know if any are missing.
-				\item \textbf{Synapse colors} - go to \texttt{getStructureColors.m} to change the default colors for each synapse. 
-				%Matlab accepts RGB values between 0-1. Additionally, I included a function to convert hex to RGB \texttt{hex2rgb('0000ff')} and a function to convert color names to RGB (\texttt{rgb('color name')}) - based on \href{https://xkcd.com/color/rgb/}{\textcolor{blue}{XCKD's color survey}}. }
-			\end{enumerate}
-	\end{frame}
+\begin{frame}
+	\frametitle{Configuration}
+		These are found in the \texttt{defaults} folder.
+		\begin{enumerate}
+			\item \textbf{Directories} - to save time navigating to the correct directory each time, edit \texttt{getFilepaths.m}
+			\item \textbf{Cell types and subtypes} - go to \texttt{getCellTypes.m} and \texttt{getCellSubtypes.m}. Let me know if any are missing.
+			\item \textbf{Synapse colors} - go to \texttt{getStructureColors.m} to change the default colors for each synapse. 
+			%Matlab accepts RGB values between 0-1. Additionally, I included a function to convert hex to RGB \texttt{hex2rgb('0000ff')} and a function to convert color names to RGB (\texttt{rgb('color name')}) - based on \href{https://xkcd.com/color/rgb/}{\textcolor{blue}{XCKD's color survey}}. }
+		\end{enumerate}
+\end{frame}
 
+% --------------------------------------------------- Slide --
+\section{Group Analysis}
+\begin{frame}[fragile]
+	\frametitle{Mosaic}
+	The mosaic class is a first attempt at support for groups of neurons. This allows the most important properties of each neuron to be accessed and analyzed as a group.
+	\begin{lstlisting}[language=matlab]
+% Create a Mosaic by passing in the first Neuron
+bip = Mosaic(c142);
+% Add a description of the mosaic
+bip.describe('s-off bipolar cells');
+% Add Neuron to the mosaic
+bip.add(c1411);
+% Remove a Neuron
+bip.rmNeuron(1411); % by cell number
+bip.rmRow(2); % by row number
+% To view the neurons in the cmd line:
+bip
+% Mosaic is essentially matlab's table. To use the full range of table methods, cast to table:
+T = mosaic2table(bip);
+\end{lstlisting} 
+\end{frame}
 % --------------------------------------------------- Slide --
 \begin{frame}
 	\frametitle{Links}

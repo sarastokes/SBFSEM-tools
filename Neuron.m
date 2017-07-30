@@ -38,6 +38,18 @@ classdef Neuron < handle
     methods
         function obj = Neuron(cellData, cellNum, source)
             
+            % create the cellData structure
+            obj.cellData = struct();
+            % get the cell number if not provided
+            if nargin < 2
+                answer = inputdlg('Input the cell number:',...
+                    'Cell number dialog box', 1);
+                cellNum = answer{1};
+                obj.cellData.cellNum = str2double(cellNum);
+            else
+                obj.cellData.cellNum = cellNum;
+            end
+
             % get the source if not provided
             if nargin == 3
                 switch lower(source)
@@ -54,27 +66,16 @@ classdef Neuron < handle
             else
                 source = obj.getSource();
             end
+            obj.cellData.source = source;
             
             % parse the neuron
             obj.json2Neuron(cellData, source);
-            % create the cellData structure
-            obj.cellData = struct();
             
-            % get the cell number
-            if nargin < 2
-                answer = inputdlg('Input the cell number:',...
-                    'Cell number dialog box', 1);
-                cellNum = answer{1};
-                obj.cellData.cellNum = str2double(cellNum);
-            else
-                obj.cellData.cellNum = cellNum;
-            end
-            
+            % remaining cellData attributes are set in UI
             obj.cellData.flag = false;
             obj.cellData.cellType = [];
             obj.cellData.subType = [];
             obj.cellData.annotator = [];
-            obj.cellData.source = source;
             obj.cellData.onoff = [0 0];
             obj.cellData.strata = zeros(1,5);
             obj.cellData.inputs = zeros(1,3);
@@ -95,7 +96,8 @@ classdef Neuron < handle
         end % getSource
         
         function updateData(obj, dataFile)
-            obj.json2Neuron(dataFile)
+            obj.json2Neuron(dataFile, obj.cellData.source);
+            obj.analysisDate = datestr(now);
             fprintf('updated underlying data\n');
         end % update data
         
