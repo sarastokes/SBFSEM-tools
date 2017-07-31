@@ -153,7 +153,6 @@ function s = parseNeuron(cellData, source)
 	s.dataTable = table(LocationID, LocalName, XYZ, XYZum,... 
 		ParentID, SynType, SynTag, Size,... 
 		Unique, SynNum, OffEdge, Terminal, UUID);
-
 	cellStats(s);
 
 %% ------------------------------------------------- support functions ----

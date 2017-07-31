@@ -1,5 +1,0 @@
-[1] Config.pm:327> INFO - This is Biber 2.3
-[2] Config.pm:330> INFO - Logfile is 'sbsfem_tools_Tutorial.blg'
-[47] biber-MSWIN:284> INFO - === 
-[473] Utils.pm:163> ERROR - Cannot find control file 'sbsfem_tools_Tutorial.bcf'! - did you pass the "backend=biber" option to BibLaTeX?
-[474] Biber.pm:111> INFO - ERRORS: 1

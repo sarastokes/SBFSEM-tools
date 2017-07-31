@@ -28,15 +28,15 @@ classdef Neuron < handle
         synList
     end
     
-    properties
-        fh
-        handles
+    properties (Hidden, Transient)
+        fh % UI figure
+        handles % all components of UI figure
+        somaDist % euclidean distance of each node from soma
         azel = [0 90]% current azimuth + elevation view
-        somaDist
     end
     
     methods
-        function obj = Neuron(cellData, cellNum, source)
+        function obj = Neuron(jsonData, cellNum, source, varargin)
             
             % create the cellData structure
             obj.cellData = struct();
@@ -49,9 +49,9 @@ classdef Neuron < handle
             else
                 obj.cellData.cellNum = cellNum;
             end
-
+            
             % get the source if not provided
-            if nargin == 3
+            if nargin >= 3
                 switch lower(source)
                     case {'temporal', 't'}
                         source = 'temporal';
@@ -68,67 +68,132 @@ classdef Neuron < handle
             end
             obj.cellData.source = source;
             
-            % parse the neuron
-            obj.json2Neuron(cellData, source);
+            % parse additional inputs
+            ip = inputParser();
+            ip.addParameter('ct', [],  @(x) any(validatestring(upper(x), getCellTypes(1))));
+            ip.addParameter('st', [], @ischar);
+            ip.addParameter('pol', [], @(x) ischar(x) || isnumeric(x));
+            ip.addParameter('prs', [], @isnumeric);
+            ip.addParameter('strata', [], @isnumeric);
+            ip.addParameter('ann', [], @ischar);
+            ip.parse(varargin{:});
+            
+            % set the cellType
+            obj.cellData.cellType = [];
+            if ~isempty(ip.Results.ct)
+                % first check abbreviated types
+                % {'--', 'GC', 'BC', 'HC', 'AC','PR', 'IPC'};
+                x = getCellTypes;
+                ind = find(not(cellfun('isempty',...
+                    strfind(getCellTypes(1), upper(ip.Results.ct)))));
+                obj.cellData.cellType = [x{ind}]; %#ok<FNDSB>
+                fprintf('set cell type to %s\n', obj.cellData.cellType);
+            end
+            
+            % set the subtype
+            obj.cellData.subType = [];
+            if ~isempty(obj.cellData.cellType) && ~isempty(ip.Results.st)
+                x = getCellSubtypes(obj.cellData.cellType);
+                if any(ismember(x, lower(ip.Results.st)));
+                    ind = find(not(cellfun('isempty',...
+                        strfind(x, lower(ip.Results.st)))));
+                    obj.cellData.subType = [x{ind}];  %#ok<FNDSB>
+                    fprintf('set subtype to %s\n', obj.cellData.subType);
+                else
+                    fprintf('SubType %s not found\n', ip.Results.st);
+                end
+            end
+            
+            % set the polarity
+            obj.cellData.onoff = [0 0];
+            if ~isempty(ip.Results.pol)
+                pol = ip.Results.pol;
+                if isvector(pol) && numel(pol) == 2
+                    obj.cellData.onoff = pol;
+                elseif ischar(pol)
+                    switch lower(pol)
+                        case 'on'
+                            obj.cellData.onoff(1) = 1;
+                        case 'off'
+                            obj.cellData.onoff(2) = 1;
+                        case 'onoff'
+                            obj.cellData.onoff = [1 1];
+                    end
+                end
+            end
+            
+            % set the cone inputs
+            obj.cellData.inputs = zeros(1,3);
+            if ~isempty(ip.Results.prs)
+                prs = ip.Results.prs;
+                if numel(prs) == 1
+                    obj.cellData.inputs(prs) = 1;
+                elseif numel(prs) == 3
+                    obj.cellData.inputs = prs;
+                end
+            end
+            
+            % set the strata
+            obj.cellData.strata = zeros(1,5);
+            if ~isempty(ip.Results.strata)
+                strat = ip.Results.strata;
+                if numel(strat) == 5 && max(strat) == 1
+                    obj.cellData.strata = strat;
+                elseif max(strat) <= 5
+                    obj.cellData.strata(strat) = 1;
+                end
+            end
+            
+            % set the annotator initials
+            obj.cellData.annotator = ip.Results.ann;
             
             % remaining cellData attributes are set in UI
             obj.cellData.flag = false;
-            obj.cellData.cellType = [];
-            obj.cellData.subType = [];
-            obj.cellData.annotator = [];
-            obj.cellData.onoff = [0 0];
-            obj.cellData.strata = zeros(1,5);
-            obj.cellData.inputs = zeros(1,3);
             obj.cellData.notes = [];
+            
+            % parse the neuron
+            obj.json2Neuron(jsonData, source);
             
             rows = ~strcmp(obj.dataTable.LocalName, 'cell') & obj.dataTable.Unique == 1;
             synTable = obj.dataTable(rows,:);
             [~, obj.synList] = findgroups(synTable.LocalName);
-            
         end % constructor
         
-%% ------------------------------------------------ setup functions -----
-        function source = getSource(obj) %#ok<MANU>
-            answer = questdlg('Which block?',...
-                'tissue source dialog',...
-                'inferior', 'temporal', 'rc1', 'inferior');
-            source = answer;
-        end % getSource
-        
-        function updateData(obj, dataFile)
-            obj.json2Neuron(dataFile, obj.cellData.source);
+        %% ------------------------------------------------ setup functions -----
+        function updateData(obj, jsonData)
+            obj.json2Neuron(jsonData, obj.cellData.source);
             obj.analysisDate = datestr(now);
             fprintf('updated underlying data\n');
         end % update data
         
-        function json2Neuron(obj, cellData, source)
+        function json2Neuron(obj, jsonData, source)
             % detect input type
-            if ischar(cellData) && strcmp(cellData(end-3:end), 'json')
+            if ischar(jsonData) && strcmp(jsonData(end-3:end), 'json')
                 fprintf('parsing with loadjson.m...');
-                cellData = loadjson(cellData);
+                jsonData = loadjson(jsonData);
                 fprintf('parsed\n');
-                cellData = parseNeuron(cellData, source);
-                obj.dataTable = cellData.dataTable;
-            elseif isstruct(cellData) && isfield(cellData, 'version')
-                cellData = parseNeuron(cellData, source);
-            elseif isstruct(cellData) && isfield(cellData, 'somaNode')
+                jsonData = parseNeuron(jsonData, source);
+                obj.dataTable = jsonData.dataTable;
+            elseif isstruct(jsonData) && isfield(jsonData, 'version')
+                jsonData = parseNeuron(jsonData, source);
+            elseif isstruct(jsonData) && isfield(jsonData, 'somaNode')
                 fprintf('already parsed from parseNodes.m\n');
             else % could also supply output from loadjson..
                 warndlg('input filename as string or struct from loadjson()');
                 return
             end
             
-            obj.fname = cellData.fileName;
-            obj.parseDate = cellData.parseDate;
+            obj.fname = jsonData.fileName;
+            obj.parseDate = jsonData.parseDate;
             obj.analysisDate = datestr(now);
             
-            obj.nodeList = cellData.nodeList;
+            obj.nodeList = jsonData.nodeList;
             
-            obj.synData = cellData.typeData;
-            obj.tulipData = cellData.tulipData;
+            obj.synData = jsonData.typeData;
+            obj.tulipData = jsonData.tulipData;
             
-            obj.skeleton = cellData.skeleton;
-            obj.somaNode = cellData.somaNode;
+            obj.skeleton = jsonData.skeleton;
+            obj.somaNode = jsonData.somaNode;
         end % json2neuron
         
         function addConnectivity(obj, connectivityFile)
@@ -141,6 +206,25 @@ classdef Neuron < handle
             obj.connectivityDate = datestr(now);
             fprintf('added connectivity\n');
         end % addConnectivity
+        
+        function source = getSource(obj)
+            answer = questdlg('Which block?',...
+                'tissue source dialog',...
+                'inferior', 'temporal', 'rc1', 'inferior');
+            source = answer;
+        end % getSource
+        
+        function printSyn(obj)
+            % summarize synapses to cmd line
+            rows = ~strcmp(obj.dataTable.LocalName, 'cell') & obj.dataTable.Unique;
+            T = obj.dataTable(rows,:);
+            
+            [a, b] = findgroups(T.LocalName);
+            x = splitapply(@numel, T.LocalName, a);
+            for ii = 1:numel(x)
+                fprintf('%u %s\n', x(ii), b{ii});
+            end
+        end % printSyn
         
         %------------------------------------------------------------------
         %% -------------------------------------------------- GUI setup ---
@@ -164,35 +248,35 @@ classdef Neuron < handle
             pos(4) = pos(4) * 1.1;
             obj.fh.Position = pos;
             
-%% -------------------------------------------------- menu bar ----
+            %% -------------------------------------------------- menu bar ----
             mh.file = uimenu('Parent', obj.fh,...
                 'Label', 'File');
-            mh.sav = uimenu('Parent', mh.file,...
+            uimenu('Parent', mh.file,...
                 'Label', 'Save cell',...
                 'Callback', @obj.onMenu_saveCell);
             mh.analysis = uimenu('Parent', obj.fh,...
                 'Label', 'Analysis');
             mh.reports = uimenu('Parent', obj.fh,...
                 'Label', 'Reports');
-            mh.overview = uimenu('Parent', mh.reports,...
+            uimenu('Parent', mh.reports,...
                 'Label', 'Synapse Overview',...
                 'Callback', @obj.onReport_synapseOverview);
-            mh.unknown = uimenu('Parent', mh.reports,...
+            uimenu('Parent', mh.reports,...
                 'Label', 'Unknown synapses',...
                 'Callback', @obj.onReport_unknown);
             mh.export = uimenu('Parent', obj.fh,...
                 'Label', 'Export');
-            mh.figExp = uimenu('Parent', mh.export,...
+            uimenu('Parent', mh.export,...
                 'Label', 'Open figure outside UI',...
                 'Callback', @obj.onExport_figure);
-            mh.connectivityTable = uimenu('Parent', mh.export,...
+            uimenu('Parent', mh.export,...
                 'Label', 'Export network',...
                 'Callback', @obj.onExport_connectivityTable);
-            mh.neuronTable = uimenu('Parent', mh.export,...
+            uimenu('Parent', mh.export,...
                 'Label', 'Export neuron',...
                 'Callback', @obj.onExport_neuronTable);
             
-%% ------------------------------------------------ tab panels ----
+            %% ------------------------------------------------ tab panels ----
             mainLayout = uix.HBoxFlex('Parent', obj.fh,...
                 'Spacing', 5);
             
@@ -204,6 +288,7 @@ classdef Neuron < handle
             plotTab = uix.Panel('Parent', obj.handles.tabLayout,...
                 'Padding', 5);
             obj.handles.ax.d3plot = axes('Parent', plotTab);
+            axis(obj.handles.ax.d3plot, 'equal');
             tabTab = uix.Panel('Parent', obj.handles.tabLayout,...
                 'Padding', 5);
             contactTab = uix.Panel('Parent', obj.handles.tabLayout,...
@@ -224,10 +309,10 @@ classdef Neuron < handle
             obj.handles.tabLayout.Selection = 1;
             obj.handles.histTabs.Selection = 1;
             
-%% create the UI panel (left) -------------------------------------
+            %% create the UI panel (left) -------------------------------------
             uiLayout = uix.VBox('Parent', mainLayout,...
                 'Spacing', 1, 'Padding', 5);
-%% -------------------------------------------synapse setup -------
+            %% -------------------------------------------synapse setup -------
             
             tableData = populateSynData(obj.dataTable);
             
@@ -240,7 +325,7 @@ classdef Neuron < handle
                 'FontName', 'Segoe UI', 'FontSize', 10,...
                 'CellEditCallback', @obj.onEdit_synTable);
             
-%% ---------------------------------------------- 3d plot setup ----
+            %% ---------------------------------------------- 3d plot setup ----
             obj.handles.clipLayout = uix.HBox('Parent', uiLayout);
             obj.handles.tx.clip = uicontrol('Parent', obj.handles.clipLayout,...
                 'Style', 'Text',...
@@ -329,7 +414,7 @@ classdef Neuron < handle
             % graph all the synapses then set Visibile to off except soma
             obj = populatePlots(obj);
             
-%% --------------------------------------------- connectivity tab ---------
+            %% --------------------------------------------- connectivity tab ---------
             obj.handles.ax.adj = axes('Parent', contactTab);
             if ~isempty(obj.conData)
                 % this is an asymmetric graph
@@ -344,7 +429,7 @@ classdef Neuron < handle
                     'YTick', 1:length(adjMat),...
                     'FontSize', 7);
             end
-%% -------------------------------------------------- render tab ----------
+            %% -------------------------------------------------- render tab ----------
             renderLayout = uix.VBox('Parent', renderTab,...
                 'Spacing', 5);
             obj.handles.ax.render = axes('Parent', renderLayout);
@@ -381,7 +466,7 @@ classdef Neuron < handle
             uicontrol('Parent', cellTypeLayout,...
                 'Style', 'text', 'String', 'Cell Type:');
             obj.handles.lst.cellType = uicontrol('Parent', cellTypeLayout,...
-                'Style', 'list', 'String', CellTypes);
+                'Style', 'list', 'String', getCellTypes());
             set(cellTypeLayout, 'Heights', [-1 -3]);
             % 3
             uicontrol('Parent', infoGrid,...
@@ -473,11 +558,11 @@ classdef Neuron < handle
             set(obj.handles.histTabs, 'SelectionChangedFcn', @obj.onChanged_histTab);
         end % openGUI
         
-%-------------------------------------------------------------------------
-%% --------------------------------------------------------- callbacks ---
-%-------------------------------------------------------------------------
+        %-------------------------------------------------------------------------
+        %% --------------------------------------------------------- callbacks ---
+        %-------------------------------------------------------------------------
         
-%% ------------------------------------------------ render callbacks -----
+        %% ------------------------------------------------ render callbacks -----
         function onSelected_showRender(obj,~,~)
             imName = obj.handles.lst.renders.String{obj.handles.lst.renders.Value};
             imName = [getFilepaths('render') imName];
@@ -486,7 +571,7 @@ classdef Neuron < handle
                 'InitialMagnification', 'fit');
         end % onSelected_showRender
         
-%% ------------------------------------------------ 3d plot callbacks -----
+        %% ------------------------------------------------ 3d plot callbacks -----
         function onChanged_azimuth(obj, ~, ~)
             obj.azel(1) = get(obj.handles.sl.azimuth, 'Value');
             view(obj.handles.ax.d3plot, obj.azel);
@@ -566,7 +651,7 @@ classdef Neuron < handle
                 obj.handles.ax.d3plot.ZLim(2) = somaXYZ(3);
             end
         end % clipBySoma
-%% ----------------------------------------------- network callbacks -----
+        %% ----------------------------------------------- network callbacks -----
         
         function onChanged_limitDegrees(obj, ~,~)
             % this is totally repetitive, fix at some point
@@ -611,7 +696,7 @@ classdef Neuron < handle
             obj.addConnectivity([filePath, fileName]);
         end % onSelected_loadConnectivity
         
-%% ---------------------------------------------- histogram callbacks -----
+        %% ---------------------------------------------- histogram callbacks -----
         function onChanged_tab(obj,~,~)
             set(obj.handles.cb.addSoma, 'Visible', 'off');
             set(obj.handles.cb.addSkeleton, 'Visible', 'off');
@@ -799,7 +884,7 @@ classdef Neuron < handle
             if strcmp(cType, 'unknown')
                 set(obj.handles.pb.subtype, 'String', 'Pick a type first!');
             else
-                set(obj.handles.lst.subtype, 'String', CellSubtypes(cType),...
+                set(obj.handles.lst.subtype, 'String', getCellSubtypes(cType),...
                     'Enable', 'on');
             end
         end % onSelected_getSubtypes

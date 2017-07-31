@@ -84,7 +84,7 @@
 % --------------------------------------------------- Slide --
 \begin{frame}[fragile]
 	\frametitle{Install}
-	First download or clone \href{www.github.com/sarastokes/sbfsem-tools}{\textcolor{blue}{SBSFEM-tools}}.
+	First download or clone \href{www.github.com/sarastokes/sbfsem-tools}{\textcolor{blue}{SBFSEM-tools}}.
 	This requires two open-source toolboxes, \href{https://www.mathworks.com/matlabcentral/fileexchange/33381-jsonlab--a-toolbox-to-encode-decode-json-files}{JSONLab} and the \href{https://www.mathworks.com/matlabcentral/fileexchange/47982-gui-layout-toolbox}{\textcolor{blue}{GUI Layout Toolbox}}. I included JSONLab but it will be easier for you to install the GUI Layout Toolbox yourself from Mathworks.\\
 	Make sure SBSFEM-tools is added to your MATLAB path like so:
 	\begin{lstlisting}[language=matlab]	
@@ -96,8 +96,7 @@
 \end{frame}
 % --------------------------------------------------- Slide --
 \section{Import}
-% --------------------------------------------------- Slide --
-\subsection{Tulip}
+
 \begin{frame}[fragile]
 	\frametitle{Import}
 	\framesubtitle{Step One: Tulip}
@@ -118,6 +117,24 @@ success = tlp.exportGraph('JSON Export', graph, outputFile, params)\end{lstlisti
 	\frametitle{Import}
 	\framesubtitle{Step One: Tulip}
 	\includegraphics[width = 0.9\textwidth]{tulip_python}
+\end{frame}
+
+% --------------------------------------------------- Slide --
+\subsection{Tulip}
+\begin{frame}[fragile]
+	\frametitle{Alternative Streamlined Import}
+	\framesubtitle{Step One - Tulip}
+	If you're comfortable with Python, you can skip opening Tulip's UI entirely.\\
+	First get the Tulip modules:
+	\begin{lstlisting}
+	$ pip install tulip-python\end{lstlisting}
+	This will allow you to export \texttt{.tlp} (or compressed \texttt{.tlp.gz}) files to JSON from a command line without Tulip's UI.
+	\begin{lstlisting}[language=python]
+	from tulip import tlp
+	graph = tlp.loadGraph("C:\...\morph-207.tlp")
+	outputFile = "C:\...\c207.json"
+	params = tlp.getDefaultPluginParameters('JSON Export', graph)
+	success = tlp.exportGraph('JSON Export', graph, outputFile, params)\end{lstlisting}
 \end{frame}
 % --------------------------------------------------- Slide --
 \subsection{Matlab}
@@ -281,10 +298,17 @@ networkTable(c207);\end{lstlisting}
 \section{Group Analysis}
 \begin{frame}[fragile]
 	\frametitle{Mosaic}
-	The mosaic class is a first attempt at support for groups of neurons. This allows the most important properties of each neuron to be accessed and analyzed as a group.
+	The Mosaic class is a first attempt at support for groups of neurons. This allows the most important properties of each neuron to be accessed and analyzed as a group.\\
+	\vskip10pt
+	Mosaic is the parent class that shouldn't be used directly. Instead use Generic or one of the cell type specific subclasses (BipolarCells, Photoreceptors, HorizontalCells). 
+\end{frame}
+% --------------------------------------------------- Slide --
+\begin{frame}[fragile]
+	\frametitle{Mosaic}
+	These core methods are common to all Mosaic subclasses, not just Generic.
 	\begin{lstlisting}[language=matlab]
-% Create a Mosaic by passing in the first Neuron
-bip = Mosaic(c142);
+% Create a Mosaic by passing a Neuron
+bip = Generic(c142);
 % Add a description of the mosaic
 bip.describe('s-off bipolar cells');
 % Add Neuron to the mosaic
@@ -298,6 +322,7 @@ bip
 T = mosaic2table(bip);
 \end{lstlisting} 
 \end{frame}
+% --------------------------------------------------- Slide --
 % --------------------------------------------------- Slide --
 \begin{frame}
 	\frametitle{Links}

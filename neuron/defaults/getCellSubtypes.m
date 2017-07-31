@@ -1,4 +1,4 @@
-function x = CellSubtypes(cellType)
+function x = getCellSubtypes(cellType)
 	% get the cell subtype
 	%
 	% INPUT: cellType 		string from CellTypes
@@ -12,15 +12,15 @@ function x = CellSubtypes(cellType)
 		'large bistratified', 'smooth', 'melanopsin', 'broad throny'};
 	case {'amacrine cell', 'ac'}
 		x = {'unknown', 'wiry', 'semilunar',...
-		'AII', 'A17', 'A1', 'A8', 'A3', 'A5'...
+		'aii', 'a17', 'a1', 'a8', 'a3', 'a5'...
 		'starburst', 'dopaminergic', 'on-off lateral'};
 	case {'horizontal cell', 'hc'}
-		x = {'unknown', 'h1', 'h2', 'h1 axon', 'h2 axon'};
+		x = {'unknown', 'h1', 'h2', 'axon1', 'axon2'};
 	case {'bipolar cell', 'bc'}
 		x = {'unknown', 'midget', 'blue', 'rod', 'giant',...
-		'DB1', 'DB2', 'DB3a', 'DB3b', 'DB4', 'DB5', 'DB6'};
+		'db1', 'db2', 'db3a', 'db3b', 'db4', 'db5', 'db6'};
 	case {'photoreceptor', 'pr'}
-		x = {'cone', 'rod'};
+		x = {'s', 'lm', 'rod', 'l', 'm'};
 	case {'interplexiform cell', 'ipc'}
 		x = {'unknown'};
 	end
