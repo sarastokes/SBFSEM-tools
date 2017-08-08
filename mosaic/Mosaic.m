@@ -13,7 +13,7 @@ classdef Mosaic < handle
         end % constructor
         
         function obj = loadadd(obj, fname, fpath)
-            % add a neuron not currently in workspace
+            % LOADADD  Add a neuron not currently in workspace
             % fname can be 'c207.mat' or 207
             if nargin < 3
                 % fprintf('Set to default folder: NeitzInferior\n');
@@ -29,13 +29,17 @@ classdef Mosaic < handle
             n = [fpath filesep n];
             
             try
-                load(n);
-                obj.add(newNeuron);
-                fprint('loadadd successful! added %u\n',...
-                    newNeuron.cellData.cellNum);
+                newNeuron = load(n);   
             catch
                 fprintf('No file or directory:\n%s\n', n);
+                return;
             end
+            
+            f = fieldnames(newNeuron);
+            obj.add(newNeuron.(f{1}));
+            
+            fprintf('loadadd successful! added %u\n',...
+                newNeuron.(f{1}).cellData.cellNum);
         end
         
         function obj = add(obj, Neuron)
@@ -72,10 +76,12 @@ classdef Mosaic < handle
         end
         
         function obj = rmRow(obj, rowNum)
+            % RMROW  Remove neuron by row number
             obj.dataTable(rowNum,:) = [];
         end % rmRow
         
         function obj = rmNeuron(obj, cellNum)
+            % RMNEURON  Remove neuron by cell number
             row = obj.dataTable.CellNum == cellNum;
             if ~isempty(row)
                 obj.dataTable(row,:) = [];
@@ -85,10 +91,12 @@ classdef Mosaic < handle
         end % rmNeuron
         
         function obj = describe(obj, str)
+            % DESCRIBE  Edit description
             obj.dataTable.Properties.Description = str;
         end
         
         function disp(obj)
+            % DISP  Display table, description if exists
             if ~isempty(obj.dataTable.Properties.Description)
                 disp(obj.dataTable.Properties.Description);
             end
@@ -96,28 +104,59 @@ classdef Mosaic < handle
         end % disp
         
         function obj = sortrows(obj)
+            % SORTROWS  Sorts rows by CellNum
             obj.dataTable = sortrows(obj.dataTable);
         end % sortrows
         
         function T = table(obj)
-            % ditch the mosaic class
+            % TABLE  Ditches the mosaic class
             T = obj.dataTable;
         end % table
         
-        function [ind, dst] = nearestNeighbor(obj, rowNum)
-            if nargin == 2
-                xyz = obj.dataTable.XYZ(rowNum, :);
-            else
-                xyz = obj.dataTable.XYZ;
+        function newMosaic = split(key, value)
+            % SPLIT  Make a new mosaic from a subset
+            newMosaic = obj;
+            if isa(value, 'char')
+                rows = strcmp(newMosaic.dataTable.(key), value);
+            elseif isa(value, 'double')
+                rows = newMosaic.dataTable.(key) == value;
             end
-            [ind, dst] = knnsearch(xyz(1), xyz(2), 'K', 3);
+            
+            newMosaic.rmRows(rows);            
+        end
+        
+        function [ind, dst] = nearestNeighbor(obj, rowNum, varargin)
+            % NEARESTNEIGHBOR  Runs knnsearch with option to plot result
+            ip = inputParser();
+            ip.addParameter('k', 3, @isnumeric);
+            ip.addParameter('graph', false, @islogical);
+            ip.parse(varargin{:});
+            K = ip.Results.k;
+            
+            if nargin == 2
+                xyz = obj.dataTable.XYZ(rowNum, 1:2);
+                lbl = obj.dataTable.CellNum(rowNum);
+            else
+                xyz = obj.dataTable.XYZ(:, 1:2);
+                lbl = obj.dataTable.CellNum;
+            end
+            [ind, dst] = knnsearch(xyz, xyz, 'K', K);
+            if ip.Results.graph
+                figure('Name', 'knnsearch result');
+                barh(dst(:,2:K), 'stacked'); 
+                set(gca, 'YTickLabel', lbl, 'Box', 'off');
+            end                
         end % nearestNeighbor
         
         function somaPlot(obj, varargin)
+            % SOMAPLOT  Plots somas of cells in mosaic
             ip = inputParser();
-            ip.addParameter('co', [0 0 0], @isnumeric);
+            ip.addParameter('co', [0.4 0.4 0.4], @ismatrix);
             ip.addParameter('ax', [], @ishandle);
+            ip.addParameter('lbl', false, @islogical);
+            ip.addParameter('lw', 1, @isnumeric);
             ip.parse(varargin{:});
+            
             if isempty(ip.Results.ax)
                 fh = figure('Name', 'Soma Mosaic');
                 ax = axes('Parent', fh);
@@ -126,13 +165,41 @@ classdef Mosaic < handle
                 fh = ax.Parent;
             end
             hold(ax, 'on');
+            
+            if size(ip.Results.co,1) == 1
+                co = repmat(ip.Results.co, size(obj.dataTable, 1), 1);
+            elseif size(ip.Results.co) == [size(obj.dataTable, 1), 3]
+                co = ip.Results.co;
+            else
+                error('co should either be a 1x3 RGB vector or an Nx3 matrix where N = number of neurons in table');
+            end
+
             for ii = 1:size(obj.dataTable, 1)
                 xyr = [obj.dataTable.XYZ(ii, 1:2) (obj.dataTable.Size(ii)/2)];
-                vissoma(xyr, 'ax', ax, 'co', ip.Results.co);
+                vissoma(xyr, 'ax', ax,... 
+                    'co', co(ii,:), 'lw', ip.Results.lw);
                 fh.UserData = cat(2, fh.UserData, obj.dataTable.CellNum(ii));
+                if ip.Results.lbl
+                    lbl = ['c' num2str(obj.dataTable.CellNum(ii))];
+                    text(xyr(1), xyr(2), xyr(3), lbl);
+                end
             end
-            axis equal; axis off;
+            
+            axis equal;
+            set(gca, 'XColor', 'w', 'YColor', 'w');
         end % somaPlot
+        
+        function obj = addField(obj, varName, varType)
+            % ADDFIELD  Add a new column to an existing mosaic
+            if isa(varType, 'char')
+                T = cell(size(obj.dataTable, 1), 1);
+            else
+                T = zeros(size(obj.dataTable, 1), 1);
+            end
+            T = array2table(T);
+            T.Properties.VariableNames = {varName};
+            obj.dataTable = [obj.dataTable, T];
+        end % addField
     end % methods
     
     methods (Static)
@@ -169,7 +236,7 @@ classdef Mosaic < handle
             end
         end % coneStr
         
-        function str = cellNameStr(Neuron)
+        function str = cellNameStr(Neuron)            
             if ~isempty(Neuron.cellData.cellType)
                 if isempty(Neuron.cellData.subType)
                     str = Neuron.cellData.cellType;

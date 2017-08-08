@@ -10,7 +10,7 @@ function [handles,titlestr] = loadCellData(handles, cellData)
 		set(handles.lst.cellType, 'Value', find(ismember(handles.lst.cellType.String, cellData.cellType)));
 		% call subtypes
 		if ~strcmp(cellData.cellType, 'unknown')
-			set(handles.lst.subtype, 'String', CellSubtypes(cellData.cellType),...
+			set(handles.lst.subtype, 'String', getCellSubtypes(cellData.cellType),...
 				'Enable', 'on');
 			if ~isempty(cellData.subType)
 				set(handles.lst.subtype, 'Value', find(ismember(handles.lst.subtype.String, cellData.subType)));

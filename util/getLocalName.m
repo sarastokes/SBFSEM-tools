@@ -27,11 +27,11 @@ function localName = getLocalName(synType, synTag)
 					localName = 'bip conv post';
 				case 'conventional;gaba'
 					localName = 'gaba fwd';
-				case 'ta'
+				case 'conventional;ta'
 					localName = 'triad basal';
-				case 'nta'
+				case 'conventional;nta'
 					localName = 'nontriad basal';
-				case 'mnta'
+				case 'conventional;mnta'
 					localName = 'marginal basal';
 				otherwise
 					localName = 'postsynapse';

@@ -43,6 +43,21 @@ classdef HorizontalCells < Mosaic
             T = cell2table(C);
             T.Properties.VariableNames = vn;
         end % makeRows
+        
+        function colorVec = assignColors(obj)
+            % ASSIGNCOLORS  Get a matrix of plot colors
+            colorVec = zeros(size(obj.dataTable, 1), 3);
+            for ii = 1:size(obj.dataTable, 1)
+                switch lower(obj.dataTable.SubType{ii})
+                    case 'h1'
+                        colorVec(ii,:) = rgb('light orange');
+                    case 'h2'
+                        colorVec(ii, :) = rgb('teal');
+                    otherwise
+                        colorVec(ii, :) = [0.4 0.4 0.4];
+                end
+            end
+        end % assignColors
     end % methods
 end % classdef
 

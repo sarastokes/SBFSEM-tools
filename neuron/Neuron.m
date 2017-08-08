@@ -1,24 +1,21 @@
 classdef Neuron < handle
     % Analysis and graphs based only on nodes, without edges
+    % 14Jun2017 - SSP - created
+    % 01Aug2017 - SSP - switched createUi to separate NeuronApp class
     
     properties
-        % this comes from tulip too but could edit if needed
-        somaNode % largest "cell" node
         cellData
-        fname
         saveDir
     end
     
     properties (SetAccess = private, GetAccess = public)
         % these are properties parsed from tulip data
-        nodeList % all nodes
         skeleton % just the "cell" nodes
         dataTable % The properties included are: LocationInViking,
         % LocationID, ParentID, StructureType, Tags, ViewSize, OffEdge and
         % Terminal. See parseNodes.m for more details
         
         synData % this contains data about each synapse type in the cell
-        tulipData % currently not using, might get rid of
         parseDate % date .tlp or .tlpx file created
         analysisDate % date run thru NeuronNodes
         
@@ -26,6 +23,12 @@ classdef Neuron < handle
         conData % connectivity data
         
         synList
+        somaNode % largest "cell" node
+    end
+    
+    properties (Access = private)
+        nodeList % all nodes
+        tulipData
     end
     
     properties (Hidden, Transient)
@@ -146,9 +149,14 @@ classdef Neuron < handle
             
             % set the annotator initials
             obj.cellData.annotator = ip.Results.ann;
+
+            % trigger loadCellData in NeuronApp
+            if nargin > 3
+                obj.cellData.flag = true;
+            else
+                obj.cellData.flag = false;
+            end
             
-            % remaining cellData attributes are set in UI
-            obj.cellData.flag = false;
             obj.cellData.notes = [];
             
             % parse the neuron
@@ -157,6 +165,7 @@ classdef Neuron < handle
             rows = ~strcmp(obj.dataTable.LocalName, 'cell') & obj.dataTable.Unique == 1;
             synTable = obj.dataTable(rows,:);
             [~, obj.synList] = findgroups(synTable.LocalName);
+            
         end % constructor
         
         %% ------------------------------------------------ setup functions -----
@@ -183,7 +192,6 @@ classdef Neuron < handle
                 return
             end
             
-            obj.fname = jsonData.fileName;
             obj.parseDate = jsonData.parseDate;
             obj.analysisDate = datestr(now);
             
@@ -207,7 +215,7 @@ classdef Neuron < handle
             fprintf('added connectivity\n');
         end % addConnectivity
         
-        function source = getSource(obj)
+        function source = getSource(obj) %#ok<MANU>
             answer = questdlg('Which block?',...
                 'tissue source dialog',...
                 'inferior', 'temporal', 'rc1', 'inferior');
@@ -225,6 +233,10 @@ classdef Neuron < handle
                 fprintf('%u %s\n', x(ii), b{ii});
             end
         end % printSyn
+        
+        function fh = openApp(obj)
+            fh = NeuronApp(obj);
+        end
         
         %------------------------------------------------------------------
         %% -------------------------------------------------- GUI setup ---
@@ -582,7 +594,7 @@ classdef Neuron < handle
             view(obj.handles.ax.d3plot, obj.azel);
         end % onChanged_elevation
         
-        function onEdit_synTable(obj, src,eventdata)
+        function onEdit_synTable(obj, src, eventdata)
             tableData = src.Data;
             tableInd = eventdata.Indices;
             switch tableInd(2)
@@ -843,6 +855,7 @@ classdef Neuron < handle
                     ax = obj.handles.ax.render;
                 otherwise
                     warndlg('No graph in current window!');
+                    return;
             end
             % get only the visible components
             newAxes = copyobj(ax, figure);
