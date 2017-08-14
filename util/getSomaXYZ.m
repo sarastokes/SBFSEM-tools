@@ -5,6 +5,8 @@ function xyz = getSomaXYZ(obj, micronFlag)
 
 	if nargin < 2
 		micronFlag = true;
+    else
+        fprintf('working in pixels not microns\n');
 	end
 
 	% find the row matching soma node uuid

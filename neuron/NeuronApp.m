@@ -386,7 +386,7 @@ classdef NeuronApp < handle
             numSyn = numel(names);
             
             obj.handles.numBins = zeros(2, numSyn);
-            obj.neuron.somaDist = cell(numSyn, 1);
+            obj.somaDist = cell(numSyn, 1);
             
             % create the plots by synapse type
             for ii = 1:numSyn
@@ -680,11 +680,11 @@ classdef NeuronApp < handle
             % CHANGEHISTOGRAM  Updates bin # display for each histogram
             switch obj.handles.tabs.hist.Selection
                 case 1 % soma plot
-                    for ii = 1:length(obj.synList)
+                    for ii = 1:length(obj.neuron.synList)
                         obj.handles.synTable.Data{ii,5} = obj.handles.numBins(1,ii);
                     end
                 case 2 % z-axis plot
-                    for ii = 1:length(obj.synList)
+                    for ii = 1:length(obj.neuron.synList)
                         obj.handles.synTable.Data{ii,5} = obj.handles.numBins(2,ii);
                     end
             end
@@ -743,7 +743,9 @@ classdef NeuronApp < handle
             set(newAxes, 'ActivePositionProperty', 'outerposition',...
                 'Units', 'normalized',...
                 'OuterPosition', [0 0 1 1],...
-                'Position', [0.13 0.11 0.775 0.815]);
+                'Position', [0.13 0.11 0.775 0.815],...
+                'XColor', 'w', 'YColor', 'w');
+            axis(newAxes, 'tight');
             title(newAxes, ['c' num2str(obj.neuron.cellData.cellNum)]);
             % keep only visible components
             lines = findall(newAxes, 'Type', 'line', 'Visible', 'off');
