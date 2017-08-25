@@ -2,10 +2,12 @@ classdef Neuron < handle
     % Analysis and graphs based only on nodes, without edges
     % 14Jun2017 - SSP - created
     % 01Aug2017 - SSP - switched createUi to separate NeuronApp class
+    % 25Aug2017 - SSP - added analysis property & methods
     
     properties
         cellData
-        saveDir
+        analysis
+        saveDir % will be used more in the future
     end
     
     properties (SetAccess = private, GetAccess = public)
@@ -17,12 +19,12 @@ classdef Neuron < handle
         
         synData % this contains data about each synapse type in the cell
         parseDate % date .tlp or .tlpx file created
-        analysisDate % date run thru NeuronNodes
+        jsonDir % filename and path for json data file
         
         connectivityDate % date added connectivity
         conData % connectivity data
         
-        synList
+        synList % synapses in cell
         somaNode % largest "cell" node
     end
     
@@ -40,6 +42,9 @@ classdef Neuron < handle
             
             % create the cellData structure
             obj.cellData = struct();
+            % create analysis map
+            obj.analysis = containers.Map;
+            
             % get the cell number if not provided
             if nargin < 2
                 answer = inputdlg('Input the cell number:',...
@@ -166,7 +171,7 @@ classdef Neuron < handle
             
         end % constructor
         
-        function updateData(obj, jsonData)
+        function update(obj, jsonData)
             obj.json2Neuron(jsonData, obj.cellData.source);
             obj.analysisDate = datestr(now);
             fprintf('updated underlying data\n');
@@ -221,6 +226,30 @@ classdef Neuron < handle
                 clipboard('copy', id);
             end
         end
+        
+        function addAnalysis(obj, analysis, overwrite)
+            % ADDANALYSIS  Append or update an analysis
+            if nargin < 3 
+                overwrite = false;
+            end
+            if isempty(obj.analysis)
+                obj.analysis = containers.Map;
+            end
+            validateattributes(analysis, {'NeuronAnalysis'}, {});
+            if isKey(obj.analysis, analysis.keyName)
+                if overwrite
+                    obj.analysis(analysis.keyName) = analysis;
+                else
+                    fprintf('Existing %s, call fcn w/ overwrite enabled\n',... 
+                        analysis.keyName);
+                    return;
+                end
+                % dialog to overwrite existing
+            else
+                obj.analysis(analysis.keyName) = analysis;
+            end
+            fprintf('Added %s analysis\n', analysis.keyName);
+        end % addanalysis
     end % methods
     
     

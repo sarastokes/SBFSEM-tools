@@ -27,6 +27,14 @@ classdef Photoreceptors < Mosaic
             end
         end % setH2Input
         
+        function obj = addTracing(obj, cellNum, mat)
+            % ADDTRACING  Add outline of cone
+            row = obj.dataTable.CellNum == cellNum;
+            if nnz(row) == 1
+                obj.dataTable.Tracing(row,:) = mat;
+            end
+        end % addTracing
+        
         function add(obj, Neuron, varargin)
             % make sure Neuron isn't already in table
             if ~isempty(find(obj.dataTable.CellNum == Neuron.cellData.cellNum)) %#ok<EFIND>

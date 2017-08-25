@@ -90,6 +90,18 @@ classdef Mosaic < handle
             end
         end % rmNeuron
         
+        function rmCol(obj, colName)
+            % RMCOL  Remove a column from mosaic
+            if ischar(colName)
+                ind = find(ismember(obj.dataTable.Properties.VariableNames,... 
+                    colName));
+            else
+                ind = colName;
+            end
+            
+            obj.dataTable(:,ind) = [];
+        end % rmCol
+        
         function obj = describe(obj, str)
             % DESCRIBE  Edit description
             obj.dataTable.Properties.Description = str;
