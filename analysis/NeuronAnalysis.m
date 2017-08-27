@@ -38,7 +38,7 @@ classdef NeuronAnalysis < handle
         doAnalysis(obj) % main analysis method
     end % abstract methods
     
-    methods (Access = protected)
+    methods
         function append(obj, newData)
             % APPEND  Add a completed analysis to existing object
             str = [datestr(now) ' - appended new ' class(newData) '\n'];
