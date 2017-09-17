@@ -3,6 +3,7 @@ function tableData = populateSynData(T)
 	% 
 	% 21Jun2017 - SSP - moved from class
 	% 5Jul2017 - SSP - rewrote for struct->table
+	% 30Aug2017 - SSP - moved into NeuronApp
 
 	% get the synapse legend colors
 	sc = getStructureColors();

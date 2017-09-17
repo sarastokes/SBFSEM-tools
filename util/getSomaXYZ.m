@@ -1,4 +1,4 @@
-function xyz = getSomaXYZ(obj, micronFlag)
+function xyz = getSomaXYZ(neuron, micronFlag)
 	% get the location of soma given node uuid
 	%
 	% 5Jul2017 - SSP - created
@@ -10,10 +10,10 @@ function xyz = getSomaXYZ(obj, micronFlag)
 	end
 
 	% find the row matching soma node uuid
-	row = strcmp(obj.dataTable.UUID, obj.somaNode);
+	row = strcmp(neuron.dataTable.UUID, neuron.somaNode);
 	% get the XYZ values
 	if micronFlag
-		xyz = table2array(obj.dataTable(row, 'XYZum'));
+		xyz = table2array(neuron.dataTable(row, 'XYZum'));
 	else
-		xyz = table2array(obj.dataTable(row, 'XYZ'));
+		xyz = table2array(neuron.dataTable(row, 'XYZ'));
 	end

@@ -137,15 +137,17 @@ classdef Mosaic < handle
             newMosaic.rmRows(rows);
         end
 
-        function [ind, dst] = nearestNeighbor(obj, rowNum, varargin)
+        function [ind, dst] = nearestNeighbor(obj, varargin)
             % NEARESTNEIGHBOR  Runs knnsearch with option to plot result
             ip = inputParser();
+            ip.addParameter('rowNum', [], @isvector);
             ip.addParameter('k', 3, @isnumeric);
             ip.addParameter('graph', false, @islogical);
             ip.parse(varargin{:});
+            rowNum = ip.Results.rowNum;
             K = ip.Results.k;
 
-            if nargin == 2
+            if isempty(rowNum);
                 xyz = obj.dataTable.XYZ(rowNum, 1:2);
                 lbl = obj.dataTable.CellNum(rowNum);
             else

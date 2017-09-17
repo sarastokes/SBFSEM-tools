@@ -21,7 +21,7 @@ classdef Neuron < handle
         parseDate % date .tlp or .tlpx file created
         jsonDir % filename and path for json data file
         
-        connectivityDate % date added connectivity
+        networkDate % date added connectivity
         conData % connectivity data
         
         synList % synapses in cell
@@ -87,11 +87,9 @@ classdef Neuron < handle
             % set the cellType
             obj.cellData.cellType = [];
             if ~isempty(ip.Results.ct)
-                % first check abbreviated types
-                % {'--', 'GC', 'BC', 'HC', 'AC','PR', 'IPC'};
                 x = getCellTypes;
                 ind = find(not(cellfun('isempty',...
-                    strfind(getCellTypes(1), upper(ip.Results.ct)))));
+                    strfind(getCellTypes(1), upper(ip.Results.ct))))); %#ok<STRCL1>
                 obj.cellData.cellType = [x{ind}]; %#ok<FNDSB>
                 fprintf('set cell type to %s\n', obj.cellData.cellType);
             end
@@ -100,9 +98,9 @@ classdef Neuron < handle
             obj.cellData.subType = [];
             if ~isempty(obj.cellData.cellType) && ~isempty(ip.Results.st)
                 x = getCellSubtypes(obj.cellData.cellType);
-                if any(ismember(x, lower(ip.Results.st)));
+                if any(ismember(x, lower(ip.Results.st)))
                     ind = find(not(cellfun('isempty',...
-                        strfind(x, lower(ip.Results.st)))));
+                        strfind(x, lower(ip.Results.st))))); %#ok<STRCL1>
                     obj.cellData.subType = [x{ind}];  %#ok<FNDSB>
                     fprintf('set subtype to %s\n', obj.cellData.subType);
                 else
@@ -167,26 +165,14 @@ classdef Neuron < handle
             
             rows = ~strcmp(obj.dataTable.LocalName, 'cell') & obj.dataTable.Unique == 1;
             synTable = obj.dataTable(rows,:);
-            [~, obj.synList] = findgroups(synTable.LocalName);
-            
+            [~, obj.synList] = findgroups(synTable.LocalName);            
         end % constructor
         
         function update(obj, jsonData)
             obj.json2Neuron(jsonData, obj.cellData.source);
-            obj.analysisDate = datestr(now);
+            obj.parseDate = datestr(now);
             fprintf('updated underlying data\n');
         end % update data
-        
-        function addConnectivity(obj, connectivityFile)
-            % add something to check for overwrite?
-            if ischar(connectivityFile)
-                obj.conData = parseConnectivity(connectivityFile);
-            elseif isstruct(connectivityFile)
-                obj.conData = connectivityFile;
-            end
-            obj.connectivityDate = datestr(now);
-            fprintf('added connectivity\n');
-        end % addConnectivity
         
         function T = synIDs(obj, whichSyn)
             % SYNIDS  Return location IDs for synapses
@@ -195,18 +181,31 @@ classdef Neuron < handle
             disp(T);
         end % synIDs
         
-        function printSyn(obj)
-            % summarize synapses to cmd line
-            rows = ~strcmp(obj.dataTable.LocalName, 'cell') & obj.dataTable.Unique;
-            T = obj.dataTable(rows,:);
-            
-            [a, b] = findgroups(T.LocalName);
-            x = splitapply(@numel, T.LocalName, a);
-            for ii = 1:numel(x)
-                fprintf('%u %s\n', x(ii), b{ii});
+        function xyz = getSynapseXYZ(obj, syn, micronFlag)
+            % GETSYNAPSEXYZ  Get xyz of synapse type
+            % INPUTS:   syn             synapse name
+            %           microns         true/false
+
+            if nargin < 3 % default unit is microns
+                micronFlag = true;
             end
-        end % printSyn
-        
+
+            % check that input syn is in synapse list
+            syn = validatestring(syn, obj.synList);
+
+            % find unique rows with synapse name
+            rows = strcmp(obj.dataTable.LocalName, syn)... 
+                & obj.dataTable.Unique == 1;
+
+            % get the xyz values for only those rows
+            if micronFlag
+                xyz = obj.dataTable{rows, 'XYZum'};
+            else
+                xyz = obj.dataTable{rows, 'XYZ'};
+            end
+        end % getSynapseXYZ
+
+
         function fh = openApp(obj)
             fh = NeuronApp(obj);
         end
@@ -226,6 +225,21 @@ classdef Neuron < handle
                 clipboard('copy', id);
             end
         end
+
+        function xyz = getSomaXYZ(obj, micronFlag)
+            % GETSOMAXYZ  Coordinates of soma
+            if nargin < 2 % default unit is microns
+                micronFlag = true;
+            end
+            % find the row matching the soma node uuid
+            row = strcmp(obj.dataTable.UUID, obj.somaNode);
+            % get the XYZ values
+            if micronFlag
+                xyz = table2array(obj.dataTable(row, 'XYZum'));
+            else
+                xyz = table2array(obj.dataTable(row, 'XYZ'));
+            end
+        end % getSomaXYZ
         
         function addAnalysis(obj, analysis, overwrite)
             % ADDANALYSIS  Append or update an analysis
@@ -250,11 +264,59 @@ classdef Neuron < handle
             end
             fprintf('Added %s analysis\n', analysis.keyName);
         end % addanalysis
+
+        function saveNeuron(obj)
+            % SAVENEURON  Save changes to neuron
+            uisave(obj, sprintf('c%u', obj.cellData.cellNum));
+            fprintf('Saved!\n');
+        end
+                 
+        function printSyn(obj)
+            % summarize synapses to cmd line
+            rows = ~strcmp(obj.dataTable.LocalName, 'cell') & obj.dataTable.Unique;
+            T = obj.dataTable(rows,:);
+            
+            [a, b] = findgroups(T.LocalName);
+            x = splitapply(@numel, T.LocalName, a);
+            for ii = 1:numel(x)
+                fprintf('%u %s\n', x(ii), b{ii});
+            end
+        end % printSyn
+
+        function rescaleXYZ(obj)
+            % RESCALEXYZ  Change XYZ based on OData scale
+            dbase = getODataURL(obj.cellData.source);
+            vol = webread([dbase '/Scale'],... 
+                'Timeout', 30,...
+                'ContentType', 'json',...
+                'CharacterEncoding', 'UTF-8');
+            newScale = [vol.X.Value, vol.Y.Value, vol.Z.Value];
+            fprintf('Updating XYZum with scale:\n    %.2g, %.2g, %.2g in %s\n',...
+                newScale, vol.X.Units);
+            % convert to microns if needed
+            if strcmp(vol.X.Units, 'nm') && strcmp(vol.X.Units, 'nm')
+                newScale = newScale ./ 1000; %#ok<NASGU>
+            end
+            obj.dataTable.XYZum = bsxfun(@times, obj.dataTable.XYZ,... 
+                [vol.X.Value, vol.Y.Value, vol.Z.Value]);
+        end
     end % methods
     
+    methods % network methods
+        function addNetwork(obj, networkFile)
+            % ADDCONNECTIVITY  Add network data to neuron
+            if nargin < 2
+                [fileName, filePath] = uigetfile('*.json', 'Pick a network:');
+                obj.conData = parseConnectivity([fileName, filePath]);
+            else % json file name in current directory
+                obj.conData = parseConnectivity(networkFile);
+            end
+            obj.networkDate = datestr(now);
+            fprintf('added network\n');
+        end % addNetwork
+    end % network methods
     
-    methods (Access = private)
-        
+    methods (Access = private)     
         function source = getSource(obj) %#ok<MANU>
             % GETSOURCE  Dialog box for tissue block
             answer = questdlg('Which block?',...
@@ -282,7 +344,6 @@ classdef Neuron < handle
             end
             
             obj.parseDate = jsonData.parseDate;
-            obj.analysisDate = datestr(now);
             
             obj.nodeList = jsonData.nodeList;
             
@@ -291,8 +352,6 @@ classdef Neuron < handle
             
             obj.skeleton = jsonData.skeleton;
             obj.somaNode = jsonData.somaNode;
-        end % json2neuron
-        
+        end % json2neuron     
     end % methods private
-    
 end % classdef

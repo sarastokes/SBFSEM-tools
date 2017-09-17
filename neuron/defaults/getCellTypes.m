@@ -1,4 +1,4 @@
-function x = CellTypes(abbrevFlag)
+function x = getCellTypes(abbrevFlag)
 	% Possible cell types
 	%
 	% INPUTS: abbrevFlag 	any input will return short names

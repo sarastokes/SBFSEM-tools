@@ -25,7 +25,7 @@ else
 	% You may have other versions of loadjson.m installed. These might
 	% throw errors so if this doesn't return the version in sbfsem-tools,
 	% remove the other path
-	if isempty(strfind('sbfsem-tools', which('loadjson.m'))
+	if isempty(strfind('sbfsem-tools', which('loadjson.m')))
 		rmpath(which('loadjson.m'));
 	end
 end

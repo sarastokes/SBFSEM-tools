@@ -1,13 +1,29 @@
-function str = getVikingURL(cellNum, source, numHops)
+function str = getVikingURL(cellNum, source, varargin)
     % format into URL for Viking and copy to clipboard
     % INPUTS:
     %   cellNum         cell number to export
     %   source          tissue block
-    %   numHops         network degrees, leave empty for morphology
+    % OPTIONAL:
+    %   fileType        ['tlp']   file type: tlp, dot, graphml, json
+    %   numHops         []   network degrees, leave empty for morphology
     % OUTPUT:
-    %   str             URL to get .tlp from Viking server
+    %   str             URL to get file from Viking server
     
-    if nargin < 3
+    ip = inputParser();
+    addRequired(ip, 'cellNum', @isnumeric);
+    addRequired(ip, 'source', @(x) any(validatestring(lower(x),...
+        {'inferior', 'temporal', 'rc1', 'i', 't', 'r'})));
+    addParameter(ip, 'numHops', [], @isnumeric);
+    addParameter(ip, 'fileType', 'tlp', @(x) any(validatestring(lower(x),... 
+        {'tlp', 'dot', 'graphml', 'json'})));
+    parse(ip, cellNum, source, varargin{:});
+    
+    cellNum = ip.Results.cellNum;
+    source = ip.Results.source;
+    fileType = ip.Results.fileType;
+    numHops = ip.Results.numHops;
+       
+    if isempty(numHops)
         report = 'morphology';
     else
         report = 'network';
@@ -28,10 +44,11 @@ function str = getVikingURL(cellNum, source, numHops)
     
     switch report
         case 'morphology'
-            str = [str, sprintf('%s/export/morphology/tlp?id=%u', source, cellNum)];
+            str = [str, sprintf('%s/export/morphology/%s?id=%u',... 
+                source, fileType, cellNum)];
         case 'network'
-            str = [str, sprintf('%s/export/network/tlp?id=%u&hops=%u',...
-                source, cellNum, numHops)];
+            str = [str, sprintf('%s/export/network/%s?id=%u&hops=%u',...
+                source, fileType, cellNum, numHops)];
     end
     
     % copy to clipboard

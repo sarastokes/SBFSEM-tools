@@ -28,14 +28,15 @@ function mat = getImageRGB(im, rgb, clipFlag) %#ok<INUSD>
 	end
 	ind(ind < 3) = 0;
     if ~nnz(ind)
-        warndlg('No pixels with rgb = [%u %u %u]', rgb);
-        return;
-    end
-	ind = reshape(ind, [m n]);
+        fprintf('No pixels with rgb = [%u %u %u]\n', rgb);
+        mat = [];
+    else
+    	ind = reshape(ind, [m n]);
 	
-	[r, c] = find(ind);
+        [r, c] = find(ind);
     
-    %mat = rotateZ(r, c, -90);
-    mat = [r,c]';
+        %mat = rotateZ(r, c, -90);
+        mat = [r,c]';
+    end
 
 end

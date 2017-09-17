@@ -9,6 +9,7 @@ function s = parseNeuron(cellData, source)
 	% 22Jun2017 - SSP - changed to table structure
 	% 16Jul2017 - SSP - added source requirement, XYZ units, RC1 support
 	% 29Jul2017 - SSP - cell node size to microns
+	% 6Sept2017 - SSP - switched XYZ scale from hard coded to OData pull
 
 	if ischar(cellData) && strcmp(cellData(end-3:end), 'json')
 		fprintf('parsing with loadjson.m...');
@@ -137,17 +138,16 @@ function s = parseNeuron(cellData, source)
 	SynTag(1,:) = []; SynType(1,:) = [];
 	LocalName(1,:) = []; UUID(1,:) = [];
 	s.skeleton(:,1) = [];
-	switch lower(source)
-		case 'temporal'
-			XYZum = bsxfun(@times, XYZ, [0.005 0.005 0.07]);
-			Size = 5e-3 .* Size;
-		case 'inferior'
-			XYZum = bsxfun(@times, XYZ, [0.005 0.005 0.09]);
-			Size = 5e-3 .* Size;
-		case 'rc1'
-			XYZum = bsxfun(@times, XYZ, [0.00218 0.00218 0.08]);
-			Size = 2.18e-3 .* Size;
-	end
+
+	% get the scale 
+	dbase = getODataURL(source);
+	fprintf('Getting scale from OData server:\n    %s\n', dbase);
+	vol = webread([dbase '/Scale'],... 
+		'Timeout', 30,...
+		'ContentType', 'json',...
+		'CharacterEncoding', 'UTF-8');
+	XYZum = bsxfun(@times, XYZ,... 
+		([vol.X.Value, vol.Y.Value, vol.Z.Value]./1000));
 
 	% arrange the data table
 	s.dataTable = table(LocationID, LocalName, XYZ, XYZum,... 
