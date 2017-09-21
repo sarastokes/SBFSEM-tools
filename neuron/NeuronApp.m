@@ -178,6 +178,7 @@ classdef NeuronApp < handle
                 % number of histogram bins (set later)
                 tableData{ii,5} = '-';
             end
+            
             % create the synapse table
             obj.handles.synTable = uitable('Parent', obj.handles.layouts.ui);
             set(obj.handles.synTable, 'Data', tableData,...

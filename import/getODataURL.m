@@ -18,9 +18,11 @@ function str = getODataURL(cellNum, source, urlType)
 		case 'neuron'
 			str = [baseURL '/Structures(' num2str(cellNum) ')/'];
 		case 'location'
-			str = [baseURL '/Locations/?$select=ID,ParentID,VolumeX,VolumeY,Z,Radius,X,Y'];
+			str = [baseURL '/Structures(' num2str(cellNum)... 
+				')/Locations/?$select=ID,ParentID,VolumeX,VolumeY,Z,Radius,X,Y,Tags,OffEdge'];
 		case 'link'
-			str = [baseURL '/LocationLinks/?$select=A,B'];
+			str = [baseURL '/Structures(' num2str(cellNum)... 
+				')/LocationLinks/?$select=A,B'];
 		case 'child'
 			str = [baseURL '/Structures(' num2str(cellNum) ')/Children'];
 		otherwise

@@ -71,6 +71,10 @@
 % --------------------------------------------------- Slide --
 \begin{frame}
 	\frametitle{Changes}
+	15Sept2017:
+	\begin{itemize}
+		\item Matlab's webread has replaced the Tulip import system as the default. Support for Tulip import remains, however, as it can be useful for certain situations.
+	\end{itemize}
 	Some changes since the first release:
 	\begin{itemize}
 		\item All display units are now in microns
@@ -85,8 +89,8 @@
 \begin{frame}[fragile]
 	\frametitle{Install}
 	First download or clone \href{www.github.com/sarastokes/sbfsem-tools}{\textcolor{blue}{SBFSEM-tools}}.
-	This requires two open-source toolboxes, \href{https://www.mathworks.com/matlabcentral/fileexchange/33381-jsonlab--a-toolbox-to-encode-decode-json-files}{JSONLab} and the \href{https://www.mathworks.com/matlabcentral/fileexchange/47982-gui-layout-toolbox}{\textcolor{blue}{GUI Layout Toolbox}}. I included JSONLab but it will be easier for you to install the GUI Layout Toolbox yourself from Mathworks.\\
-	Make sure SBSFEM-tools is added to your MATLAB path like so:
+	
+	Make sure SBSFEM-tools is added to your MATLAB \href{https://www.mathworks.com/help/matlab/ref/addpath.html}{\textcolor{blue}{path}} like so:
 	\begin{lstlisting}[language=matlab]	
 	addpath(genpath('C:\...\sbfsem-tools'));\end{lstlisting}
 	If you already have JSONLab installed, make sure 
@@ -95,74 +99,31 @@
 	returns the version in sbfsem-tools. Otherwise, you might get some errors.
 \end{frame}
 % --------------------------------------------------- Slide --
-\section{Import}
-
+\section{Neuron Class}
+% --------------------------------------------------- Slide --
 \begin{frame}[fragile]
-	\frametitle{Import}
-	\framesubtitle{Step One: Tulip}
-	\begin{block}{}
-		Open a cell in Tulip and then open the Python command line. It's on the bottom toolbar.\\
-		Set the file name* and file path:
-		\begin{lstlisting}[language=python]
-outputFile = "C:\...\c207.json"\end{lstlisting}
-		Then run these two lines:
-		\begin{lstlisting}[language=python]
-params = tlp.getDefaultPluginParameters('JSON Export', graph)
-success = tlp.exportGraph('JSON Export', graph, outputFile, params)\end{lstlisting}
-	\end{block}
-\end{frame}
-
-% --------------------------------------------------- Slide --
-\begin{frame}
-	\frametitle{Import}
-	\framesubtitle{Step One: Tulip}
-	\includegraphics[width = 0.9\textwidth]{tulip_python}
-\end{frame}
-
-% --------------------------------------------------- Slide --
-\subsection{Tulip}
-\begin{frame}[fragile]
-	\frametitle{Alternative Streamlined Import}
-	\framesubtitle{Step One - Tulip}
-	If you're comfortable with Python, you can skip opening Tulip's UI entirely.\\
-	First get the Tulip modules:
-	\begin{lstlisting}
-	$ pip install tulip-python\end{lstlisting}
-	This will allow you to export \texttt{.tlp} (or compressed \texttt{.tlp.gz}) files to JSON from a command line without Tulip's UI.
-	\begin{lstlisting}[language=python]
-	from tulip import tlp
-	graph = tlp.loadGraph("C:\...\morph-207.tlp")
-	outputFile = "C:\...\c207.json"
-	params = tlp.getDefaultPluginParameters('JSON Export', graph)
-	success = tlp.exportGraph('JSON Export', graph, outputFile, params)\end{lstlisting}
+	\frametitle{Basic Use: Neuron}
+	The Neuron class is the basic representation of a cell exported from Viking. To create a Neuron:
+\begin{lstlisting}[language=matlab]
+% cellName = Neuron(cellID, 'source');
+c207 = Neuron(207, 'temporal');\end{lstlisting}
+Note: Source can be `inferior', `temporal' or `rc1'. Also, abbreviating to `i', `t' and `r' works as well.\\
+Open the Neuron class in the user interface
+\begin{lstlisting}[language=matlab]
+NeuronApp(c207);\end{lstlisting}
+To update a neuron in the workspace:
+\begin{lstlisting}[language=matlab]
+c207.update();\end{lstlisting}
 \end{frame}
 % --------------------------------------------------- Slide --
-\subsection{Matlab}
-\begin{frame}[fragile]
-	\frametitle{Import}
-	\framesubtitle{Step Two - MATLAB}
-	Load in the JSON file and create a Neuron object:
-	\begin{lstlisting}[language=matlab]
-c207 = Neuron('c207.json');\end{lstlisting}
-	A dialog box will ask for the cell number and source (temporal, inferior, rc1). To avoid that, include them while creating the Neuron object:
-	\begin{lstlisting}[language=matlab]
-% output = Neuron(filename, cellNumber, source);
-c207 = Neuron('c207.json', 207, 'temporal');\end{lstlisting}
-	To update the underlying data for an existing Neuron:
-	\begin{lstlisting}[language=matlab]
-c207.updateData('c207.json');\end{lstlisting}
-	Open up the user interface:
-	\begin{lstlisting}[language=matlab]
-c207.openUI;\end{lstlisting}
-\end{frame}
+\section{NeuronApp}
 % --------------------------------------------------- Slide --
-\section{User Interface}
 \subsection{Cell Info}
 % --------------------------------------------------- Slide --
 	\begin{frame}
 		\frametitle{Cell Info Panel}
+		This entire panel is designed with a future directory class in mind. As of now, you don't need to save each Neuron, so only set these if you have a specific reason for doing so.
 		\begin{itemize}
-			\item \textbf{Set the cell number.} This will be used in report generation and file saving. 
 			\item If known, the cell type and subtype will be helpful for connectivity analysis.
 			\item The other properties will eventually be used for cell queries but don't have much use yet.
 		\end{itemize}
@@ -233,7 +194,7 @@ c207.addConnectivity('c207hops.json');\end{lstlisting}
 networkTable(c207);\end{lstlisting}
 \end{frame}
 % --------------------------------------------------- Slide --
-\subsection{Renders}
+\subsection{Images}
 \begin{frame}
 	\frametitle{Blender Renders and Cell Fills}
 	\begin{columns}
@@ -244,10 +205,12 @@ networkTable(c207);\end{lstlisting}
 		\column[]{0.5\textwidth}
 		For now, set the \texttt{renderDir} in \texttt{getFilepaths.m} to the file your images are saved into. The UI find the images if their filename includes the letter `c' followed by cell number (like `c207'). I hope to improve this at some point.
 		\vskip15pt
-		I also include other helpful images. For example, a comparison of the ON-smooth cell I reconstructed to a macular ON-smooth cell I filled.
+		This isn't limited to renders and could include whatever images and diagrams are helpful. For example, I can compare my ON-smooth cell reconstructions and cell fills.
 	\end{columns}
 \end{frame}
+% --------------------------------------------------- Slide --
 \subsection{Reports}
+% --------------------------------------------------- Slide --
 	\begin{frame}
 		\frametitle{Reports}
 		This is pretty limited... Right now you can generate two reports:
@@ -258,30 +221,24 @@ networkTable(c207);\end{lstlisting}
 		The report name is auto-generated and will overwrite any existing reports of the same type for that neuron.\\Let me know any other reports that would be of use.
 	\end{frame}
 % --------------------------------------------------- Slide --
-\section{Save}
+\section{Utilites}
 % --------------------------------------------------- Slide --	
 	\begin{frame}
 		\frametitle{Save}
+		Neurons do not need to be saved, as the underlying data is replaced with each update. However, if you would like to save a neuron for offline work, here's some guidelines: 
 		\begin{block}{Save Cell Info}
 			After adding information to the Cell Info Panel, make sure to press the button \texttt{[Add to cell info]}.\\ This saves cell attributes to the Neuron object.
 		\end{block}
 		\begin{block}{Save Neuron}
-			To save the Neuron object itself, go to \texttt{File-->Save Cell}. Use the UI (not the command line) for saving neurons as this method produces a more compact file size.\\ Note: this is separate from the Cell Info panel save. Also, this will close the UI.  
+			To save the Neuron object itself, go to \texttt{File-->Save Cell} or save from the command line to the current directory. 
 		\end{block}
 	\end{frame}
 % --------------------------------------------------- Slide --
-% --------------------------------------------------- Slide --
-\section{Organization}
 \begin{frame}
-	\frametitle{Organization}
-	This is boring but will be important for later neuron comparison code...
-	\begin{itemize}
-		\item Once you pick a folder to save your neuron data in, make a subfolder for each block(for example, \texttt{NeitzTemporal} and \texttt{NeitzInferior}). Save your neurons in these folders. Make a subfolder in each called \texttt{connectivity} and save networks there.
-		\item Name the neurons with `c' followed by the cell number - c6800, c207, etc. This will keep the names consistent and make it easier for the program to find data.
-	\end{itemize}
+	\frametitle{Export}
 \end{frame}
 % --------------------------------------------------- Slide --
-\section{Configuration}
+
 % --------------------------------------------------- Slide --	
 \begin{frame}
 	\frametitle{Configuration}
@@ -290,18 +247,33 @@ networkTable(c207);\end{lstlisting}
 			\item \textbf{Directories} - to save time navigating to the correct directory each time, edit \texttt{getFilepaths.m}
 			\item \textbf{Cell types and subtypes} - go to \texttt{getCellTypes.m} and \texttt{getCellSubtypes.m}. Let me know if any are missing.
 			\item \textbf{Synapse colors} - go to \texttt{getStructureColors.m} to change the default colors for each synapse. 
-			%Matlab accepts RGB values between 0-1. Additionally, I included a function to convert hex to RGB \texttt{hex2rgb('0000ff')} and a function to convert color names to RGB (\texttt{rgb('color name')}) - based on \href{https://xkcd.com/color/rgb/}{\textcolor{blue}{XCKD's color survey}}. }
 		\end{enumerate}
 \end{frame}
 
 % --------------------------------------------------- Slide --
 \section{Group Analysis}
+% --------------------------------------------------- Slide --
+\subsection{NeuronAnalysis Class}
+% --------------------------------------------------- Slide --
+\begin{frame}
+	\frametitle{NeuronAnalysis Class}
+	The NeuronAnalysis class helps keep population data organized by managing input parameters and results of common analyses. To create a new analysis, subclass NeuronAnalysis and edit the \texttt{doAnalysis} and \texttt{visualize} methods.
+	\vskip10pt
+	See \texttt{Tutorial.m} for information on these existing classes:
+	\begin{itemize}
+		\item \textbf{DendriticFieldHull} - uses convex hull to estimate dendritic field area, includes methods for removing axons prior to analysis.
+		\item \textbf{PrimaryDendriteDiameter} - returns the median dendrite diameter at a given distance from the soma.
+	\end{itemize}
+\end{frame}
+% --------------------------------------------------- Slide --
 \begin{frame}[fragile]
-	\frametitle{Mosaic}
+	\frametitle{Mosaic Class}
 	The Mosaic class is a first attempt at support for groups of neurons. This allows the most important properties of each neuron to be accessed and analyzed as a group.\\
 	\vskip10pt
-	Mosaic is the parent class that shouldn't be used directly. Instead use Generic or one of the cell type specific subclasses (BipolarCells, Photoreceptors, HorizontalCells). 
+	Mosaic is the parent class that should not be used directly. Instead use Generic or one of the cell type specific subclasses (BipolarCells, Photoreceptors, HorizontalCells). 
 \end{frame}
+% --------------------------------------------------- Slide --
+\subsection{Mosaic Class}
 % --------------------------------------------------- Slide --
 \begin{frame}[fragile]
 	\frametitle{Mosaic}
@@ -323,17 +295,112 @@ T = mosaic2table(bip);
 \end{lstlisting} 
 \end{frame}
 % --------------------------------------------------- Slide --
+\begin{frame}[fragile]
+	\frametitle{Mosaic Visualization}
+	\begin{columns}
+		\column[]{0.75\textwidth}
+			The Mosaic class grew from functions designed to view the photoreceptor mosaic. Accordingly, the visualization methods are most developed.
+\begin{lstlisting}[language=matlab]
+% Basic plot of cell 'somas'
+% Plot to existing axis
+bip.somaPlot('ax', axesHandle);
+% Include cell ID labels
+bip.somaPlot('lbl', true);
+% Set the color and linewidth
+bip.somaPlot('co', [1 0 0], 'lw', 1);\end{lstlisting}
+\vskip15pt
+Additional cell-type specific parameters can be found in each Mosaic class' description.
+		\column[]{0.25\textwidth}
+			\begin{center}
+				\includegraphics[width=\textwidth]{prMosaic}
+				\vskip10pt
+				{\footnotesize Cone mosaic with cellID labels}	
+			\end{center}		
+	\end{columns}
+\end{frame}
+% --------------------------------------------------- Slide --
+\section{Appendix}
+% --------------------------------------------------- Slide --
+\begin{frame}
+	\frametitle{Appendix}
+	Here's some information and methods that are less essential:
+	\begin{itemize}
+		\item Links
+		\item Tulip import method
+		\item Will add more with next update...
+	\end{itemize}
+\end{frame}
+% --------------------------------------------------- Slide --
+\subsection{Links}
 % --------------------------------------------------- Slide --
 \begin{frame}
 	\frametitle{Links}
+	The SBFSEM-tools \href{www.github.com/sarastokes/sbfsem-tools}{\textcolor{blue}{repository}} can be found on Github.\\
+	I included two open source matlab toolboxes: \href{https://www.mathworks.com/matlabcentral/fileexchange/33381-jsonlab--a-toolbox-to-encode-decode-json-files}{\textcolor{blue}{JSONLab}} and the \href{https://www.mathworks.com/matlabcentral/fileexchange/47982-gui-layout-toolbox}{\textcolor{blue}{GUI Layout Toolbox}}.\\
+	The software used for annotations is \href{https://connectomes.utah.edu/}{\textcolor{blue}{Viking}}, developed by Jamie Anderson and the Marc Lab at University of Utah.\\
+	Useful free programs involved in these analyses:
 	\begin{itemize}
-		\item \href{www.github.com/sarastokes/sbfsem-tools}{SBFSEM-tools repository}
-		\item \href{https://www.mathworks.com/matlabcentral/fileexchange/47982-gui-layout-toolbox}{GUI Layout Toolbox}
-		\item \href{https://www.mathworks.com/matlabcentral/fileexchange/33381-jsonlab--a-toolbox-to-encode-decode-json-files}{JSONLab}
-		\item Tulip
-		\item Tulip Python documentation
-		\item Blender
-		\item Viking documentation
+		\item \href{http://chip.de/downloads/Tulip-64-Bit_41528289.html}{\textcolor{blue}{Tulip}} supports graph visualization. The documentation for Tulip's Python package can be found \href{http://tulip.labri.fr/Documentation/4_10_0/tulip-python/html/index.html}{\textcolor{blue}{here}}.
+		\item \href{http://www.blender.com}{\textcolor{blue}{Blender}} for 3D renders of neurons.
 	\end{itemize}
+	SBFSEM-tools was developed in the \href{http://www.neitzvision.com/}{\textcolor{blue}{Neitz lab}} at University of Washington.
 \end{frame}	
+% --------------------------------------------------- Slide --
+\subsection{Tulip Import}
+% --------------------------------------------------- Slide --
+\begin{frame}[fragile]
+	\frametitle{Import}
+	\framesubtitle{Step One: Tulip}
+	\begin{block}{}
+		Open a cell in Tulip and then open the Python command line. It's on the bottom toolbar.\\
+		Set the file name* and file path:
+		\begin{lstlisting}[language=python]
+		outputFile = "C:\...\c207.json"\end{lstlisting}
+		Then run these two lines:
+		\begin{lstlisting}[language=python]
+		params = tlp.getDefaultPluginParameters('JSON Export', graph)
+		success = tlp.exportGraph('JSON Export', graph, outputFile, params)\end{lstlisting}
+	\end{block}
+\end{frame}
+% --------------------------------------------------- Slide --
+\begin{frame}
+	\frametitle{Import}
+	\framesubtitle{Step One: Tulip}
+	\includegraphics[width = 0.9\textwidth]{tulip_python}
+\end{frame}
+% --------------------------------------------------- Slide --
+\begin{frame}[fragile]
+	\frametitle{Alternative Streamlined Import}
+	\framesubtitle{Step One - Tulip}
+	If you're comfortable with Python, you can skip opening Tulip's UI entirely.\\
+	First get the Tulip modules:
+	\begin{lstlisting}
+	$ pip install tulip-python\end{lstlisting}
+	This will allow you to export \texttt{.tlp} (or compressed \texttt{.tlp.gz}) files to JSON from a command line without Tulip's UI.
+	\begin{lstlisting}[language=python]
+	from tulip import tlp
+	graph = tlp.loadGraph("C:\...\morph-207.tlp")
+	outputFile = "C:\...\c207.json"
+	params = tlp.getDefaultPluginParameters('JSON Export', graph)
+	success = tlp.exportGraph('JSON Export', graph, outputFile, params)\end{lstlisting}
+\end{frame}
+% --------------------------------------------------- Slide --
+\begin{frame}[fragile]
+	\frametitle{Import}
+	\framesubtitle{Step Two - MATLAB}
+	Load in the JSON file and create a Neuron object:
+	\begin{lstlisting}[language=matlab]
+	c207 = Neuron('c207.json');\end{lstlisting}
+	A dialog box will ask for the cell number and source (temporal, inferior, rc1). To avoid that, include them while creating the Neuron object:
+	\begin{lstlisting}[language=matlab]
+	% output = Neuron(filename, cellNumber, source);
+	c207 = Neuron('c207.json', 207, 'temporal');\end{lstlisting}
+	To update the underlying data for an existing Neuron:
+	\begin{lstlisting}[language=matlab]
+	c207.updateData('c207.json');\end{lstlisting}
+	Open up the user interface:
+	\begin{lstlisting}[language=matlab]
+	c207.openUI;\end{lstlisting}
+\end{frame}
+% --------------------------------------------------- Slide --
 \end{document}

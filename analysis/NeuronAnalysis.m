@@ -36,6 +36,7 @@ classdef NeuronAnalysis < handle
     
     methods (Abstract)
         doAnalysis(obj) % main analysis method
+        visualize(obj) % display analysis results
     end % abstract methods
     
     methods
