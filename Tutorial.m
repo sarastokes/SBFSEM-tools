@@ -1,4 +1,6 @@
 % SBFSEM-tools tutorial
+% 29Sept2017 - several aspects are now out of date with new OData import.
+% I will fix this soon.
 
 % The purpose of this tutorial is to demonstrate the program's basic
 % capabilities while checking to ensure each component is installed
@@ -7,11 +9,6 @@
 
 %% First add sbfsem-tools to your path by editing the filepath below:
 addpath(genpath('C:\users\...\sbfsem-tools'));
-
-%% Next add your data folder to the file path:
-addpath(genpath('C:\users\...\sbfsem-data'));
-% To streamline future saving, you may want to edit the saveDir in
-% ui/defaults/getFilepaths.m with this path
 
 %% Toolbox check
 % Check community toolboxes to make sure GUI Layout Toolbox is installed
@@ -30,39 +27,20 @@ else
 	end
 end
 
-%% Export from Viking
-% Let's import c207 from NeitzTemporalMonkey. You could right click on c207
-% in Viking. However, with the right URL, you can download a tlp file from
-% the web.
-% 	getVikingURL(cellNumber, 'source')
-getVikingURL(207, 't');
-% Note: 'NeitzTemporalMonkey' can be abbreviated as 'temporal' or 't'.
-% Similarly, 'inferior' and 'i' work for 'NeitzInferiorMonkey'. Anyway, the
-% URL is now in copied to your clipboard. Paste it into your browser and
-% press enter.. The tlp file should download! Like exporting from Viking,
-% occasionally this fails.. just re-enter the URL and try again.
+%% Import from OData
 
-% Now open the .tlp file in Tulip or open a Python shell (either way, see
-% the documentation for this part)
-
-%% Import to matlab
-% Go to the NeitzTemporal folder of sbfsem-data (or wherever you saved the
-% .json file)
-cd('C:\Users\...\sbfsem-data\NeitzTemporal\');
-
-% Create a Neuron object Neuron('filename.json', cellNumber, 'source');
-c207 = Neuron('c207.json', 207, 't');
+% Create a Neuron object Neuron(cellID, 'source');
+c207 = Neuron(207, 'temporal');
+% Note: sources are 'temporal', 'inferior', 'rc1' but will
+% recognize any abbreviation like 't', 'inf', etc
 
 % Open the UI
-c207.openUI();
-
-%% Additional commands:
-% If you'd like to update an existing Neuron:
-c207.updateData('c207.json');
+NeuronApp(c207);
 
 %% ------------------------------------------------------------
-% Data table The bulk of a Neuron's data is stored in it's dataTable which
-% is easily searchable
+% Data table The bulk of a Neuron's data is stored in it's dataTable. 
+% I chose this data structure as it's similar to Excel - a
+% program everyone in the collaboration is comfortable with.
 
 % Here's a few examples of queries..
 
@@ -83,9 +61,63 @@ T.Location % returns the location IDs!
 doc table
 % should get you to the right area.
 
+%% ------------------------------------------------------------
+%% ImageStack class
+% In Viking: Export frames from viking to a dedicated folder
 
+% ImageStack represents the images as a doubly linked list
+% Creating ImageStack imports all .png files in that folder, relying on the numbering system created by Viking's export frames
+imStack = ImageStack(folderPath);
+% Open in image stack app
+ImageStackApp(imStack);
+
+% Create a GIF 
+[im, map] = stack2gif(ImageStack);
+imwrite(im, map, 'foldername/filename.gif',... 
+	'DelayUpdate', 0,...
+	'Loop', inf);
 
 %% ------------------------------------------------------------
+%% NeuronAnalysis class
+% This class will make population data on common analyses easier to manage
+% and reproduce by organizing input parameters and results.
+
+% load in an h1 horizontal cell
+load c28
+
+% Here's the primary dendrite diameter analysis:
+a = PrimaryDendriteDiameter(c28);
+% add it to the neuron:
+c28.addAnalysis(a);
+% Each analysis has input parameters that may vary
+a = PrimaryDendriteDiameter(c28, 'searchBins', [3 6]);
+% These parameters are saved to the neuron with the analysis object
+c28.addAnalysis(a);
+% To overwrite an existing analysis, set overwrite priviledges to true
+c28.addAnalysis(a, true);
+
+% Here's an 2nd example with the dendritic field convex hull analysis:
+
+% This cell has an axon that shouldn't be included in dendritic field area.
+axonCheck(c28);
+% Remove the axon with the data brush option (toolbar) next click on the
+% cell body. This makes the cell the currently active object (might need to
+% first select the mouse button on the toolbar)
+xy = xyFromPlot(gco);
+% xy is the new, axonless matrix of annotation locations
+
+% Get the dendritic field hull and return a plot. The object returned
+% stores your xy values so you won't have to remove the axon again later.
+foo = DendriticFieldHull(c28, xy);
+
+% Add this to the neuron
+c28.addAnalysis(foo);
+% If you already have a DendriticFieldHull
+
+%% ------------------------------------------------------------
+% 29Sept2017 - Mosaic class is now out of date with new OData system
+% Fixing this is on the list
+%
 % Mosaic class - Everything in the repository is functional, however, the
 % underlying code is still changing - current Mosaic objects may not be
 % compatible with future updates... Here's a brief intro and I'll add more
@@ -135,39 +167,4 @@ PR.loadadd('c643.mat');
 % S-cone, Red = LM-cone, Black = rod
 PR.somaPlot();
 
-%% NeuronAnalysis class
-% This class will make population data on common analyses easier to manage
-% and reproduce by organizing input parameters and results.
-
-% load in an h1 horizontal cell
-load c28
-
-% Here's the primary dendrite diameter analysis:
-a = PrimaryDendriteDiameter(c28);
-% add it to the neuron:
-c28.addAnalysis(a);
-% Each analysis has input parameters that may vary
-a = PrimaryDendriteDiameter(c28, 'searchBins', [3 6]);
-% These parameters are saved to the neuron with the analysis object
-c28.addAnalysis(a);
-% To overwrite an existing analysis, set overwrite priviledges to true
-c28.addAnalysis(a, true);
-
-% Here's an 2nd example with the dendritic field convex hull analysis:
-
-% This cell has an axon that shouldn't be included in dendritic field area.
-axonCheck(c28);
-% Remove the axon with the data brush option (toolbar) next click on the
-% cell body. This makes the cell the currently active object (might need to
-% first select the mouse button on the toolbar)
-xy = xyFromPlot(gco);
-% xy is the new, axonless matrix of annotation locations
-
-% Get the dendritic field hull and return a plot. The object returned
-% stores your xy values so you won't have to remove the axon again later.
-foo = DendriticFieldHull(c28, xy);
-
-% Add this to the neuron
-c28.addAnalysis(foo);
-% If you already have a DendriticFieldHull
 

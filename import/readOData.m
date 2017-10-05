@@ -1,0 +1,6 @@
+function data = readOData(endpoint)
+	% READODATA  Webread with options
+	
+	data = webread(endpoint,...
+		'Timeout', 30,...
+		'ContentType', 'json');

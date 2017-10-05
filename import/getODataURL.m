@@ -25,6 +25,8 @@ function str = getODataURL(cellNum, source, urlType)
 				')/LocationLinks/?$select=A,B'];
 		case 'child'
 			str = [baseURL '/Structures(' num2str(cellNum) ')/Children'];
+		case 'scale'
+			str = [baseURL '/Scale'];
 		otherwise
 			str = baseURL;
 	end

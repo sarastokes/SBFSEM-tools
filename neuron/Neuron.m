@@ -3,75 +3,40 @@ classdef Neuron < handle
     % 14Jun2017 - SSP - created
     % 01Aug2017 - SSP - switched createUi to separate NeuronApp class
     % 25Aug2017 - SSP - added analysis property & methods
+    % 2Oct2017 - SSP - ready for odata-based import
     
     properties
         cellData
-        analysis
+        analysis = containers.Map()
         saveDir % will be used more in the future
     end
     
+    properties % new
+        neuronData
+        nodeData
+        edgeData
+        childData
+    end
+    
     properties (SetAccess = private, GetAccess = public)
-        % these are properties parsed from tulip data
-        skeleton % just the "cell" nodes
-        dataTable % The properties included are: LocationInViking,
-        % LocationID, ParentID, StructureType, Tags, ViewSize, OffEdge and
-        % Terminal. See parseNodes.m for more details
-        
-        synData % this contains data about each synapse type in the cell
-        parseDate % date .tlp or .tlpx file created
-        jsonDir % filename and path for json data file
-        
+        parseDate % date info pulled from odata        
         networkDate % date added connectivity
-        conData % connectivity data
-        
+        conData % connectivity data        
+    end
+    
+    properties (Dependent = true)
         synList % synapses in cell
-        somaNode % largest "cell" node
+        somaRow % largest "cell" node's row
     end
-    
-    properties (Access = private)
-        nodeList % all nodes
-        tulipData
-    end
-    
-    properties (Hidden, Transient)
-        somaDist
-    end
-        
+
     methods
-        function obj = Neuron(jsonData, cellNum, source, varargin)
+        function obj = Neuron(ID, source, varargin)
+            validateattributes(ID, {'numeric'}, {'numel', 1});
+            source = validatestring(source, {'temporal', 'inferior', 'rc1'});
             
-            % create the cellData structure
-            obj.cellData = struct();
-            % create analysis map
-            obj.analysis = containers.Map;
-            
-            % get the cell number if not provided
-            if nargin < 2
-                answer = inputdlg('Input the cell number:',...
-                    'Cell number dialog box', 1);
-                cellNum = answer{1};
-                obj.cellData.cellNum = str2double(cellNum);
-            else
-                obj.cellData.cellNum = cellNum;
-            end
-            
-            % get the source if not provided
-            if nargin >= 3
-                switch lower(source)
-                    case {'temporal', 't'}
-                        source = 'temporal';
-                    case {'inferior', 'i'}
-                        source = 'inferior';
-                    case {'rc1', 'r'}
-                        source = 'rc1';
-                    otherwise
-                        warndlg('valid source names: (temporal, t), (inferior, i), (rc1, r)');
-                        source = obj.getSource();
-                end
-            else
-                source = obj.getSource();
-            end
-            obj.cellData.source = source;
+            % Get the OData
+            [obj.neuronData, obj.nodeData, obj.edgeData, obj.childData] =... 
+                getNeuronOData(ID, source);
             
             % parse additional inputs
             ip = inputParser();
@@ -85,71 +50,16 @@ classdef Neuron < handle
             ip.parse(varargin{:});
             
             % set the cellType
-            obj.cellData.cellType = [];
-            if ~isempty(ip.Results.ct)
-                x = getCellTypes;
-                ind = find(not(cellfun('isempty',...
-                    strfind(getCellTypes(1), upper(ip.Results.ct))))); %#ok<STRCL1>
-                obj.cellData.cellType = [x{ind}]; %#ok<FNDSB>
-                fprintf('set cell type to %s\n', obj.cellData.cellType);
-            end
-            
+            obj.cellData.cellType = validateCellType(ip.Results.ct);
+      
             % set the subtype
-            obj.cellData.subType = [];
-            if ~isempty(obj.cellData.cellType) && ~isempty(ip.Results.st)
-                x = getCellSubtypes(obj.cellData.cellType);
-                if any(ismember(x, lower(ip.Results.st)))
-                    ind = find(not(cellfun('isempty',...
-                        strfind(x, lower(ip.Results.st))))); %#ok<STRCL1>
-                    obj.cellData.subType = [x{ind}];  %#ok<FNDSB>
-                    fprintf('set subtype to %s\n', obj.cellData.subType);
-                else
-                    fprintf('SubType %s not found\n', ip.Results.st);
-                end
-            end
+            obj.cellData.subtype = validateSubType(ip.Results.st, obj.cellData.cellType);
             
-            % set the polarity
-            obj.cellData.onoff = [0 0];
-            if ~isempty(ip.Results.pol)
-                pol = ip.Results.pol;
-                if isvector(pol) && numel(pol) == 2
-                    obj.cellData.onoff = pol;
-                elseif ischar(pol)
-                    switch lower(pol)
-                        case 'on'
-                            obj.cellData.onoff(1) = 1;
-                        case 'off'
-                            obj.cellData.onoff(2) = 1;
-                        case 'onoff'
-                            obj.cellData.onoff = [1 1];
-                    end
-                end
-            end
+            obj.cellData.onoff = validatePolarity(ip.Results.pol);
+            obj.cellData.inputs = validateConeInputs(ip.Results.prs);
+            obj.cellData.strata = validateStrata(ip.Results.strata);
             
-            % set the cone inputs
-            obj.cellData.inputs = zeros(1,3);
-            if ~isempty(ip.Results.prs)
-                prs = ip.Results.prs;
-                if numel(prs) == 1
-                    obj.cellData.inputs(prs) = 1;
-                elseif numel(prs) == 3
-                    obj.cellData.inputs = prs;
-                end
-            end
-            
-            % set the strata
-            obj.cellData.strata = zeros(1,5);
-            if ~isempty(ip.Results.strata)
-                strat = ip.Results.strata;
-                if numel(strat) == 5 && max(strat) == 1
-                    obj.cellData.strata = strat;
-                elseif max(strat) <= 5
-                    obj.cellData.strata(strat) = 1;
-                end
-            end
-            
-            % set the annotator initials
-            obj.cellData.annotator = ip.Results.ann;
+            obj.cellData.annotator = ip.Results.ann;        
             
             % trigger loadCellData in NeuronApp
             if nargin > 3
@@ -160,19 +70,32 @@ classdef Neuron < handle
             
             obj.cellData.notes = [];
             
-            % parse the neuron
-            obj.json2Neuron(jsonData, source);
+            obj.nodeData.Unique = zeros(height(obj.nodeData), 1);
+            localNames = []; nChild = [];
+            for i = 1:height(obj.childData)
+                localNames = cat(2, localNames, getLocalSynapseName(...
+                    obj.childData.TypeID(i,:), obj.childData.Tags(i,:)));
+                row = find(obj.nodeData.ParentID == obj.childData.ID(i));
+                nChild = cat(2, row, numel(ind));
+                if numel(ind) > 1
+                    ind = find(b.Z(row,:) == median(b.Z(row,:)));
+                    obj.nodeData.Unique(row(ind)) = 1;
+                end
+            end
+            obj.childData.LocalName = localNames;
+            obj.childData.N = nChild;
             
-            rows = ~strcmp(obj.dataTable.LocalName, 'cell') & obj.dataTable.Unique == 1;
-            synTable = obj.dataTable(rows,:);
-            [~, obj.synList] = findgroups(synTable.LocalName);            
+            obj.parseDate = datestr(now);
+           
         end % constructor
         
-        function update(obj, jsonData)
-            obj.json2Neuron(jsonData, obj.cellData.source);
-            obj.parseDate = datestr(now);
-            fprintf('updated underlying data\n');
-        end % update data
+        function somaRow = get.somaRow(obj)
+            somaRow = find(obj.nodeData.Radius == max(obj.nodeData.Radius));
+        end
+
+        function synList = get.synList(obj)
+            [~, obj.synList] = findgroups(obj.childData.LocalName);
+        end
         
         function T = synIDs(obj, whichSyn)
             % SYNIDS  Return location IDs for synapses
@@ -204,11 +127,6 @@ classdef Neuron < handle
                 xyz = obj.dataTable{rows, 'XYZ'};
             end
         end % getSynapseXYZ
-
-
-        function fh = openApp(obj)
-            fh = NeuronApp(obj);
-        end
         
         function id = getSomaID(obj, toClipboard)
             % GETSOMAID  Get location ID for current "soma" node
@@ -273,8 +191,8 @@ classdef Neuron < handle
                  
         function printSyn(obj)
             % summarize synapses to cmd line
-            rows = ~strcmp(obj.dataTable.LocalName, 'cell') & obj.dataTable.Unique;
-            T = obj.dataTable(rows,:);
+            rows = ~strcmp(obj.childData.LocalName, 'cell');
+            T = obj.childData(rows,:);
             
             [a, b] = findgroups(T.LocalName);
             x = splitapply(@numel, T.LocalName, a);
@@ -283,26 +201,6 @@ classdef Neuron < handle
             end
         end % printSyn
 
-        function rescaleXYZ(obj)
-            % RESCALEXYZ  Change XYZ based on OData scale
-            dbase = getODataURL(obj.cellData.source);
-            vol = webread([dbase '/Scale'],... 
-                'Timeout', 30,...
-                'ContentType', 'json',...
-                'CharacterEncoding', 'UTF-8');
-            newScale = [vol.X.Value, vol.Y.Value, vol.Z.Value];
-            fprintf('Updating XYZum with scale:\n    %.2g, %.2g, %.2g in %s\n',...
-                newScale, vol.X.Units);
-            % convert to microns if needed
-            if strcmp(vol.X.Units, 'nm') && strcmp(vol.X.Units, 'nm')
-                newScale = newScale ./ 1000; %#ok<NASGU>
-            end
-            obj.dataTable.XYZum = bsxfun(@times, obj.dataTable.XYZ,... 
-                [vol.X.Value, vol.Y.Value, vol.Z.Value]);
-        end
-    end % methods
-    
-    methods % network methods
         function addNetwork(obj, networkFile)
             % ADDCONNECTIVITY  Add network data to neuron
             if nargin < 2
@@ -314,44 +212,5 @@ classdef Neuron < handle
             obj.networkDate = datestr(now);
             fprintf('added network\n');
         end % addNetwork
-    end % network methods
-    
-    methods (Access = private)     
-        function source = getSource(obj) %#ok<MANU>
-            % GETSOURCE  Dialog box for tissue block
-            answer = questdlg('Which block?',...
-                'tissue source dialog',...
-                'inferior', 'temporal', 'rc1', 'inferior');
-            source = answer;
-        end % getSource
-        
-        function json2Neuron(obj, jsonData, source)
-            % JSON2NEURON  Wrapper for loadjson
-            % detect input type
-            if ischar(jsonData) && strcmp(jsonData(end-3:end), 'json')
-                fprintf('parsing with loadjson.m...');
-                jsonData = loadjson(jsonData);
-                fprintf('parsed\n');
-                jsonData = parseNeuron(jsonData, source);
-                obj.dataTable = jsonData.dataTable;
-            elseif isstruct(jsonData) && isfield(jsonData, 'version')
-                jsonData = parseNeuron(jsonData, source);
-            elseif isstruct(jsonData) && isfield(jsonData, 'somaNode')
-                fprintf('already parsed from parseNodes.m\n');
-            else % could also supply output from loadjson..
-                warndlg('input filename as string or struct from loadjson()');
-                return
-            end
-            
-            obj.parseDate = jsonData.parseDate;
-            
-            obj.nodeList = jsonData.nodeList;
-            
-            obj.synData = jsonData.typeData;
-            obj.tulipData = jsonData.tulipData;
-            
-            obj.skeleton = jsonData.skeleton;
-            obj.somaNode = jsonData.somaNode;
-        end % json2neuron     
-    end % methods private
+    end % methods  
 end % classdef

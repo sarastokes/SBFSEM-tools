@@ -11,7 +11,6 @@ function [neuronData, nodeData, edgeData, childData] = getNeuronOData(cellNum, s
     	neuronData = readOData(neuronURL);
     catch ME1
         % Often first run times out regardless of timeout setting
-        %meID = regexp(ME1.identifier, '(?<=:)\w+$', 'match');
         if strcmp(ME1.identifier, 'MATLAB:webservices:Timeout')
             neuronData = readOData(neuronURL);
         end
@@ -24,7 +23,8 @@ function [neuronData, nodeData, edgeData, childData] = getNeuronOData(cellNum, s
     childData = readOData(childURL);
     childData = rmfield(childData.value, {'Confidence',... 
     	'Notes', 'Verified', 'Created', 'Version' });
-  	childData = struct2table(childData);	
+  	childData = struct2table(childData);
+    childData.Tags = parseTags(childData.Tags);
 
     IDs = childData.ID;
     fprintf('Importing data for %u child structures\n', length(IDs));
@@ -44,14 +44,6 @@ function [neuronData, nodeData, edgeData, childData] = getNeuronOData(cellNum, s
         'VolumeX', 'VolumeY', 'Z', 'Radius', 'X', 'Y', 'OffEdge'};
 
     % support functions --------------------------------------------
-    function data = readOData(url)
-        % READODATA  Webread with options
-        data = webread(url,...
-            'Timeout', 30,...
-            'ContentType', 'json',...
-            'CharacterEncoding', 'UTF-8');
-    end
-
     function Locs = getLocationData(ID)
         locationURL = getODataURL(ID, source, 'location');
         importedData = readOData(locationURL);
