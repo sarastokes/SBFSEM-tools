@@ -6,7 +6,7 @@ classdef NeuronAnalysis < handle
 
 
     properties (SetAccess = protected)
-        data % structure if 1, table if more
+        data % structure if 1, table/map if more
     end
     properties (Access = private)
         actions % logs all activity
@@ -15,7 +15,7 @@ classdef NeuronAnalysis < handle
         target % object being analyzed: neuron, mosaic, simneuron        
     end
     properties (Abstract)
-        keyName % reference in Neuron/Mosaic analysis containers.Map
+        DISPLAYNAME % reference in Neuron/Mosaic analysis containers.Map
     end
 
 

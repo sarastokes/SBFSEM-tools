@@ -6,7 +6,10 @@ classdef DendriticFieldHull < NeuronAnalysis
         % final cell structure used in analysis. Right now, the structure
         % is automatically saved, this may become optional in the future.
         dendrites
-        keyName = 'DendriticFieldHull'
+    end
+
+    properties (Constant = true, Hidden = true)
+        DISPLAYNAME = 'DendriticFieldHull'
     end
 
     methods

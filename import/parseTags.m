@@ -4,7 +4,7 @@ function y = parseTags(x)
     % 1Oct2017 - SSP
     
     validateattributes(x, {'cellstr', 'cell'},{});
-    y = [];
+    y = cell(0,1);
     % localNames = cat(2, localNames, regexp(tag, '"\w*\w*"', 'match');
     
     for i = 1:size(x,1)

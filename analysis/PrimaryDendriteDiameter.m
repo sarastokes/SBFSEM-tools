@@ -1,14 +1,15 @@
 classdef PrimaryDendriteDiameter < NeuronAnalysis
     % PRIMARYDENDRITEDIAMETER
     % See analyzeDS.m for information on use
+    %
     % INPUTS:
     %		neuron 				neuron object
     %	OPTIONAL:
-    %		dim 		[2]			2 or 3 dimensions
-    %		ind 		[]			rows to remove (axon, soma)
-    %		nbins 	[auto]	number of bins for histogram
-    %		graph 	[true]	whether to plot results
-    %		search 	[2 5]		primary dendrite search window
+    %		dim 		[2]		2 or 3 dimensions
+    %		ind 	    []	    rows to remove (axon, soma)
+    %		nbins 	  [auto]	number of bins for histogram
+    %		graph 	  [true]	whether to plot results
+    %		search 	  [2 5]		primary dendrite search window
     %	OUTPUT:
     %		d 			structure containing stats
     %
@@ -20,8 +21,8 @@ classdef PrimaryDendriteDiameter < NeuronAnalysis
     %
     % 25Aug2017 - SSP - created from analyzeDS.m
     
-    properties
-        keyName = 'PrimaryDendriteDiameter'
+    properties (Constant = true, Hidden = true)
+        DISPLAYNAME = 'PrimaryDendriteDiameter'
     end
     
     methods
@@ -45,41 +46,41 @@ classdef PrimaryDendriteDiameter < NeuronAnalysis
             nbins = ip.Results.nbins;
             searchBins = ip.Results.search(1):ip.Results.search(2);
             
-            % get the soma location
+            % Get the soma location
             soma = getSomaXYZ(obj.target);
-            % remove rows for soma/axon
+            % Remove rows for soma/axon
             T = obj.target.dataTable;
             if ~isempty(ip.Results.ind)
                 T(ip.Results.ind,:) = [];
             end
-            % remove the synapse annotations
+            % Remove the synapse annotations
             row = strcmp(T.LocalName, 'cell');
             T = T(row, :);
-            % get the remaining locations
+            % Get the remaining locations
             xyz = T.XYZum;
             
-            % remove Z-axis if needed
+            % Remove Z-axis if needed
             if ip.Results.dim == 2
                 xyz = xyz(:, 1:2);
                 soma = soma(:, 1:2);
             end
             
-            % get the distance of each annotation from the soma
+            % Get the distance of each annotation from the soma
             somaDist = fastEuclid2d(soma, xyz);
             fprintf('soma distances range from %.2f to %.2f\n',...
                 min(somaDist), max(somaDist));
             
-            % create a histogram of soma distances
+            % Create a histogram of soma distances
             if isempty(nbins)
                 [n, edges, bins] = histcounts(somaDist);
             else
                 [n, edges, bins] = histcounts(somaDist, nbins);
             end
             
-            % get the dendrite sizes
+            % Get the dendrite sizes
             dendrite = T.Size;
             
-            % prevent splitapply error for empty bins
+            % Prevent splitapply error for empty bins
             emptyBins = find(n == 0);
             % lots of empty bins is generally not a good sign
             fprintf('Found %u empty bins\n', numel(emptyBins));
