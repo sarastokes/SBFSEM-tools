@@ -7,4 +7,4 @@ function distFromSoma = fastEuclid2d(somaXY, targetXY)
 	x = bsxfun(@minus, somaXY(:,1), targetXY(:,1));
 	y = bsxfun(@minus, somaXY(:,2), targetXY(:,2));
 
-	distFromSoma = sqrt(x.^2 + x.^2);
+	distFromSoma = sqrt(x.^2 + y.^2);
