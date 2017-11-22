@@ -35,8 +35,11 @@ classdef Neuron < handle
         ODataObj
     end
     
+    properties (Dependent = true)
+        synapseNames % synapses in cell
+    end
+    
     properties (Dependent = true, Transient = true, Hidden = true)
-        synList % synapses in cell
         somaRow % largest "cell" node's row
     end
 
@@ -77,13 +80,13 @@ classdef Neuron < handle
             obj.ID = ID;
             obj.source = source;
             
-            obj.ODataObj = OData(obj.ID, obj.source);
-            
             % Parse additional inputs
             if nargin > 2
                 obj.addDescription(varargin{:});
             end
 
+            obj.ODataObj = sbfsem.io.NeuronOData(obj.ID, obj.source);
+            
             % Fetch OData and parse
             obj.pull();
 
@@ -104,9 +107,9 @@ classdef Neuron < handle
             somaRow = find(obj.nodes.Radius == max(obj.nodes.Radius));
         end
 
-        function synList = get.synList(obj)
-            % SYNLIST  Returns a list of synapse types
-            [~, synList] = findgroups(obj.synapses.LocalName);
+        function synapseNames = get.synapseNames(obj)
+            % synapseNames  Returns a list of synapse types
+            [~, synapseNames] = findgroups(obj.synapses.LocalName);
         end
 
         function setGeometries(obj)
@@ -125,24 +128,33 @@ classdef Neuron < handle
                 ')\Locations?$filter=TypeCode eq 6']);
             
             for i = 1:numel(odata.value)
-                obj.geometries = [obj.geometries; table(odata.value(i).ID, odata.value(i).Z,...  
+                obj.geometries = [obj.geometries; table(odata.value(i).ID,...
+                    odata.value(i).ParentID, odata.value(i).Z,...  
                     {parseClosedCurve(odata.value(i).MosaicShape.Geometry.WellKnownText)})];
             end
-            obj.geometries.Properties.VariableNames = {'ID', 'Z', 'Curve'};
+            obj.geometries.Properties.VariableNames = {'ID', 'ParentID', 'Z', 'Curve'};
             % Sort by z section
             obj.geometries = sortrows(obj.geometries, 'Z', 'descend');
         end
 
-        function synapseNodes = getSynapseNodes(obj, onlyUnique) %#ok
+        function synapseNodes = getSynapseNodes(obj, onlyUnique)
             % GETSYNAPSENODES  Returns a table with only synapse annotations
             % Inputs:
             %   onlyUnique      t/f  return only unique locations
             if nargin < 2
-                row = obj.nodes.ParentID ~= obj.ID;
-            else
+                onlyUnique = true;
+            end
+            if onlyUnique
                 row = obj.nodes.ParentID ~= obj.ID & obj.nodes.Unique;
+            else
+                row = obj.nodes.ParentID ~= obj.ID;
             end
             synapseNodes = obj.nodes(row, :);
+
+            % Sort by parentID
+            synapseNodes = sortrows(synapseNodes, 'ParentID');
+            synapseTable = sortrows(obj.synapses, 'ParentID');
+            synapseNodes = [synapseNodes, synapseTable(:, {'N', 'LocalName'})];
         end
         
         function T = synIDs(obj, whichSyn)
@@ -183,26 +195,23 @@ classdef Neuron < handle
             if nargin < 3 % default unit is microns
                 useMicrons = true;
             end
-
-            % check that input syn is in synapse list
-            assert(ismember(syn, obj.synList), 'Synapse not in list');
             
-            % Find the parent IDs matching synapse
+            % Find the synapse structures matching synapse name
             if ischar(syn)
                 row = strcmp(obj.synapses.LocalName, syn);
-            elseif isnumeric(syn)
-                row = obj.synapses.LocalName == syn;
+            else
+                row = obj.synapses.LocalName == syn;                
             end
-            
-            % Find the unique rows matching synapse name
-            row = strcmp(obj.synapses.LocalName, syn)... 
-                & obj.synapses.Unique == 1;
+            IDs = obj.synapses.ID(row,:);
+
+            % Find the unique instances of each synapse ID
+            row = ismember(obj.nodes.ParentID, IDs) & obj.nodes.Unique;
 
             % get the xyz values for only those rows
             if useMicrons
-                xyz = obj.synapses{row, 'XYZum'};
+                xyz = obj.nodes{row, 'XYZum'};
             else
-                xyz = obj.dataTable{row, 'XYZ'};
+                xyz = obj.dataTable{row, {'X','Y', 'Z'}};
             end
         end 
         
@@ -213,7 +222,7 @@ classdef Neuron < handle
                 toClipboard = false;
             end
             
-            row = strcmp(obj.dataTable.UUID, obj.somaNode);
+            row = strcmp(obj.nodes.ID, obj.somaNode);
             id = obj.dataTable.LocationID(row, :);
             
             % copy to clipboard
@@ -227,13 +236,12 @@ classdef Neuron < handle
             if nargin < 2 % default unit is microns
                 useMicrons = true;
             end
-            % find the row matching the soma node uuid
-            row = strcmp(obj.dataTable.UUID, obj.somaNode);
+
             % get the XYZ values
             if useMicrons
-                xyz = table2array(obj.dataTable(row, 'XYZum'));
+                xyz = obj.nodes{obj.somaRow, 'XYZum'};
             else
-                xyz = table2array(obj.dataTable(row, 'XYZ'));
+                xyz = obj.nodes{obj.somaRow, {'X', 'Y', 'Z'}};
             end
         end
         
@@ -356,13 +364,16 @@ classdef Neuron < handle
             obj.nodes.XYZum = zeros(height(obj.nodes), 3);
             % TODO: There's an assumption about the units in here...
             obj.nodes.XYZum = bsxfun(@times,...
-                [obj.nodes.X, obj.nodes.Y, obj.nodes.Z],...
+                [obj.nodes.VolumeX, obj.nodes.VolumeY, obj.nodes.Z],...
                 (obj.volumeScale./1000));
             % Create a column for radiys in microns
-            obj.nodes.Rum = obj.nodes.Radius * obj.volumeScale(1)./1000;                      
+            obj.nodes.Rum = obj.nodes.Radius * obj.volumeScale(1)./1000; 
+            
+            % Setup synapse columns
+            obj.setupSynapses();
         end
 
-        function fetchSynapses(obj)
+        function setupSynapses(obj)
             import sbfsem.core.StructureTypes;
             % Create a new column for "unique" synapses 
             % The purpose of this is having 1 marker per synapse structure
@@ -390,8 +401,12 @@ classdef Neuron < handle
                 structures = sbfsem.core.VikingStructureTypes(obj.synapses.TypeID);
                 % Match to local StructureType
                 for i = 1:numel(structures)
-                    obj.synapses.LocalName(i,:) = sbfsem.core.StructureTypes.fromViking(...
-                        structures(i), obj.synapses.Tags{i,:});   
+                    try
+                        obj.synapses.LocalName(i,:) = sbfsem.core.StructureTypes.fromViking(...
+                            structures(i), obj.synapses.Tags{i,:});   
+                    catch
+                        assignin('base', 'tags', obj.synapses.Tags{i,:});
+                    end
                 end
                 
                 % Make sure synapses match the new naming conventions

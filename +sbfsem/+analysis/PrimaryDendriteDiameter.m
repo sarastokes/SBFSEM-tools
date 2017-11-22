@@ -2,7 +2,7 @@ classdef PrimaryDendriteDiameter < sbfsem.analysis.NeuronAnalysis
     % PRIMARYDENDRITEDIAMETER
     % See analyzeDS.m for information on use
     %
-    % INPUTS:
+    %   INPUTS:
     %		neuron 				neuron object
     %	OPTIONAL:
     %		dim 		[2]		2 or 3 dimensions
@@ -27,12 +27,12 @@ classdef PrimaryDendriteDiameter < sbfsem.analysis.NeuronAnalysis
     
     methods
         function obj = PrimaryDendriteDiameter(neuron, varargin)
-            validateattributes(neuron, {'Neuron'}, {});
+            validateattributes(neuron, {'sbfsem.Neuron'}, {});
             obj@sbfsem.analysis.NeuronAnalysis(neuron);
             
             obj.doAnalysis(varargin);
             obj.visualize();
-        end % constructor
+        end
         
         function doAnalysis(obj, varargin)
             obj.data = analyzeDS(obj.target, varargin);
@@ -113,7 +113,7 @@ classdef PrimaryDendriteDiameter < sbfsem.analysis.NeuronAnalysis
             
             % save to object
             obj.data = d;
-        end % doAnalysis
+        end
         
         function fh = visualize(obj)
             % VISUALIZE  Plot the analysis results
@@ -135,6 +135,6 @@ classdef PrimaryDendriteDiameter < sbfsem.analysis.NeuronAnalysis
             ylabel(ax, 'avg dendrite diameter (microns)');
             title(ax, sprintf('c%u',...
                 obj.target.cellData.cellNum));
-        end % visualize
-    end % methods
-end % classdef
+        end
+    end
+end

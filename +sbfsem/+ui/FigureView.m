@@ -37,6 +37,10 @@ classdef FigureView < handle
 			end
 		end
 
+		function close(obj)
+			delete(obj.figureHandle);
+		end
+
 		function title(obj, str, axNum)
 			if nargin < 3
 				axHandle = obj.ax;

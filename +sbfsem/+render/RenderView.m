@@ -27,18 +27,20 @@ classdef (Abstract) RenderView < sbfsem.ui.FigureView
         function obj = RenderView(neuron)
             % RENDERVIEW  Create a render figure and object
             % Inputs:
-            %	neuron 		Neuron object
+            %	neuron 		        Neuron object
             %
             % 10Nov2017 - SSP
             
-            assert(isa(neuron, 'Neuron'), 'Input neuron object');
+            assert(isa(neuron, 'sbfsem.Neuron'), 'Input neuron object');
             
             obj@sbfsem.ui.FigureView(1);
             obj.ID = neuron.ID;
             obj.source = neuron.source;
 
             set(obj.figureHandle,...
-                'Name', ['c', num2str(obj.ID), ' render']);
+                'Name', ['c', num2str(obj.ID), ' render'],...
+                'Color', 'k');
+            set(obj.ax, 'Color', 'k');
         end
         
         function update(obj)
@@ -91,7 +93,7 @@ classdef (Abstract) RenderView < sbfsem.ui.FigureView
         function binaryMatrix = padBinaryImages(obj, xy, F)
             % Resize the binary images to xy limits
             binaryMatrix = [];
-            for i = 1:numel(obj.imNodes)
+            for i = 1:numel(F)
                 im = F{i};
                 if size(im,1) < xy(1)
                     pad = xy(1)-size(im,1);

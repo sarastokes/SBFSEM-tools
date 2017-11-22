@@ -1,5 +1,11 @@
-classdef Annotation < sbfsem.core.EntityType
-	
+classdef (Abstract) Annotation < sbfsem.core.EntityType
+    % ANNOTATION  Prepares a single annotation for 3D render
+
+    properties (SetAccess = protected, GetAccess = public)
+        Z
+        parentID
+    end
+
 	properties (Transient = true, SetAccess = protected)
 		boundingBox = [];
 		binaryImage = [];
@@ -7,7 +13,7 @@ classdef Annotation < sbfsem.core.EntityType
     
 	methods
 		function obj = Annotation()
-			% Do nothing
+            % Do nothing, leave to subclasses
 		end
 	end
 
@@ -23,13 +29,13 @@ classdef Annotation < sbfsem.core.EntityType
         	obj.boundingBox = boundingBox;
 		end
 
-		function F = resize(obj, scaleFactor)
+		function F = resize(obj, scaleFactor, varargin)
             % RESIZE  Resample the binary image
             % Inputs:
             %	scaleFactor 		resize by x
             
             % Rerun binarize to prevent multiple call issues
-            obj.binarize();
+            obj.binarize(varargin{:});
             % Resize the image
             obj.binaryImage = imresize(obj.binaryImage, scaleFactor);
             % Set output if needed

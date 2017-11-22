@@ -1,4 +1,4 @@
-classdef OData < handle
+classdef NeuronOData < sbfsem.io.OData
 %
 %   Inputs: 
 %       ID      Viking ID number
@@ -27,7 +27,6 @@ classdef OData < handle
     
     properties (SetAccess = private)
         ID
-        source
         numChildren = 0
     end
     
@@ -48,7 +47,7 @@ classdef OData < handle
     end
     
     methods
-        function obj = OData(ID, source)
+        function obj = NeuronOData(ID, source)
             % ODATA  Serves as middleman between OData server and Matlab
             %  
             % Inputs:
@@ -61,9 +60,8 @@ classdef OData < handle
             % The idea is that other objects use OData, not independent
             %
             % 10Nov2017 - SSP
-            
+            obj@sbfsem.io.OData(source);
             assert(isnumeric(ID), 'ID must be numeric');
-            source = validateSource(source);
             
             vikingData = readOData(getODataURL(ID, source, 'neuron'));
             if vikingData.TypeID ~= 1

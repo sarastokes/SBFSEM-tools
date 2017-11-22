@@ -9,7 +9,7 @@ function hiso = renderClosedCurve(neuron, varargin)
     % Output: handle to 3D Patch object
     % 9Nov2017 - SSP
 
-    assert(isa(neuron, 'Neuron'),...
+    assert(isa(neuron, 'sbfsem.Neuron'),...
         'Input Neuron object');
 
     % Parse additional inputs
@@ -24,9 +24,9 @@ function hiso = renderClosedCurve(neuron, varargin)
     if ischar(faceColor)
         switch faceColor
             case {'l', 'm'}
-                faceColor = [0.65, 0.08, 0.18];
+                faceColor = [.2, 1, 0.4]; % [0.65, 0.08, 0.18];
             case 's'
-                faceColor = [0, 0.3, 0.9];
+                faceColor = [0.2, 0.6, 1]; % [0, 0.3, 0.9];
         end
     end
 
@@ -104,6 +104,8 @@ function hiso = renderClosedCurve(neuron, varargin)
 
     % Create the 3D structure
     fh = sbfsem.ui.FigureView(1);
+    set([fh.figureHandle, fh.ax], 'Color', 'k');
+    
     hiso = patch(isosurface(smoothedImages),...
     	'Parent', fh.ax,...
         'FaceColor', faceColor,...
@@ -124,3 +126,4 @@ function hiso = renderClosedCurve(neuron, varargin)
     daspect(neuron.getDAspect);
     axis equal;
     fh.labelXYZ();
+    set(fh.ax, 'XColor', 'w', 'YColor', 'w', 'ZColor', 'w');

@@ -43,7 +43,7 @@ classdef (Abstract) NeuronAnalysis < handle
             % NEURONANALYSIS
             if nargin > 0
                 % might eventually leave attribute validation to subclasses
-                validateattributes(target, {'Neuron', 'Mosaic'}, {});
+                validateattributes(target, {'Neuron', 'Mosaic', 'Query'}, {});
                 obj.target = target;
             else
                 obj.target = [];
@@ -56,7 +56,7 @@ classdef (Abstract) NeuronAnalysis < handle
     methods
         function append(obj, newData)
             % APPEND  Add a completed analysis to existing object
-            str = [datestr(now) ' - appended new ' class(newData) '\n'];
+            str = [datestr(now), ' - appended new ', class(newData), '\n'];
             if isstruct(newData)
                 newData = struct2table(newData);
             else isa(newData, 'NeuronAnalysis')
@@ -74,6 +74,6 @@ classdef (Abstract) NeuronAnalysis < handle
         function describe(obj, str)
             % DESCRIBE  Add a short string describing the analysis
             obj.description = str;
-        end % describe
-    end % protected methods
-end % classdef
+        end
+    end
+end
