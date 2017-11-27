@@ -26,7 +26,7 @@ classdef BinaryView < handle
 				boundingBox = [];
 			else
 				validateattributes(boundingBox, {'numeric'},...
-					{'size', 4, 'nonnegative'});
+                    {'size', [1 4]});
 			end
 
 			fh = figure('Color', 'k');
@@ -58,12 +58,6 @@ classdef BinaryView < handle
 			% Clear out the figure
 			hold(ax, 'off');
 			delete(fh);
-		end
-	end
-
-	methods (Access = private)
-
-		function createScene(obj)
 		end
 	end
 end

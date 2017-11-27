@@ -112,6 +112,30 @@ classdef Neuron < handle
             [~, synapseNames] = findgroups(obj.synapses.LocalName);
         end
 
+        function boundingBox = getBoundingBox(obj, useMicrons)
+            % GETBOUNDINGBOX  Calculates extent in xy-plane 
+            % INPUTS:
+            %   useMicrons  [true]      microns or pixels     
+            % OUTPUTS:
+            %   boundingBox     [xmin ymin xmax ymax]
+
+            if nargin < 2
+                useMicrons = true;
+                disp('Set units to microns');
+                xyz = obj.nodes.XYZum;
+                r = obj.nodes.Rum;
+            else
+                assert(islogical(useMicrons), 'useMicrons is t/f');
+                xyz = [obj.nodes.VolumeX, obj.nodes.VolumeY];
+                r = obj.nodes.Radius;
+            end
+            boundingBox = zeros(1,4);
+            boundingBox(1) = min(xyz(:,1) - r);
+            boundingBox(2) = max(xyz(:,1) + r);   
+            boundingBox(3) = min(xyz(:,2) - r);
+            boundingBox(4) = max(xyz(:,2) + r);       
+        end
+
         function setGeometries(obj)
             % SETGEOMETRIES  Fetch closed curve OData and parse
             obj.geometries = [];

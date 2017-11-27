@@ -24,9 +24,9 @@ function hiso = renderClosedCurve(neuron, varargin)
     if ischar(faceColor)
         switch faceColor
             case {'l', 'm'}
-                faceColor = [.2, 1, 0.4]; % [0.65, 0.08, 0.18];
+                faceColor = [.2, 1, 0.4];
             case 's'
-                faceColor = [0.2, 0.6, 1]; % [0, 0.3, 0.9];
+                faceColor = [0.2, 0.6, 1];
         end
     end
 
