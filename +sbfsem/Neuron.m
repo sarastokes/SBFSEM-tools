@@ -27,16 +27,12 @@ classdef Neuron < handle
         geometries
         % Date info pulled from odata             
         lastModified 
-        % Analysis related to the neuron
+        % Analyses related to the neuron
         analysis = containers.Map();
     end
     
     properties (Transient = true, Hidden = true)
-        ODataObj
-    end
-    
-    properties (Dependent = true)
-        synapseNames % synapses in cell
+        ODataClient
     end
     
     properties (Dependent = true, Transient = true, Hidden = true)
@@ -85,7 +81,7 @@ classdef Neuron < handle
                 obj.addDescription(varargin{:});
             end
 
-            obj.ODataObj = sbfsem.io.NeuronOData(obj.ID, obj.source);
+            obj.ODataClient = sbfsem.io.NeuronOData(obj.ID, obj.source);
             
             % Fetch OData and parse
             obj.pull();
@@ -107,9 +103,16 @@ classdef Neuron < handle
             somaRow = find(obj.nodes.Radius == max(obj.nodes.Radius));
         end
 
-        function synapseNames = get.synapseNames(obj)
+        function synapseNames = synapseNames(obj, toChar)
             % synapseNames  Returns a list of synapse types
-            [~, synapseNames] = findgroups(obj.synapses.LocalName);
+            if nargin < 2
+                toChar = false;
+            end
+            synapseNames = unique(vertcat(obj.synapses.LocalName{:}));
+            if toChar
+                synapseNames = vertcat(arrayfun(@(x) char(x) ,synapseNames,...
+                    'UniformOutput', false));
+            end
         end
 
         function boundingBox = getBoundingBox(obj, useMicrons)
@@ -129,11 +132,15 @@ classdef Neuron < handle
                 xyz = [obj.nodes.VolumeX, obj.nodes.VolumeY];
                 r = obj.nodes.Radius;
             end
-            boundingBox = zeros(1,4);
-            boundingBox(1) = min(xyz(:,1) - r);
-            boundingBox(2) = max(xyz(:,1) + r);   
-            boundingBox(3) = min(xyz(:,2) - r);
-            boundingBox(4) = max(xyz(:,2) + r);       
+            boundingBox = [min(xyz(:,1) - r), max(xyz(:,1) + r),...
+                min(xyz(:,2) - r), max(xyz(:,2) + r)];  
+
+            % Now check for closed curves
+            obj.setGeometries();
+            if ~isempty(obj.geometries)
+                disp('Including closed curves');
+                % TODO add close curve geometries
+            end
         end
 
         function setGeometries(obj)
@@ -180,6 +187,13 @@ classdef Neuron < handle
             synapseTable = sortrows(obj.synapses, 'ParentID');
             synapseNodes = [synapseNodes, synapseTable(:, {'N', 'LocalName'})];
         end
+
+        function cellNodes = getCellNodes(obj)
+            % GETCELLNODES  Return only cell body nodes
+
+            row = obj.nodes.ParentID == obj.ID;
+            cellNodes = obj.nodes(row, :);
+        end
         
         function T = synIDs(obj, whichSyn)
             % SYNIDS  Return location IDs for synapses
@@ -205,10 +219,20 @@ classdef Neuron < handle
             end
         end
 
-        function um = getSomaSize(obj)
+        function um = getSomaSize(obj, useDiameter)
             % GETSOMASIZE  Returns soma radius in microns
-            um = max(obj.nodes.Rum);
-            fprintf('Soma size = %.2f um diameter\n', 2*um);
+            if nargin < 2
+                useDiameter = false;
+                disp('Returning radius');
+            end
+
+            if useDiameter
+                um = max(obj.nodes.Rum) * 2;
+            else
+                um = max(obj.nodes.Rum);
+            end
+            
+            % fprintf('Soma size = %.2f um diameter\n', 2*um);
         end
         
         function xyz = getSynapseXYZ(obj, syn, useMicrons)
@@ -224,7 +248,7 @@ classdef Neuron < handle
             if ischar(syn)
                 row = strcmp(obj.synapses.LocalName, syn);
             else
-                row = obj.synapses.LocalName == syn;                
+                row = vertcat(obj.synapses.LocalName{:}) == syn;                
             end
             IDs = obj.synapses.ID(row,:);
 
@@ -266,6 +290,10 @@ classdef Neuron < handle
                 xyz = obj.nodes{obj.somaRow, 'XYZum'};
             else
                 xyz = obj.nodes{obj.somaRow, {'X', 'Y', 'Z'}};
+            end
+
+            if size(xyz, 1) > 1
+                xyz = xyz(1,:);
             end
         end
         
@@ -337,23 +365,32 @@ classdef Neuron < handle
             if nargin < 3 
                 overwrite = false;
             end
-            if isempty(obj.analysis)
-                obj.analysis = containers.Map;
+
+            % if isempty(obj.analysis)
+            %     obj.analysis = containers.Map;
+            % end
+
+            validateattributes(analysis, {'sbfsem.analysis.NeuronAnalysis'}, {});
+
+            % Analysis holds a reference to target neuron
+            if isprop(analysis, 'target') && ~isempty(analysis.target)
+                analysis.target = [];
             end
-            validateattributes(analysis, {'NeuronAnalysis'}, {});
-            if isKey(obj.analysis, analysis.keyName)
+
+            if isKey(obj.analysis, analysis.DisplayName)
                 if overwrite
-                    obj.analysis(analysis.keyName) = analysis;
+                    obj.analysis(analysis.DisplayName) = analysis;
                 else
                     fprintf('Existing %s, call fcn w/ overwrite enabled\n',... 
-                        analysis.keyName);
+                        analysis.DisplayName);
                     return;
                 end
                 % dialog to overwrite existing
             else
-                obj.analysis(analysis.keyName) = analysis;
+                obj.analysis(analysis.DisplayName) = analysis;
             end
-            fprintf('Added %s analysis\n', analysis.keyName);
+
+            fprintf('Added %s analysis\n', analysis.DisplayName);
         end
 
         function saveNeuron(obj)
@@ -381,7 +418,7 @@ classdef Neuron < handle
 
             % Get the relevant data with OData queries
             [obj.viking, obj.nodes, obj.edges, obj.synapses, obj.volumeScale] = ...
-                obj.ODataObj.toNeuron();
+                obj.ODataClient.toNeuron();
             
             disp('Processing data');
             % Create an XYZ in microns column
@@ -424,15 +461,17 @@ classdef Neuron < handle
                 % Match the TypeID to the Viking StructureType
                 structures = sbfsem.core.VikingStructureTypes(obj.synapses.TypeID);
                 % Match to local StructureType
+                localNames = cell(numel(structures),1);
                 for i = 1:numel(structures)
                     try
-                        obj.synapses.LocalName(i,:) = sbfsem.core.StructureTypes.fromViking(...
+                        localNames{i,:} = sbfsem.core.StructureTypes.fromViking(...
                             structures(i), obj.synapses.Tags{i,:});   
                     catch
+                        disp('setupSynapses error, assigned to base');
                         assignin('base', 'tags', obj.synapses.Tags{i,:});
                     end
                 end
-                
+                obj.synapses.LocalName = localNames;
                 % Make sure synapses match the new naming conventions
                 makeConsistent(obj);
             end                         

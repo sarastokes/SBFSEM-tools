@@ -115,7 +115,7 @@ function hiso = renderClosedCurve(neuron, varargin)
 
     % Set up the lighting
     view(35, 30);
-    lgt = camlight(90, 90);
+    lgt = camlight(30, 30);
     lgt.Style = 'Local';
     set(hiso,...
     	'FaceLighting', 'gouraud',...

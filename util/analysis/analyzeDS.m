@@ -36,7 +36,7 @@ function d = analyzeDS(neuron, varargin)
 	% get the soma location
 	soma = getSomaXYZ(neuron);
 	% remove rows for soma/axon
-	T = neuron.dataTable;
+	T = neuron.getCellNodes;
 	if ~isempty(ind)
 		T(ind,:) = [];
 	end

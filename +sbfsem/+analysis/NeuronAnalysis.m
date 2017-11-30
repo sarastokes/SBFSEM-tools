@@ -19,6 +19,7 @@ classdef (Abstract) NeuronAnalysis < handle
 
     properties (SetAccess = protected)
         data
+        ID
     end
 
     properties (Access = private)
@@ -27,10 +28,6 @@ classdef (Abstract) NeuronAnalysis < handle
 
     properties (Transient = true)
         target        
-    end
-
-    properties (Abstract)
-        DisplayName
     end
     
     methods (Abstract)
@@ -43,8 +40,16 @@ classdef (Abstract) NeuronAnalysis < handle
             % NEURONANALYSIS
             if nargin > 0
                 % might eventually leave attribute validation to subclasses
-                validateattributes(target, {'Neuron', 'Mosaic', 'Query'}, {});
+                validateattributes(target, {'sbfsem.Neuron', 'sbfsem.NeuronGroup'}, {});
+                % Target is a transient property
                 obj.target = target;
+                % Save only the cell ID numbers with analysis
+                if isa(target, 'sbfsem.Neuron')
+                    obj.ID = obj.target.ID;
+                else
+                    % TODO: Revist this after writing NeuronGroup code
+                   obj.ID = obj.target.IDs;
+                end
             else
                 obj.target = [];
             end

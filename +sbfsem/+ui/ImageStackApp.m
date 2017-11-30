@@ -1,8 +1,10 @@
 classdef ImageStackApp < handle
     
-    properties (Hidden = true, Transient = true)
+    properties (Transient = true)
         currentNode
         handles
+        toolbar
+        imageBounds = [];
     end
     
     methods
@@ -12,7 +14,7 @@ classdef ImageStackApp < handle
             % Inputs:
             %       images      ImageStack
             % Provide a 2nd input to reverse the stack
-            validateattributes(imStack, {'ImageStack'}, {});
+            validateattributes(imStack, {'sbfsem.image.ImageStack'}, {});
 
             if nargin < 2
                 obj.currentNode = imStack.tail;
@@ -24,11 +26,32 @@ classdef ImageStackApp < handle
         end
         
         function createUi(obj)
-            obj.handles.fh = figure('Name', 'Image Stack View',...
+            obj.handles.fh = figure(...
+                'Name', 'Image Stack View',...
+                'Menubar', 'none',...
+                'Toolbar', 'none',...
+                'NumberTitle', 'off',...
+                'DefaultUicontrolBackgroundColor', 'w',...
+                'DefaultUicontrolFontName', 'Segoe Ui',...
+                'DefaultUicontrolFontSize', 10,...
                 'KeyPressFcn', @obj.onKeyPress);
             pos = get(obj.handles.fh, 'Position');
             obj.handles.fh.Position = [pos(1), pos(2)-200, 550, 600];
             
+            obj.toolbar.file = uimenu('Parent', obj.handles.fh,...
+                'Label', 'Process image');
+            uimenu('Parent', obj.toolbar.file,...
+                'Label', 'Crop',...
+                'Callback', @obj.onToolbarCrop);
+            uimenu('Parent', obj.toolbar.file,...
+                'Label', 'Full size',...
+                'Callback', @obj.onToolbarFullSize);
+            obj.toolbar.file = uimenu('Parent', obj.handles.fh,...
+                'Label', 'Export');
+            uimenu('Parent', obj.toolbar.file,...
+                'Label', 'Export image',...
+                'Callback', @obj.onToolbarExport);
+
             mainLayout = uix.VBoxFlex( ...
                 'Parent', obj.handles.fh,...
                 'BackgroundColor', 'w');
@@ -80,7 +103,7 @@ classdef ImageStackApp < handle
             end
             
             obj.currentNode = obj.currentNode.previous;
-            obj.currentNode.show(obj.handles.ax);
+            obj.showImage();
             set(obj.handles.tx.frame, 'String', obj.currentNode.name);
         end
         
@@ -94,8 +117,24 @@ classdef ImageStackApp < handle
             end
             
             obj.currentNode = obj.currentNode.next;
-            obj.currentNode.show(obj.handles.ax);
+            obj.showImage();
             set(obj.handles.tx.frame, 'String', obj.currentNode.name);
+        end
+
+        function showImage(obj)
+            obj.currentNode.show(obj.handles.ax);
+            if ~isempty(obj.imageBounds)
+                xlim(obj.handles.ax, obj.imageBounds([1 3]));
+                ylim(obj.handles.ax, obj.imageBounds([2 4]));
+            end
+        end
+
+        function onToolbarCrop(obj, ~, ~)
+            obj.imageBounds = round(rect2pts(getrect(obj.handles.ax)));
+        end
+
+        function onToolbarFullSize(obj, ~, ~)
+            obj.imageBounds = [];
         end
     end
 end

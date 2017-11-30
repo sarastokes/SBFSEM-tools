@@ -2,13 +2,16 @@ function y = parseTags(x)
     % PARSETAGS  Get rid of the HTML markup and keep the synapse names
     %
     % 1Oct2017 - SSP
-    
+    if ischar(x)
+        x = {x};
+    end
     validateattributes(x, {'cellstr', 'cell'},{});
+
     y = cell(0,1);
     % localNames = cat(2, localNames, regexp(tag, '"\w*\w*"', 'match');
     
     for i = 1:size(x,1)
-        if ~isempty(x{i}) && numel(x{i}) > 1
+        if ~isempty(x{i}) && numel(x{i}) > 1 && ~strcmp(x{i}, '-')
             tag = x{i};
             str = [];      
             % tags are inside quotes

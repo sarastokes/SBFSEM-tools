@@ -170,8 +170,18 @@ classdef NeuronOData < sbfsem.io.OData
         function [viking, nodes, edges, child, volumeScale] = toNeuron(obj)
             % TONEURON  Fetches data and formats in old neuron style
             viking = obj.vikingData;
-            nodes = [obj.getNodes(); obj.getChildNodes()];
-            edges = [obj.getEdges(); obj.getChildEdges()];
+            childNodes = obj.getChildNodes;
+            if ~isempty(childNodes)
+                nodes = [obj.getNodes(); childNodes];
+            else
+                nodes = obj.getNodes();
+            end
+            childEdges = obj.getChildEdges();
+            if ~isempty(childEdges)
+                edges = [obj.getEdges(); childEdges];
+            else
+                edges = obj.getEdges();
+            end
             child = obj.getChildData('data');
             volumeScale = obj.getScale();
         end
@@ -244,8 +254,12 @@ classdef NeuronOData < sbfsem.io.OData
                 obj.fetchSynapses(true);
             end
             
-            childNodes = array2table(obj.childData.nodes);
-            childNodes.Properties.VariableNames = obj.NODENAMES;
+            if isempty(obj.childData.nodes)
+                childNodes = [];
+            else
+                childNodes = array2table(obj.childData.nodes);
+                childNodes.Properties.VariableNames = obj.NODENAMES;
+            end
         end
         
         function childEdges = getChildEdges(obj)
@@ -255,10 +269,13 @@ classdef NeuronOData < sbfsem.io.OData
                 obj.fetchSynapses(true);
             end
             
-            childEdges = array2table(obj.childData.edges);
-            childEdges.Properties.VariableNames = obj.EDGENAMES;
-        end
-        
+            if isempty(obj.childData.edges)
+                childEdges = [];
+            else
+                childEdges = array2table(obj.childData.edges);
+                childEdges.Properties.VariableNames = obj.EDGENAMES;
+            end
+        end    
     end
 
     % OData import and processing methods
@@ -305,6 +322,9 @@ classdef NeuronOData < sbfsem.io.OData
             fprintf('c%u has %u child structures\n',...
                 obj.ID, obj.numChildren);
             if ~isempty(importedData.value)
+                if obj.numChildren == 1
+                    importedData.value.Label = {'-'};
+                end
                 data = struct2table(importedData.value);
                 data.Tags = parseTags(data.Tags);
                 if expandChild
@@ -314,7 +334,7 @@ classdef NeuronOData < sbfsem.io.OData
                     [locs, loclinks, nullIDs] = obj.expandChildData(data.ID);
                     % Mark the empty synapses
                     if ~isempty(nullIDs)
-                        data.Label(data.ID == nullIDs,:) = 'Null';
+                        data.Label(data.ID == nullIDs,:) = {'Null'};
                     end
                 else
                     locs = []; 

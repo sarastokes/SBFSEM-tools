@@ -1,4 +1,19 @@
 classdef DendriticFieldHull < sbfsem.analysis.NeuronAnalysis
+% DENDRITICFIELDHULL
+%
+%   Inputs:
+%      neuron           neuron object
+%   Optional:  
+%       xyz             dendrites to use in analysis
+%                       use if removing axons
+%   Output:
+%       d               structure containing stats
+%       []              creates a figure showing convhull and dendrites
+%
+%   NOTES:  Analysis is not projected onto plane calculated from depth
+%           markers. This should be ok for smaller neurons but will
+%           need to be corrected at some point for wide-field cells
+%   Aug2017 - SSP
 
     properties
         % This often requires manually removing an axon or clipping out
@@ -14,11 +29,11 @@ classdef DendriticFieldHull < sbfsem.analysis.NeuronAnalysis
 
     methods
         function obj = DendriticFieldHull(neuron, xyz)
-            validateattributes(neuron, {'Neuron'}, {});
+            validateattributes(neuron, {'sbfsem.Neuron'}, {});
             obj@sbfsem.analysis.NeuronAnalysis(neuron);
             if nargin < 2
-                row = strcmp(neuron.dataTable.LocalName, 'cell');
-                xyz = neuron.dataTable.XYZum(row,:);
+                T = obj.target.getCellNodes;
+                xyz = T.XYZum;
             end
             obj.dendrites = xyz;
             obj.doAnalysis();
@@ -27,6 +42,8 @@ classdef DendriticFieldHull < sbfsem.analysis.NeuronAnalysis
 
         function doAnalysis(obj, xyz)
           % DOANALYSIS  Borrows code from analyzeDF function
+          % Optional inputs:
+          %   xyz     Overrides xyz values in obj.dendrites
 
           % This allows the analysis to be called individually with new
           % underlying data.

@@ -22,7 +22,7 @@ classdef PrimaryDendriteDiameter < sbfsem.analysis.NeuronAnalysis
     % 25Aug2017 - SSP - created from analyzeDS.m
     
     properties (Constant = true, Hidden = true)
-        DisplayName = 'PrimaryDendriteDiameter'
+        DisplayName = 'PrimaryDendriteDiameter';
     end
     
     methods
@@ -30,12 +30,13 @@ classdef PrimaryDendriteDiameter < sbfsem.analysis.NeuronAnalysis
             validateattributes(neuron, {'sbfsem.Neuron'}, {});
             obj@sbfsem.analysis.NeuronAnalysis(neuron);
             
-            obj.doAnalysis(varargin);
+            
+            obj.doAnalysis(varargin{:});
             obj.visualize();
         end
         
         function doAnalysis(obj, varargin)
-            obj.data = analyzeDS(obj.target, varargin);
+            % obj.data = analyzeDS(obj.target, varargin{:});
             
             ip = inputParser();
             addParameter(ip, 'dim', 2, @(x) ismember(x, [2 3]));
@@ -49,36 +50,36 @@ classdef PrimaryDendriteDiameter < sbfsem.analysis.NeuronAnalysis
             % Get the soma location
             soma = getSomaXYZ(obj.target);
             % Remove rows for soma/axon
-            T = obj.target.dataTable;
+            T = obj.target.getCellNodes;
             if ~isempty(ip.Results.ind)
                 T(ip.Results.ind,:) = [];
             end
-            % Remove the synapse annotations
-            row = strcmp(T.LocalName, 'cell');
-            T = T(row, :);
             % Get the remaining locations
             xyz = T.XYZum;
             
-            % Remove Z-axis if needed
+            % Get the distance of each annotation from the soma
             if ip.Results.dim == 2
+                % Remove Z-axis
                 xyz = xyz(:, 1:2);
                 soma = soma(:, 1:2);
+                somaDist = fastEuclid2d(soma, xyz);
+            else
+                somaDist = fastEuclid3d(soma, xyz);
             end
             
-            % Get the distance of each annotation from the soma
-            somaDist = fastEuclid2d(soma, xyz);
             fprintf('soma distances range from %.2f to %.2f\n',...
                 min(somaDist), max(somaDist));
             
             % Create a histogram of soma distances
             if isempty(nbins)
                 [n, edges, bins] = histcounts(somaDist);
+                fprintf('Using %u bins\n', numel(n));
             else
                 [n, edges, bins] = histcounts(somaDist, nbins);
             end
             
             % Get the dendrite sizes
-            dendrite = T.Size;
+            dendrite = T.Rum;
             
             % Prevent splitapply error for empty bins
             emptyBins = find(n == 0);
@@ -118,7 +119,7 @@ classdef PrimaryDendriteDiameter < sbfsem.analysis.NeuronAnalysis
         function fh = visualize(obj)
             % VISUALIZE  Plot the analysis results
             fh = figure('Name', sprintf('c%u dendrite analysis',...
-                obj.target.cellData.cellNum));
+                obj.target.ID));
             ax = axes('Parent', fh,...
                 'Box', 'off', 'TickDir', 'out');
             hold on;
@@ -134,7 +135,7 @@ classdef PrimaryDendriteDiameter < sbfsem.analysis.NeuronAnalysis
             xlabel(ax, 'distance from soma (microns)');
             ylabel(ax, 'avg dendrite diameter (microns)');
             title(ax, sprintf('c%u',...
-                obj.target.cellData.cellNum));
+                obj.target.ID));
         end
     end
 end

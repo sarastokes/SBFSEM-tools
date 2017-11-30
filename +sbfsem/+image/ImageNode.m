@@ -1,32 +1,61 @@
-classdef ImageNode < sbfsem.image.Node
+classdef ImageNode < handle
 % IMAGENODE  Single image in an image stack
 % Meant to be called from ImageStack, not used alone
 %
 % 29Sept2017 - SSP
 
-	properties (SetAccess = private, GetAccess = public)
-		filePath
+	properties (Access = public)
+		savePath					% New save path
+		name 						% Readable name	
+
+		next 
+		previous
 	end
 
-	methods 
-		function obj = ImageNode(filePath, varargin)
-			obj@sbfsem.image.Node(varargin{:});
+	properties (SetAccess = private, GetAccess = public)
+		filePath					% Original file path
+		imData						% Image
+	end
 
-			% Where the imported image is saved
+	methods
+		function obj = ImageNode(filePath, varargin)
+
+			% where the imported image is saved
 			obj.filePath = filePath;
 
-			if isempty(obj.imData)
-				obj.imData = imread(obj.filePath);
+			ip = inputParser();
+			ip.CaseSensitive = false;
+			% image data
+			addParameter(ip, 'imData', []);
+			% image display name
+			addParameter(ip, 'name', [], @ischar);
+			% where the edited image is saved
+			addParameter(ip, 'savePath', [], @isdir);
+			parse(ip, varargin{:});
+			obj.savePath = ip.Results.savePath;
+
+			% Get image data from filepath
+			if isempty(ip.Results.imData)
+				obj.imData = imread(filePath);
+			else
+				obj.imData = ip.Results.imData;
 			end
 
 			% Use filename if other name isn't specified
-			if isempty(obj.name)
+			if isempty(ip.Results.name)
 				tmp = strsplit(obj.filePath, filesep);
 				obj.name = tmp{end};
+			else
+				obj.name = ip.Results.name;
 			end
+		end
 
-            % Then remove filename from path
-            obj.filePath(1:end-numel(obj.name)) = [];
+		function setName(obj, newName)
+			if ischar(newName)
+				obj.name = newName;
+			elseif isnumeric(newName)
+				obj.num2str(newName);
+			end
 		end
 
 		function setImage(obj, imData, writeFlag)
@@ -50,15 +79,18 @@ classdef ImageNode < sbfsem.image.Node
 			end
 		end
 
-		function ax = show(obj, ax)
+		function fh = show(obj, ax)
+			% SHOW  Display image
+			% Optional inputs:
+			%	ax 			axis handle
 			if nargin == 2
 				validateattributes(ax, {'handle'}, {});
 				fh = ax.Parent;
 			else
 				fh = figure();
 				ax = axes('Parent', fh);
-            end	
-			imshow(obj.imData, 'Parent', fh.Children);
+			end
+			imshow(obj.imData, 'Parent', ax);			
 		end
 
 		function imupdate(obj, check)
@@ -74,10 +106,28 @@ classdef ImageNode < sbfsem.image.Node
 				obj.imcompare(newImage);
 			end
 			obj.imData = newImage;
-		end		
+		end
+
 		function imcompare(obj, newImage)
 			% IMCOMPARE  Compare existing image to new one
 			imshowpair(obj.imData, newImage, 'montage');
+		end
+
+		% Set/get functions
+		function set.next(obj, next)
+			obj.next = next;
+		end
+
+		function next = get.next(obj)
+			next = obj.next;
+		end
+
+		function set.previous(obj, previous)
+			obj.previous = previous;
+		end
+
+		function previous = get.previous(obj)
+			previous = obj.previous;
 		end
 	end
 end
