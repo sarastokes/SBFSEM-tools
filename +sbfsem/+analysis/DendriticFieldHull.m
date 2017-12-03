@@ -13,6 +13,7 @@ classdef DendriticFieldHull < sbfsem.analysis.NeuronAnalysis
 %   NOTES:  Analysis is not projected onto plane calculated from depth
 %           markers. This should be ok for smaller neurons but will
 %           need to be corrected at some point for wide-field cells
+%
 %   Aug2017 - SSP
 
     properties

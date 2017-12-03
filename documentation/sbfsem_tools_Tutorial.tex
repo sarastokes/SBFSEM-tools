@@ -45,11 +45,11 @@
 % --------------------------------------------------- Slide --
 	\maketitle
 % --------------------------------------------------- Slide --
-	\begin{frame}
-		\tableofcontents
-	\end{frame}
+	\tableofcontents
 % --------------------------------------------------- Slide --
-	\section{SBFSEM-tools}
+% ------------------------------------------------- Section --
+\section{SBFSEM-tools}
+% ------------------------------------------------- Section --
 \begin{frame}
 	\frametitle{SBFSEM-tools}
 	Goal: basic analysis support requiring minimal setup and background in computers, math, etc.
@@ -84,7 +84,9 @@
 	\end{itemize}
 \end{frame}
 % --------------------------------------------------- Slide --
+% ------------------------------------------------- Section -- 
 \section{Install}
+% ------------------------------------------------- Section -- 
 % --------------------------------------------------- Slide --
 \begin{frame}[fragile]
 	\frametitle{Install}
@@ -99,10 +101,12 @@
 	returns the version in sbfsem-tools. Otherwise, you might get some errors.
 \end{frame}
 % --------------------------------------------------- Slide --
+% ------------------------------------------------- Section -- 
 \section{Neuron Class}
+% ------------------------------------------------- Section -- 
 % --------------------------------------------------- Slide --
 \begin{frame}[fragile]
-	\frametitle{Basic Use: Neuron}
+	\frametitle{Neuron}
 	The Neuron class is the basic representation of a cell exported from Viking. To create a Neuron:
 \begin{lstlisting}[language=matlab]
 % cellName = Neuron(cellID, 'source');
@@ -116,7 +120,74 @@ To update a neuron in the workspace:
 c207.update();\end{lstlisting}
 \end{frame}
 % --------------------------------------------------- Slide --
+\begin{frame}[fragile]
+	\frametitle{Neuron}
+	\framesubtitle{Properties}
+	Neuron has the following publicly accessible properties:
+	\begin{itemize}
+		\item data
+		\item \texttt{viking} - Structure of the neuron's info from viking
+		\item \texttt{nodes} - Table of all annotations
+		\item \texttt{edges} - Table of links between annotations
+		\item \texttt{volumeScale} - Units are nm/pix for X,Y and nm/section for Z
+		\item \texttt{synapses} - Table of each child structure.
+		\item \texttt{geometries} - Table of closed curve geometries
+		\item \texttt{analysis} - Containers.map of analyses
+		\item \texttt{lastModified} - Last update of neuron from OData
+	\end{itemize}
+\end{frame}
+% --------------------------------------------------- Slide --
+\begin{frame}[fragile]
+	\frametitle{Neuron}
+	\framesubtitle{Methods}
+\end{frame}
+% --------------------------------------------------- Slide --
+\begin{frame}[fragile]
+	\frametitle{NeuronGroup}
+	Create a single data object to hold related Neurons:
+	\begin{lstlisting}[language=matlab]
+	h1hc = sbfsem.NeuronGroup([28, 447, 619]);
+	\end{lstlisting}
+\end{frame}
+% --------------------------------------------------- Slide --
+\begin{frame}[fragile]
+	\frametitle{NeuronGroup}
+	\framesubtitle{Methods}
+	To plot the somas of all Neurons in the NeuronGroup:
+	\begin{lstlisting}[language=matlab]
+	h1hc.somaPlot();
+	h1hc.somaPlot('addLabel',true); % Label with ID
+	h1hc.somaPlot('ax',gca); % Add to existing axis
+	% Two methods for controlling plot color:
+	h1hc.somaPlot('Color', [0 0.8 0.3]);
+	h1hc.setPlotColor([0 0.8 0.3]); h1hc.somaPlot;\end{lstlisting}
+	\begin{columns}
+		\column[]{0.3\textwidth}
+			\includegraphics[height=0.4\textheight]{h1h2mosaic}
+		\column[]{0.7\textwidth}
+			Mosaic of H1 and H2 somas
+	\end{columns}
+\end{frame}
+% --------------------------------------------------- Slide --
+% ------------------------------------------------- Section -- 
+\section{Analysis}
+% ------------------------------------------------- Section -- 
+\subsection{NeuronAnalysis Class}
+% ------------------------------------------------- Section -- 
+\begin{frame}
+	\frametitle{NeuronAnalysis Class}
+	The NeuronAnalysis class helps keep population data organized by managing input parameters and results of common analyses. To create a new analysis, subclass NeuronAnalysis and edit the \texttt{doAnalysis} and \texttt{visualize} methods.
+	\vskip10pt
+	See \texttt{Tutorial.m} for information on these existing classes:
+	\begin{itemize}
+		\item \textbf{DendriticFieldHull} - uses convex hull to estimate dendritic field area, includes methods for removing axons prior to analysis.
+		\item \textbf{PrimaryDendriteDiameter} - returns the median dendrite diameter at a given distance from the soma.
+	\end{itemize}
+\end{frame}
+% --------------------------------------------------- Slide --
+% ------------------------------------------------- Section -- 
 \section{NeuronApp}
+% ------------------------------------------------- Section -- 
 % --------------------------------------------------- Slide --
 \subsection{Cell Info}
 % --------------------------------------------------- Slide --

@@ -30,14 +30,11 @@ classdef PrimaryDendriteDiameter < sbfsem.analysis.NeuronAnalysis
             validateattributes(neuron, {'sbfsem.Neuron'}, {});
             obj@sbfsem.analysis.NeuronAnalysis(neuron);
             
-            
             obj.doAnalysis(varargin{:});
-            obj.visualize();
+            % obj.visualize();
         end
         
         function doAnalysis(obj, varargin)
-            % obj.data = analyzeDS(obj.target, varargin{:});
-            
             ip = inputParser();
             addParameter(ip, 'dim', 2, @(x) ismember(x, [2 3]));
             addParameter(ip, 'ind', [], @isvector);
@@ -83,36 +80,44 @@ classdef PrimaryDendriteDiameter < sbfsem.analysis.NeuronAnalysis
             
             % Prevent splitapply error for empty bins
             emptyBins = find(n == 0);
-            % lots of empty bins is generally not a good sign
-            fprintf('Found %u empty bins\n', numel(emptyBins));
-            % make sure each bin is represented - even if its just 0
+            % Make sure each bin is represented by setting empty bins to 0
             if ~isempty(emptyBins)
+                % Lots of empty bins is generally not a good sign
+                fprintf('Found %u empty bins\n', numel(emptyBins));
                 bins = cat(1, bins, emptyBins');
                 dendrite = cat(1, dendrite, zeros(numel(emptyBins)));
             end
             
-            % compute dendrite size stats per distance bin
-            d.counts = n;
-            d.edges = edges;
-            d.avg = splitapply(@mean, dendrite, bins);
-            d.std = splitapply(@std, dendrite, bins);
-            d.sem = splitapply(@sem, dendrite, bins);
-            d.median = splitapply(@median, dendrite, bins);
-            % print some results
-            fprintf('search window = %.2f to %.2f\n',...
-                edges(searchBins(1)), edges(searchBins(2)));
-            fprintf('mean diameter = %.2f +- %.2f\n',...
-                mean(d.avg(searchBins)), mean(d.sem(searchBins)));
-            fprintf('median diamter = %.2f\n',...
-                mean(d.median(searchBins)));
+            % Compute dendrite size stats per distance bin
+            h.counts = n;
+            h.edges = edges;
+            h.avg = splitapply(@mean, dendrite, bins);
+            h.std = splitapply(@std, dendrite, bins);
+            h.sem = splitapply(@sem, dendrite, bins);
+            h.median = splitapply(@median, dendrite, bins);
+            % Save as a table in the final data structure
+            d.histdata = struct2table(h, 'AsArray', true);
             
-            % save the params for later reference
+            % Compute stats on just the search window
+            d.searchWindow = [edges(searchBins(1)), edges(searchBins(2))];
+            d.mean = mean(h.avg(searchBins));
+            d.sem = mean(h.sem(searchBins));
+            d.median = mean(h.median(searchBins));
+            d.n = sum(h.counts(searchBins));
+                        
+            % Print some results
+            fprintf('search window = %.2f to %.2f\n', d.searchWindow);
+            fprintf('analysis includes %u annotations\n', d.n);
+            fprintf('mean diameter = %.2f +- %.2f\n', d.mean, d.sem);
+            fprintf('median diamter = %.2f\n', d.median);
+            
+            % Save the params for later reference
             d.params.searchBins = searchBins;
             d.params.nbins = ip.Results.nbins;
             d.params.dim = ip.Results.dim;
             d.params.ind = ip.Results.ind;
             
-            % save to object
+            % Save to object
             obj.data = d;
         end
         

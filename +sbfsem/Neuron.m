@@ -359,6 +359,15 @@ classdef Neuron < handle
             obj.data.annotator = ip.Results.ann;                             
             obj.data.notes = ip.Results.notes;         
         end
+
+        function analyze(obj, DisplayName)
+            % ANALYZE  Run and append an analysis
+            % Inputs: 
+            %   DisplayName   Analysis name
+
+            validatestring(DisplayName,...
+                {'PrimaryDendriteDiameter', 'DendriticFieldHull'});
+        end
         
         function addAnalysis(obj, analysis, overwrite)
             % ADDANALYSIS  Append or update an analysis

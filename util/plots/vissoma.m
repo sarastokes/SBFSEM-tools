@@ -15,14 +15,16 @@ function fh = vissoma(xyr, varargin)
 
 
 	ip = inputParser();
+	ip.CaseSensitive = false;
 	ip.addParameter('ax', [], @ishandle);
-	ip.addParameter('co', [0 0 0], @isnumeric);
-	ip.addParameter('lw', 1, @isnumeric);
+	ip.addParameter('Color', [0 0 0], @isnumeric);
+	ip.addParameter('LineWidth', 1, @isnumeric);
 	ip.parse(varargin{:});
 	ax = ip.Results.ax;
 
-	if strcmp(class(xyr), 'Neuron')
-		xyr = getSomaXYR(xyr);
+	if strcmp(class(xyr), 'sbfsem.Neuron')
+		row = neuron.getSomaRow();
+		xyr = [row.XYZum(1:2), row.Rum];
 	end
 
 	if isempty(ax)
