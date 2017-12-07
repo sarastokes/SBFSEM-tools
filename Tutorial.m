@@ -29,13 +29,18 @@ end
 %% Import from OData
 
 % Create a Neuron object Neuron(cellID, 'source');
-c207 = sbfsem.Neuron(207, 'temporal');
+c6800 = sbfsem.Neuron(6800, 'temporal');
 % Note: sources are 'temporal', 'inferior', 'rc1' but will
 % recognize any abbreviation like 't', 'inf', etc
 c2975 = sbfsem.Neuron(2795, 'i');
 
-% Open the UI
-NeuronApp(c207);
+% I replaced NeuronApp with individual plots:
+% 3D node plot
+fh = sbfsem.ui.NodeView(c6800);
+% Stratification and synapses along the z-axis
+fh = sbfsem.ui.StratificationView(c6800);
+% Histogram of proximal-distal synapse density:
+fh = sbfsem.ui.SomaDistanceView(c6800);
 
 % Note: most of the data structures used by sbfsem tools are objects. To
 % get an idea of what an object like "sbfsem.Neuron" contains, type it into
@@ -74,7 +79,7 @@ doc table
 % Import an L/M-cone annotated with closed curves
 c2542 = sbfsem.Neuron(2542, 'i');
 % Render!
-lmcone = sbfsem.render.ClosedCurveRender(c2542, 0.5);
+lmcone = sbfsem.render.ClosedCurveRender(c2542, 0.3);
 % The 2nd argument is scale factor. The scale factor changes the image 
 % sizes used in rendering. This has two effects:
 % First, lower scale factors reduce the computation time.
@@ -86,10 +91,10 @@ lmcone = sbfsem.render.ClosedCurveRender(c2542, 0.5);
 
 % The render in the figure is a property of the output. Here are some 
 % helpful ways to manipulate this:
-% Make the render transparent
-set(lmcone.renderObj, 'FaceAlpha', 0.5);
 % Change the color
 set(lmcone.renderObj, 'FaceColor', [0.2 0.5 0.9]);
+% Make the render transparent
+set(lmcone.renderObj, 'FaceAlpha', 0.5);
 % Enable 3D rotating (or use the button on the figure toolbar)
 rotate3d;
 
@@ -155,58 +160,3 @@ foo = DendriticFieldHull(c28, xy);
 % Add this to the neuron
 c28.addAnalysis(foo);
 % If you already have a DendriticFieldHull
-
-%% ------------------------------------------------------------
-% 29Sept2017 - Mosaic class is now out of date with new OData system
-% Fixing this is on the list
-%
-% Mosaic class - Everything in the repository is functional, however, the
-% underlying code is still changing - current Mosaic objects may not be
-% compatible with future updates... Here's a brief intro and I'll add more
-% once the code is stable.
-
-% The Mosaic class was originally designed with visualizing and analyzing
-% cone mosaics, however, the code works with mosaics of other cell types or
-% really any group of cells.
-
-% load the (currently incomplete) cone mosaic from the demo folder
-load('coneMosaic.mat');
-
-% Note: If you're already familiar with matlab, Mosaic is really just a
-% table. Unfortunately, Matlab doesn't allow subclassing table. If you're
-% familiar with matlab tables and want to work with the mosaic as a table:
-% T = table(MosaicName);
-
-% I like the table class for visualizing the attributes of a small number
-% of components. Tables make this information easily readable from the
-% command line:
-disp(PR);
-
-%% Working with Mosaics
-% Add a neuron to an existing mosaic:
-PR.add(c643);
-
-% Update data of a neuron already in the mosaic
-PR.update(c643);
-
-% Add works for existing neurons as well and will return a dialog box
-% asking if you'd like to overwrite the existing entry
-PR.add(c643);
-
-% Remove a neuron - you can accomplish this in two ways: By cell number:
-PR.rmNeuron(643);
-% By row number:
-PR.rmRow(10);
-
-% Add a Neuron from file (as opposed to a Neuron in the workspace) Make
-% sbfsem-tools/demo your current directory
-cd('../sbfsem-tools/demo');
-PR.loadadd('c643.mat');
-
-% Create a figure that visualizes the mosaic. Similar to the Neuron class,
-% the largest annotation is assumed to be the "soma" (with photoreceptors,
-% this is actually the first section after the processes end). Blue =
-% S-cone, Red = LM-cone, Black = rod
-PR.somaPlot();
-
-

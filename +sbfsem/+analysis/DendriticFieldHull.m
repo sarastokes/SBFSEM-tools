@@ -38,7 +38,6 @@ classdef DendriticFieldHull < sbfsem.analysis.NeuronAnalysis
             end
             obj.dendrites = xyz;
             obj.doAnalysis();
-            obj.visualize();
         end
 
         function doAnalysis(obj, xyz)
@@ -54,7 +53,7 @@ classdef DendriticFieldHull < sbfsem.analysis.NeuronAnalysis
 
           % For most neurons this is ok. Some of the larger cells on
           % the slope may need to be projected onto a more accurate plane.
-          % Eventually that option will automatically be included.
+          % Eventually that option will be included automatically.
           xy = xyz(:,1:2);
 
           k = convhull(xy(:,1), xy(:,2));
@@ -65,13 +64,14 @@ classdef DendriticFieldHull < sbfsem.analysis.NeuronAnalysis
           obj.dendrites = xy;
         end
 
-        function visualize(obj)
-          % VISUALIZE  Plot the analysis results
+        function plot(obj)
           figure(); hold on;
+          % Scatter plot of the annotations
           scatter(obj.dendrites(:,1), obj.dendrites(:,2), '.k');
+          % Plot the surrounding convex hull
           plot(obj.dendrites(obj.data.hull,1), obj.dendrites(obj.data.hull,2),...
               'b', 'LineWidth', 2);
           title(sprintf('area = %.2f um^2', obj.data.hullArea));
-        end % visualize
-    end % methods
-end % classdef
+        end
+    end
+end

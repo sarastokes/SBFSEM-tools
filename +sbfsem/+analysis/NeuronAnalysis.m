@@ -32,7 +32,7 @@ classdef (Abstract) NeuronAnalysis < handle
     
     methods (Abstract)
         doAnalysis(obj);
-        visualize(obj);
+        plot(obj);
     end
     
     methods

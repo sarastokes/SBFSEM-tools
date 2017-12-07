@@ -19,6 +19,8 @@ classdef PrimaryDendriteDiameter < sbfsem.analysis.NeuronAnalysis
     %		Keep an eye on the search window printout which
     %		will show the how consistent the analysis is.
     %
+    %   See also: sbfsem.ui.PrimaryDendriteDiameter.m, analyzeDS.m
+    %
     % 25Aug2017 - SSP - created from analyzeDS.m
     
     properties (Constant = true, Hidden = true)
@@ -106,10 +108,11 @@ classdef PrimaryDendriteDiameter < sbfsem.analysis.NeuronAnalysis
             d.n = sum(h.counts(searchBins));
                         
             % Print some results
+            fprintf('c%u\n', obj.target.ID);
             fprintf('search window = %.2f to %.2f\n', d.searchWindow);
             fprintf('analysis includes %u annotations\n', d.n);
-            fprintf('mean diameter = %.2f +- %.2f\n', d.mean, d.sem);
-            fprintf('median diamter = %.2f\n', d.median);
+            fprintf('mean radius = %.2f +- %.2f\n', d.mean, d.sem);
+            fprintf('median diamter = %.4f\n', 2*d.median);
             
             % Save the params for later reference
             d.params.searchBins = searchBins;

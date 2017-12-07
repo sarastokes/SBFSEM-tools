@@ -101,11 +101,13 @@ classdef NeuronGroup < handle
 
             ip = inputParser();
             ip.CaseSensitive = false;
+            addParameter(ip, 'validateSizes', false, @islogical);
             addParameter(ip, 'ax', [], @ishandle);
             addParameter(ip, 'Color', obj.plotColor, @(x) isvector(x) || isvector(x));
             addParameter(ip, 'LineWidth', 1, @isnumeric);
             addParameter(ip, 'addLabel', false, @islogical);
             parse(ip, varargin{:});
+            validateSizes = ip.Results.validateSizes;
 
             if isempty(ip.Results.ax)
                 fh = sbfsem.ui.FigureView(1);
@@ -114,7 +116,7 @@ classdef NeuronGroup < handle
                 ax = ip.Results.ax;
             end
 
-            [somaSizes, validIDs] = obj.somaDiameter(true);
+            [somaSizes, validIDs] = obj.somaDiameter(validateSizes);
 
             validNeurons = [];
             for i = 1:numel(obj.neurons)
@@ -141,6 +143,28 @@ classdef NeuronGroup < handle
             end
         end
 
+        function [ind, dst] = nearestNeighbor(obj, k)
+            if nargin < 2
+                k = 3;
+            end
+            [somaSizes, validIDs] = obj.somaDiameter(false);
+            % validNeurons = [];
+            % for i = 1:numel(obj.neurons)
+            %     if ismember(obj.neurons(i).ID, validIDs)
+            %         validNeurons = cat(1, validNeurons, obj.neurons(i));
+            %     end
+            % end
+            xyz = cell2mat(arrayfun(@(x) x.getSomaXYZ, obj.neurons,...
+                'UniformOutput', false));
+            xyz = xyz(:,1:2);
+            [ind, dst] = knnsearch(xyz, xyz, 'K', k);
+
+            fh = sbfsem.ui.FigureView(1);
+            set(fh.figureHandle, 'Name', 'knnsearch result');
+            barh(fh.ax, dst(:,2:k), 'stacked');
+            %set(fh.ax, 'YTickLabel', lbl, 'Box', 'off');
+        end
+
         function arborArea(obj, somaIndex)
             % Not ready yet
             if nargin < 2
@@ -154,6 +178,10 @@ classdef NeuronGroup < handle
                 'UniformOutput', false));
             xyz = xyz(:,3);     
         end
+
+        function doAnalysis(obj, DisplayName)
+            obj.createAnalysisTable(DisplayName);
+        end
     end
 
     methods (Access = private)
@@ -161,7 +189,7 @@ classdef NeuronGroup < handle
             hasAnalysis = obj.hasAnalysis(DisplayName);
             [~, ind] = find(~hasAnalysis);
             for i = 1:numel(ind)
-                obj.neurons(ind(i)).addAnalysis();
+                obj.neurons(ind(i)).addAnalysis(analysis(obj.neurons(i)));
             end
             T = arrayfun(@(x) structfun(x.analysis(DisplayName).data,... 
                 'AsArray', true), obj.neurons, 'UniformOutput', false);
@@ -170,7 +198,7 @@ classdef NeuronGroup < handle
 
         function tf = hasAnalysis(obj, DisplayName)
             % HASANALYSIS  Returns logical array 
-            tf = arrayfun(@(x) isKey(x.analysis,DisplayName), neurons);
+            tf = arrayfun(@(x) isKey(x.analysis,DisplayName), obj.neurons);
         end
     end
 end

@@ -1,0 +1,215 @@
+<?xml version="1.0" encoding="utf-8"?>
+<edmx:Edmx Version="4.0" xmlns:edmx="http://docs.oasis-open.org/odata/ns/edmx">
+    <edmx:DataServices>
+        <Schema Namespace="ConnectomeDataModel" xmlns="http://docs.oasis-open.org/odata/ns/edm">
+            <EntityType Name="StructureType">
+                <Key>
+                    <PropertyRef Name="ID" />
+                </Key>
+                <Property Name="ID" Type="Edm.Int64" Nullable="false" />
+                <Property Name="ParentID" Type="Edm.Int64" />
+                <Property Name="Name" Type="Edm.String" />
+                <Property Name="Notes" Type="Edm.String" />
+                <Property Name="MarkupType" Type="Edm.String" />
+                <Property Name="Tags" Type="Edm.String" />
+                <Property Name="StructureTags" Type="Edm.String" />
+                <Property Name="Abstract" Type="Edm.Boolean" Nullable="false" />
+                <Property Name="Color" Type="Edm.Int32" Nullable="false" />
+                <Property Name="Version" Type="Edm.Binary" />
+                <Property Name="Code" Type="Edm.String" />
+                <Property Name="HotKey" Type="Edm.String" />
+                <Property Name="Username" Type="Edm.String" />
+                <Property Name="LastModified" Type="Edm.DateTimeOffset" Nullable="false" />
+                <Property Name="Created" Type="Edm.DateTimeOffset" Nullable="false" />
+                <NavigationProperty Name="Structures" Type="Collection(ConnectomeDataModel.Structure)" />
+                <NavigationProperty Name="Children" Type="Collection(ConnectomeDataModel.StructureType)" />
+                <NavigationProperty Name="Parent" Type="ConnectomeDataModel.StructureType" />
+                <NavigationProperty Name="SourceOfLinks" Type="Collection(ConnectomeDataModel.PermittedStructureLink)" />
+                <NavigationProperty Name="TargetOfLinks" Type="Collection(ConnectomeDataModel.PermittedStructureLink)" />
+            </EntityType>
+            <EntityType Name="Structure">
+                <Key>
+                    <PropertyRef Name="ID" />
+                </Key>
+                <Property Name="ID" Type="Edm.Int64" Nullable="false" />
+                <Property Name="TypeID" Type="Edm.Int64" Nullable="false" />
+                <Property Name="Notes" Type="Edm.String" />
+                <Property Name="Verified" Type="Edm.Boolean" Nullable="false" />
+                <Property Name="Tags" Type="Edm.String" />
+                <Property Name="Confidence" Type="Edm.Double" Nullable="false" />
+                <Property Name="Version" Type="Edm.Binary" />
+                <Property Name="ParentID" Type="Edm.Int64" />
+                <Property Name="Created" Type="Edm.DateTimeOffset" Nullable="false" />
+                <Property Name="Label" Type="Edm.String" />
+                <Property Name="Username" Type="Edm.String" />
+                <Property Name="LastModified" Type="Edm.DateTimeOffset" Nullable="false" />
+                <NavigationProperty Name="Locations" Type="Collection(ConnectomeDataModel.Location)" />
+                <NavigationProperty Name="Children" Type="Collection(ConnectomeDataModel.Structure)" />
+                <NavigationProperty Name="Parent" Type="ConnectomeDataModel.Structure" />
+                <NavigationProperty Name="Type" Type="ConnectomeDataModel.StructureType" />
+                <NavigationProperty Name="SourceOfLinks" Type="Collection(ConnectomeDataModel.StructureLink)" />
+                <NavigationProperty Name="TargetOfLinks" Type="Collection(ConnectomeDataModel.StructureLink)" />
+                <NavigationProperty Name="LocationLinks" Type="Collection(ConnectomeDataModel.LocationLink)" ContainsTarget="true" />
+            </EntityType>
+            <EntityType Name="Location">
+                <Key>
+                    <PropertyRef Name="ID" />
+                </Key>
+                <Property Name="ID" Type="Edm.Int64" Nullable="false" />
+                <Property Name="ParentID" Type="Edm.Int64" Nullable="false" />
+                <Property Name="X" Type="Edm.Double" Nullable="false" />
+                <Property Name="Y" Type="Edm.Double" Nullable="false" />
+                <Property Name="Z" Type="Edm.Int64" Nullable="false" />
+                <Property Name="Closed" Type="Edm.Boolean" Nullable="false" />
+                <Property Name="Version" Type="Edm.Binary" />
+                <Property Name="Overlay" Type="Edm.Binary" />
+                <Property Name="Tags" Type="Edm.String" />
+                <Property Name="VolumeX" Type="Edm.Double" Nullable="false" />
+                <Property Name="VolumeY" Type="Edm.Double" Nullable="false" />
+                <Property Name="Terminal" Type="Edm.Boolean" Nullable="false" />
+                <Property Name="OffEdge" Type="Edm.Boolean" Nullable="false" />
+                <Property Name="Radius" Type="Edm.Double" Nullable="false" />
+                <Property Name="TypeCode" Type="Edm.Int16" Nullable="false" />
+                <Property Name="LastModified" Type="Edm.DateTimeOffset" Nullable="false" />
+                <Property Name="Created" Type="Edm.DateTimeOffset" Nullable="false" />
+                <Property Name="Username" Type="Edm.String" />
+                <Property Name="MosaicShape" Type="System.Data.Entity.Spatial.DbGeometry" />
+                <Property Name="VolumeShape" Type="System.Data.Entity.Spatial.DbGeometry" />
+                <Property Name="Width" Type="Edm.Double" />
+                <NavigationProperty Name="Parent" Type="ConnectomeDataModel.Structure" />
+                <NavigationProperty Name="LocationLinksA" Type="Collection(ConnectomeDataModel.LocationLink)" />
+                <NavigationProperty Name="LocationLinksB" Type="Collection(ConnectomeDataModel.LocationLink)" />
+                <NavigationProperty Name="LocationLinks" Type="Collection(ConnectomeDataModel.LocationLink)" ContainsTarget="true" />
+            </EntityType>
+            <EntityType Name="StructureLink">
+                <Key>
+                    <PropertyRef Name="SourceID" />
+                    <PropertyRef Name="TargetID" />
+                    <PropertyRef Name="Bidirectional" />
+                </Key>
+                <Property Name="SourceID" Type="Edm.Int64" Nullable="false" />
+                <Property Name="TargetID" Type="Edm.Int64" Nullable="false" />
+                <Property Name="Bidirectional" Type="Edm.Boolean" Nullable="false" />
+                <Property Name="Tags" Type="Edm.String" />
+                <Property Name="Username" Type="Edm.String" />
+                <Property Name="Created" Type="Edm.DateTimeOffset" Nullable="false" />
+                <Property Name="LastModified" Type="Edm.DateTimeOffset" Nullable="false" />
+                <NavigationProperty Name="Source" Type="ConnectomeDataModel.Structure" />
+                <NavigationProperty Name="Target" Type="ConnectomeDataModel.Structure" />
+            </EntityType>
+            <EntityType Name="PermittedStructureLink">
+                <Key>
+                    <PropertyRef Name="SourceTypeID" />
+                    <PropertyRef Name="TargetTypeID" />
+                </Key>
+                <Property Name="SourceTypeID" Type="Edm.Int64" Nullable="false" />
+                <Property Name="TargetTypeID" Type="Edm.Int64" Nullable="false" />
+                <Property Name="Bidirectional" Type="Edm.Boolean" Nullable="false" />
+                <NavigationProperty Name="SourceType" Type="ConnectomeDataModel.StructureType" />
+                <NavigationProperty Name="TargetType" Type="ConnectomeDataModel.StructureType" />
+            </EntityType>
+            <EntityType Name="LocationLink">
+                <Key>
+                    <PropertyRef Name="A" />
+                    <PropertyRef Name="B" />
+                </Key>
+                <Property Name="A" Type="Edm.Int64" Nullable="false" />
+                <Property Name="B" Type="Edm.Int64" Nullable="false" />
+                <Property Name="Username" Type="Edm.String" />
+                <Property Name="Created" Type="Edm.DateTimeOffset" Nullable="false" />
+                <NavigationProperty Name="LocationA" Type="ConnectomeDataModel.Location" />
+                <NavigationProperty Name="LocationB" Type="ConnectomeDataModel.Location" />
+            </EntityType>
+        </Schema>
+        <Schema Namespace="Geometry" xmlns="http://docs.oasis-open.org/odata/ns/edm">
+            <ComplexType Name="AxisUnits">
+                <Property Name="Units" Type="Edm.String" />
+                <Property Name="Value" Type="Edm.Double" Nullable="false" />
+            </ComplexType>
+            <ComplexType Name="Scale">
+                <Property Name="X" Type="Geometry.AxisUnits" Nullable="false" />
+                <Property Name="Y" Type="Geometry.AxisUnits" Nullable="false" />
+                <Property Name="Z" Type="Geometry.AxisUnits" Nullable="false" />
+            </ComplexType>
+        </Schema>
+        <Schema Namespace="System.Data.Entity.Spatial" xmlns="http://docs.oasis-open.org/odata/ns/edm">
+            <ComplexType Name="DbGeometry">
+                <Property Name="Geometry" Type="System.Data.Entity.Spatial.DbGeometryWellKnownValue" />
+            </ComplexType>
+            <ComplexType Name="DbGeometryWellKnownValue">
+                <Property Name="CoordinateSystemId" Type="Edm.Int32" />
+                <Property Name="WellKnownText" Type="Edm.String" />
+                <Property Name="WellKnownBinary" Type="Edm.Binary" />
+            </ComplexType>
+        </Schema>
+        <Schema Namespace="ConnectomeODataV4" xmlns="http://docs.oasis-open.org/odata/ns/edm">
+            <Function Name="Scale">
+                <ReturnType Type="Geometry.Scale" />
+            </Function>
+            <Function Name="Network">
+                <Parameter Name="IDs" Type="Collection(Edm.Int64)" Nullable="false" />
+                <Parameter Name="Hops" Type="Edm.Int32" Nullable="false" />
+                <ReturnType Type="Collection(ConnectomeDataModel.Structure)" />
+            </Function>
+            <Function Name="NetworkChildStructures">
+                <Parameter Name="IDs" Type="Collection(Edm.Int64)" Nullable="false" />
+                <Parameter Name="Hops" Type="Edm.Int32" Nullable="false" />
+                <ReturnType Type="Collection(ConnectomeDataModel.Structure)" />
+            </Function>
+            <Function Name="NetworkLinks">
+                <Parameter Name="IDs" Type="Collection(Edm.Int64)" Nullable="false" />
+                <Parameter Name="Hops" Type="Edm.Int32" Nullable="false" />
+                <ReturnType Type="Collection(ConnectomeDataModel.StructureLink)" />
+            </Function>
+            <Function Name="StructureLocationLinks">
+                <Parameter Name="StructureID" Type="Edm.Int64" Nullable="false" />
+                <ReturnType Type="Collection(ConnectomeDataModel.LocationLink)" />
+            </Function>
+            <Function Name="DistinctLabels" IsBound="true">
+                <Parameter Name="bindingParameter" Type="Collection(ConnectomeDataModel.Structure)" />
+                <ReturnType Type="Collection(Edm.String)" Unicode="false" />
+            </Function>
+            <EntityContainer Name="Container">
+                <EntitySet Name="StructureTypes" EntityType="ConnectomeDataModel.StructureType">
+                    <NavigationPropertyBinding Path="Structures" Target="Structures" />
+                    <NavigationPropertyBinding Path="Children" Target="StructureTypes" />
+                    <NavigationPropertyBinding Path="Parent" Target="StructureTypes" />
+                    <NavigationPropertyBinding Path="SourceOfLinks" Target="PermittedStructureLinks" />
+                    <NavigationPropertyBinding Path="TargetOfLinks" Target="PermittedStructureLinks" />
+                </EntitySet>
+                <EntitySet Name="Structures" EntityType="ConnectomeDataModel.Structure">
+                    <NavigationPropertyBinding Path="Locations" Target="Locations" />
+                    <NavigationPropertyBinding Path="Children" Target="Structures" />
+                    <NavigationPropertyBinding Path="Parent" Target="Structures" />
+                    <NavigationPropertyBinding Path="Type" Target="StructureTypes" />
+                    <NavigationPropertyBinding Path="SourceOfLinks" Target="StructureLinks" />
+                    <NavigationPropertyBinding Path="TargetOfLinks" Target="StructureLinks" />
+                    <NavigationPropertyBinding Path="LocationLinks" Target="LocationLinks" />
+                </EntitySet>
+                <EntitySet Name="Locations" EntityType="ConnectomeDataModel.Location">
+                    <NavigationPropertyBinding Path="Parent" Target="Structures" />
+                    <NavigationPropertyBinding Path="LocationLinksA" Target="LocationLinks" />
+                    <NavigationPropertyBinding Path="LocationLinksB" Target="LocationLinks" />
+                    <NavigationPropertyBinding Path="LocationLinks" Target="LocationLinks" />
+                </EntitySet>
+                <EntitySet Name="StructureLinks" EntityType="ConnectomeDataModel.StructureLink">
+                    <NavigationPropertyBinding Path="Source" Target="Structures" />
+                    <NavigationPropertyBinding Path="Target" Target="Structures" />
+                </EntitySet>
+                <EntitySet Name="PermittedStructureLinks" EntityType="ConnectomeDataModel.PermittedStructureLink">
+                    <NavigationPropertyBinding Path="SourceType" Target="StructureTypes" />
+                    <NavigationPropertyBinding Path="TargetType" Target="StructureTypes" />
+                </EntitySet>
+                <EntitySet Name="LocationLinks" EntityType="ConnectomeDataModel.LocationLink">
+                    <NavigationPropertyBinding Path="LocationA" Target="Locations" />
+                    <NavigationPropertyBinding Path="LocationB" Target="Locations" />
+                </EntitySet>
+                <FunctionImport Name="Scale" Function="ConnectomeODataV4.Scale" IncludeInServiceDocument="true" />
+                <FunctionImport Name="Network" Function="ConnectomeODataV4.Network" EntitySet="Structures" IncludeInServiceDocument="true" />
+                <FunctionImport Name="NetworkChildStructures" Function="ConnectomeODataV4.NetworkChildStructures" EntitySet="Structures" IncludeInServiceDocument="true" />
+                <FunctionImport Name="NetworkLinks" Function="ConnectomeODataV4.NetworkLinks" EntitySet="StructureLinks" IncludeInServiceDocument="true" />
+                <FunctionImport Name="StructureLocationLinks" Function="ConnectomeODataV4.StructureLocationLinks" EntitySet="LocationLinks" IncludeInServiceDocument="true" />
+            </EntityContainer>
+        </Schema>
+    </edmx:DataServices>
+</edmx:Edmx>

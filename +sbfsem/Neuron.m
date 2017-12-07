@@ -410,14 +410,14 @@ classdef Neuron < handle
                  
         function printSyn(obj)
             % summarize synapses to cmd line
-            rows = ~strcmp(obj.synapses.LocalName, 'cell');
-            T = obj.synapses(rows,:);
-            
-            [a, b] = findgroups(T.LocalName);
-            x = splitapply(@numel, T.LocalName, a);
+            [a, b] = findgroups(obj.synapses.TypeID);
+            b2 = sbfsem.core.VikingStructureTypes(b);
+            x = splitapply(@numel, obj.synapses.TypeID, a);
+            fprintf('c%u synapses:\n', obj.ID);
             for ii = 1:numel(x)
-                fprintf('%u %s\n', x(ii), b{ii});
+                fprintf('%u %s\n', x(ii), b2(ii));
             end
+            fprintf('\n');
         end % printSyn
     end % methods  
 
