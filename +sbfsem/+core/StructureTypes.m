@@ -76,7 +76,7 @@ classdef StructureTypes < double
 			import sbfsem.core.VikingStructureTypes;
 			import sbfsem.core.StructureTypes;
 
-			if nargin < 2
+			if nargin < 2 || isempty(tags)
 				tags = '';
 			else
 				% tags = lower(tags);
@@ -118,6 +118,9 @@ classdef StructureTypes < double
 					obj = StructureTypes.Touch;
 				case VikingStructureTypes.GapJunction
 					obj = StructureTypes.GapJunction;
+				case VikingStructureTypes.CisternPost;
+					obj = StructureTypes.Unknown;
+					disp('Found CisternPost')
 				case VikingStructureTypes.Endocytosis
 					obj = StructureTypes.Endocytosis;
 				case VikingStructureTypes.Unknown

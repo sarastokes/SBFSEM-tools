@@ -1,24 +1,16 @@
 function endpoint = getODataURL(cellNum, source, urlType)
-    	% GETODATAURL  Returns OData URL string
-    	%
-		% Inputs:
-		%	cellNum 		Cell ID number
-		%	source 			'inferior', 'temporal' ('i', 't')
-		% 	urlType 		'neuron', 'location', 'link', 'child', 'scale'
-		% Use:
-		%	urlString = getODataURL(127, 'i', 'location')
-		%
+	% GETODATAURL  Returns OData URL string
+	%
+	% Inputs:
+	%	cellNum 		Cell ID number
+	%	source 			'inferior', 'temporal' ('i', 't')
+	% 	urlType 		'neuron', 'location', 'link', 'child', 'scale'
+	% Use:
+	%	urlString = getODataURL(127, 'i', 'location')
+	%
 
-	serverURL = 'http://websvc1.connectomes.utah.edu/';
-
-	switch lower(source)
-		case {'t', 'temporal', 'neitztemporalmonkey'}
-			source = 'NeitzTemporalMonkey';
-		case {'i', 'inferior', 'neitzinferiormonkey'}
-			source = 'NeitzInferiorMonkey';
-	end
-	
-	baseURL = [serverURL source '/OData'];
+		
+	baseURL = getServiceRoot(source);
 
 	switch urlType
 		case 'neuron'

@@ -1,4 +1,4 @@
-classdef ClosedCurveRender < sbfsem.render.RenderView
+classdef ClosedCurve < sbfsem.render.RenderView
     % CLOSEDCURVERENDER  Create a render figure and object
     %
     % Inputs:
@@ -15,7 +15,7 @@ classdef ClosedCurveRender < sbfsem.render.RenderView
     end
 
     methods
-        function obj = ClosedCurveRender(neuron, scaleFactor)
+        function obj = ClosedCurve(neuron, scaleFactor)
 			obj@sbfsem.render.RenderView(neuron);
 
 			if nargin < 2

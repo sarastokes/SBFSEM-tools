@@ -94,24 +94,27 @@ classdef (Abstract) RenderView < sbfsem.ui.FigureView
                 boundingBox = boundingBox * (1 + obj.BOUNDINGMARGIN);
             end
         end
-        
-        function binaryMatrix = padBinaryImages(obj, xy, F)
+    end
+    methods (Static)
+        function binaryMatrix = padBinaryImages(xy, F)
             % Resize the binary images to xy limits
             binaryMatrix = [];
+            disp('Padded x,y axes of following images');
             for i = 1:numel(F)
                 im = F{i};
                 if size(im,1) < xy(1)
                     pad = xy(1)-size(im,1);
-                    fprintf('Image %u: Added %u to x-axis\n', i, pad);
+                    fprintf('%ux = %u,   ', i, pad);
                     im = padarray(im, [pad, 0], 0, 'pre');
                 end
                 if size(im,2) < xy(2)
                     pad = xy(2)-size(im,2);
-                    fprintf('Image %u: Added %u to y-axis\n', i, pad);
+                    fprintf('%uy = %u,   ', i, pad);
                     im = padarray(im, [0, pad], 0, 'pre');
                 end
                 binaryMatrix = cat(3, binaryMatrix, im);
             end
+            fprintf('\n');
         end
     end
 end

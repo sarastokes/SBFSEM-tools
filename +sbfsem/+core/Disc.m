@@ -20,6 +20,8 @@ classdef Disc < sbfsem.core.Annotation
 	%		setBoundingBox(boundingBox)
 	%
 	%	12Nov2017 - SSP
+	%
+	% See also SBFSEM.RENDER.DISC, SBFSEM.CORE.ANNOTATION
 	
 	properties (SetAccess = private, GetAccess = public)
 		R
@@ -32,9 +34,8 @@ classdef Disc < sbfsem.core.Annotation
 	end
 
 	methods
-		function obj = Disc(xy, radius)			
+		function obj = Disc(xy, radius)
 			if istable(xy)
-
 				xyz = xy.XYZum;
 				obj.X = xyz(:,1);
 				obj.Y = xyz(:,2);

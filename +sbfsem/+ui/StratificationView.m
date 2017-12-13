@@ -45,6 +45,13 @@ classdef StratificationView < sbfsem.ui.TogglePartsView
             ylabel(obj.ax, 'Z-axis');
             set(obj.ax, 'YDir', 'reverse');
             obj.ax.XLim(1) = 1;
+            
+            % Add cell body toggle
+            uicontrol(obj.ui.ctrl,...
+                'Style', 'checkbox',...
+                'String', 'Show dendrites',...
+                'Value', 1,...
+                'Callback', @obj.onShowDendrites);
         end
                
         function [plotObj, numBins] = getHistogramPart(obj, partName, numBins)
@@ -72,6 +79,15 @@ classdef StratificationView < sbfsem.ui.TogglePartsView
                     set(plotObj, 'Color', 'k');
                 otherwise
                     set(plotObj, 'Color', partName.StructureColor);
+            end
+        end
+        
+        function onShowDendrites(obj, src, ~)
+            switch src.Value
+                case 0
+                    obj.togglePart('body', 'off');
+                case 1
+                    obj.togglePart('body', 'on');
             end
         end
         

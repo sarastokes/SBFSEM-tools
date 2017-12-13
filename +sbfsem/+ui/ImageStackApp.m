@@ -1,4 +1,5 @@
 classdef ImageStackApp < handle
+% IMAGESTACKAPP
     
     properties (Transient = true)
         currentNode
@@ -14,7 +15,12 @@ classdef ImageStackApp < handle
             % Inputs:
             %       images      ImageStack
             % Provide a 2nd input to reverse the stack
-            validateattributes(imStack, {'sbfsem.image.ImageStack'}, {});
+            assert(isa(imStack, 'sbfsem.image.ImageStack') || isdir(imStack),...
+                'Input must be ImageStack or filepath to create new ImageStack');
+
+            if ischar(imStack)
+                imStack = sbfsem.image.ImageStack(imStack);
+            end
 
             if nargin < 2
                 obj.currentNode = imStack.tail;

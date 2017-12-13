@@ -1,7 +1,7 @@
 classdef (Abstract) BoundaryMarker < handle
 	
 	properties (SetAccess = private, GetAccess = public)
-		volumeName
+		source
 		baseURL
 	end
 
@@ -9,77 +9,56 @@ classdef (Abstract) BoundaryMarker < handle
         queryDate
         TYPEID
         units = 'microns'
-        interpolationFcn
+        interpolatedSurface = []
     end
     
     properties (Access = public, Transient = true)
         markerLocations = []
-        interpolatedSurface = []
         newXPts
         newYPts
     end
 
+    properties (Constant = true)
+        SMOOTHFAC = 0.005;
+    end
+
 	methods
 		function obj = BoundaryMarker(source)
-			obj.volumeName = validateSource(source);
-			obj.baseURL = [getServerName(), obj.volumeName, '/OData/'];
+			obj.source = validateSource(source);
+			obj.baseURL = [getServerName(), obj.source, '/OData/'];
         end
         
         function setUnits(obj, unitName)
             obj.units = validatestring(unitName, {'microns', 'pixels'});
-            obj.refresh();
+            obj.pull();
         end
    
         function refresh(obj)
-            obj.updateMarkers();
-            obj.calculateInterpolation();
+            obj.pull();
         end
         
-        function interpBoundary(obj, varargin)
-            if isempty(obj.interpolationFcn) || isempty(obj.markerLocations)
+        function doAnalysis(obj, numPts)
+            if isempty(obj.markerLocations)
                 obj.refresh();
             end
             
-            ip = inputParser();
-            ip.CaseSensitive = false;
-            addParameter(ip, 'x', [], @ismatrix);
-            addParameter(ip, 'y', [], @ismatrix);
-            addParameter(ip, 'npts', 100, @isnumeric);
-            parse(ip, varargin{:});
-            npts = ip.Results.npts;
-            
-            if isempty(ip.Results.x)
-                x = linspace(min(obj.markerLocations(:,1)),...
-                    max(obj.markerLocations(:,1)), npts);
-            else
-                x = ip.Results.x;
+            if nargin < 2 
+                numPts = 100;
             end
             
-            if isempty(ip.Results.y)
-                y = linspace(min(obj.markerLocations(:,2)),...
-                    max(obj.markerLocations(:,2)), npts);
-            else
-                y = ip.Results.y;
+            % Create a new grid of points to sample from
+            ptsRange = [floor(min(obj.markerLocations)); ceil(max(obj.markerLocations))];
+            if strcmp(obj.units, 'microns')
+                ptsRange = viking2micron(ptsRange, obj.source);
             end
 
-            % Resample the original data points
-            [obj.newXPts, obj.newYPts] = meshgrid(x, y);
-            
-            % Create a boundary surface spanning the new points
-            obj.interpolatedSurface = obj.interpolationFcn(...
-                obj.newXPts, obj.newYPts);
+            obj.newXPts = linspace(ptsRange(1,1), ptsRange(2,1), numPts);          
+            obj.newYPts = linspace(ptsRange(1,2), ptsRange(2,2), numPts);
+
+            obj.interpolatedSurface = obj.getSurface();
         end
 
-        function plotRawData(obj)
-            fh = sbfsem.ui.FigureView(1);
-            surf(fh.ax, obj.markerLocations);
-            shading(fh.ax, 'flat');
-            fh.setColormap('redblue');
-            fh.labelXYZ();
-            fh.title('IPL Marker Surface');
-        end
-
-        function fh = plotSurface(obj, includeData)
+        function fh = plot(obj, includeData)
             if nargin < 2 
                 includeData = false;
             else
@@ -87,47 +66,56 @@ classdef (Abstract) BoundaryMarker < handle
                     't/f include raw data');
             end
             fh = sbfsem.ui.FigureView(1);
+            hold(fh.ax, 'on');
             surf(fh.ax, obj.newXPts, obj.newYPts,...
-                obj.interpolatedSurface);
-            shading(fh.ax, 'flat');
-            fh.setColormap('redblue');
+                obj.interpolatedSurface,...
+                'FaceAlpha', 0.8);
+            shading(fh.ax, 'interp')
             fh.labelXYZ();
             fh.title('IPL Boundary Surface');
             if includeData
                 hold(fh.ax, 'on');
                 if strcmp(obj.units, 'microns')
-                    xyz = viking2micron(obj.markerLocations, obj.volumeName);
+                    xyz = viking2micron(obj.markerLocations, obj.source);
                 else
                     xyz = obj.markerLocations;
                 end
-                scatter3(fh.ax, xyz(:, 1), xyz(:, 2), xyz(:,3), 'xk');
+                scatter3(fh.ax, xyz(:, 1), xyz(:, 2), xyz(:,3), 'fill');
             end
+            view(fh.ax, 3);
+        end
+
+        function addToScene(obj, ax, markerSize)
+            if nargin < 3
+                markerSize = 25;
+            end
+            assert(ishandle(ax), 'Input an axes handle to plot to');
+            if strcmp(obj.units, 'microns')
+                xyz = viking2micron(obj.markerLocations, obj.source);
+            else
+                xyz = obj.markerLocations;
+            end
+            hold(ax, 'on');
+            scatter3(ax, xyz(:,1), xyz(:,2), xyz(:,3), 'ViewSize', markerSize);
         end
     end
     
-    methods (Access = protected)        
-        function calculateInterpolation(obj)
-            if isempty(obj.markerLocations)
-                obj.updateMarkers();
-            end
-            fprintf('Interpolating boundary with %u markers imported %s\n',...
-                size(obj.markerLocations, 1), datestr(obj.queryDate));
+    methods (Access = protected)   
+        function z = getSurface(obj)
+            % 9Dec2017 - SSP - changed from scatteredInterpolant
+            
             if strcmp(obj.units, 'microns')
-                xyz = viking2micron(obj.markerLocations, obj.volumeName);
+                xyz = viking2micron(obj.markerLocations, obj.source);
             else
                 xyz = obj.markerLocations;
             end
 
-            obj.interpolationFcn = scatteredInterpolant(...
-                xyz(:,1), xyz(:,2), xyz(:,3));
-
-            [obj.newXPts, obj.newYPts] = meshgrid(...  
-                linspace(min(xyz(:,1)), max(xyz(:,1)), 100),...
-                linspace(min(xyz(:,2)), max(xyz(:,2)), 100));
-            obj.interpolatedSurface = obj.interpolationFcn(obj.newXPts, obj.newYPts);       
+            z = RegularizeData3D(xyz(:,1), xyz(:,2), xyz(:,3),...
+                obj.newXPts, obj.newYPts,...
+                'interp', 'bicubic', 'smoothness', obj.SMOOTHFAC);
         end
         
-		function updateMarkers(obj)
+		function pull(obj)
 			data = readOData([obj.baseURL,...
 				'Structures?$filter=TypeID eq ' num2str(obj.TYPEID),... 
 				'&$select=ID']);

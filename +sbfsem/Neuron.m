@@ -312,27 +312,40 @@ classdef Neuron < handle
             end
         end
 
-        function G = neuron2graph(obj, isDirected, visualize)
+        function [G, p] = graph(obj, varargin)
             % NEURON2GRAPH  Create a graph representation
             %   Inputs:
-            %       isDirected      [f]     directed or undirected
+            %       directed        [f]     directed or undirected
+            %       synapses        [f]     include child structures
             %       visualize       [f]     plot the graph?
             %   Outputs:
             %       G               graph or digraph
+            %       p               plot handle
             %
-            
-            if nargin < 3
-                visualize = false; %#ok
+            ip = inputParser();
+            addParameter(ip, 'directed', false, @islogical);
+            addParameter(ip, 'synapses', false, @islogical);
+            addParameter(ip, 'visualize', false, @islogical);
+            parse(ip, varargin{:});
+
+            if ip.Results.synapses
+                edge_rows = obj.edges;
             else
-                assert(islogical(visualize), 't/f variable');
+                edge_rows = obj.edges.ID == obj.ID;
             end
-            edge_rows = obj.edges.ID == obj.ID;
-            if isDirected
+
+            if ip.Results.directed
                 G = digraph(cellstr(num2str(obj.edges.A(edge_rows,:))),...
                     cellstr(num2str(obj.edges.B(edge_rows,:))));
             else
                 G = graph(cellstr(num2str(obj.edges.A(edge_rows,:))),...
                     cellstr(num2str(obj.edges.B(edge_rows,:))));
+            end
+
+            if ip.Results.visualize
+                p = plot(G);
+            else
+                p = [];
             end
         end
 
@@ -472,13 +485,8 @@ classdef Neuron < handle
                 % Match to local StructureType
                 localNames = cell(numel(structures),1);
                 for i = 1:numel(structures)
-                    try
-                        localNames{i,:} = sbfsem.core.StructureTypes.fromViking(...
-                            structures(i), obj.synapses.Tags{i,:});   
-                    catch
-                        disp('setupSynapses error, assigned to base');
-                        assignin('base', 'tags', obj.synapses.Tags{i,:});
-                    end
+                    localNames{i,:} = sbfsem.core.StructureTypes.fromViking(...
+                        structures(i), obj.synapses.Tags{i,:});   
                 end
                 obj.synapses.LocalName = localNames;
                 % Make sure synapses match the new naming conventions

@@ -1,0 +1,6 @@
+\frametitle{Connectivity}
+The network data is split into edges and nodes, each with their own table. The tables can be exported to Excel as \texttt{.csv} or as a text file from the UI menu bar.\\
+\vskip10pt
+To print a easily readable table to the command line use the networkTable function
+\begin{lstlisting}[language=matlab]
+networkTable(c207);\end{lstlisting}

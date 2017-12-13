@@ -7,6 +7,8 @@
 %% First add sbfsem-tools to your path by editing the filepath below:
 addpath(genpath('C:\users\...\sbfsem-tools'));
 
+%% Import the SBFSEM toolbox (otherwise you will have to add 'sbfsem.' before many of the functions)
+
 %% Toolbox check
 % Check community toolboxes to make sure GUI Layout Toolbox is installed
 struct2table(matlab.addons.toolbox.installedToolboxes)
@@ -79,7 +81,7 @@ doc table
 % Import an L/M-cone annotated with closed curves
 c2542 = sbfsem.Neuron(2542, 'i');
 % Render!
-lmcone = sbfsem.render.ClosedCurveRender(c2542, 0.3);
+lmcone = sbfsem.render.ClosedCurve(c2542, 0.3);
 % The 2nd argument is scale factor. The scale factor changes the image 
 % sizes used in rendering. This has two effects:
 % First, lower scale factors reduce the computation time.
@@ -99,12 +101,47 @@ set(lmcone.renderObj, 'FaceAlpha', 0.5);
 rotate3d;
 
 % Note: the initial import doesn't create the closed curve 
-% geometries. The ClosedCurveRender function will create them
+% geometries. The render function will create them
 % if they aren't present. However, if you want to access that
 % data without rendering, use this:
 c2542.setGeometries();
 % The data is stored under the "geometries" property
 geometryData = c2542.geometries;
+
+%% Disc renders
+% This is still a work in progress as the code could really be optimized.
+% However, the code renders bipolar cell axons quickly
+c1411 = sbfsem.Neuron(1411, 'i');
+bcFull = sbfse.render.Disc(c1411);
+
+% You can also specify a specific range of sections
+axonRange = 1165:1579; % The z-sections encompassing the axon
+bcAxon = sbfsem.render.Disc(c1411, axonRange);
+
+% -------------------------------------------------------------------------
+%% IPL Boundary surface
+% Create a surface from INL-IPL or INL-GCL boundary markers
+inl = sbfsem.core.INLBoundary('i');
+
+% To update the boundary marker locations from OData
+inl.refresh();
+
+% Create a surface from the marker locations
+inl.doAnalysis();
+% Increase the surface resolution (default=100 points)
+inl.doAnalysis(500);
+
+% Plot the surface:
+plot(inl);
+% To see the surface without the raw data
+plot(inl, false);
+
+% -------------------------------------------------------------------------
+%% XY alignment
+% Get statistics on the XY offset of a stack of sections
+% Queries all neurons in a range of Z sections and finds mean, median XY
+% offset (in pixels, relative to the most sclerad section).
+S = xyRegistration('i', [1283 1304], true);
 
 % -------------------------------------------------------------------------
 %% ImageStack class

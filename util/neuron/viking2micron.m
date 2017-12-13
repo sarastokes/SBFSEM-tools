@@ -1,7 +1,7 @@
 function xyzMicrons = viking2micron(xyz, source)
 	% VIKING2MICRON  Scales xyz coordinates to microns
 	% Inputs:
-	%	xyz 		coordinates [N x 3]
+	%	xyz 		coordinates [N x 3] or xy [N x 2]
 	%	source 		volume name/abbreviation
 	% Output:
 	%	xyzMicrons 	coordinates converted to microns
@@ -11,4 +11,10 @@ function xyzMicrons = viking2micron(xyz, source)
 	source = validateSource(source);
 	volumeScale = getODataScale(source);
 
-	xyzMicrons = bsxfun(@times, xyz, volumeScale);
+    if size(xyz, 1) == 1
+        xyzMicrons = xyz * volumeScale(1);
+    elseif size(xyz,2) == 2
+        xyzMicrons = bsxfun(@times, xyz, volumeScale(1:2));
+    else
+    	xyzMicrons = bsxfun(@times, xyz, volumeScale);
+    end

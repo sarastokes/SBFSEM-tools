@@ -51,7 +51,7 @@ classdef VikingStructureTypes < double
             % LOCALNAME  Returns the sbfsem-tools name
             import sbfsem.core.StructureTypes;
             
-			if nargin < 2
+			if nargin < 2 || isempty(tag)
 				tag = '';
 			else
 				tag = lower(tag);
