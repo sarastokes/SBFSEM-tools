@@ -48,7 +48,7 @@ classdef NeuronOData < sbfsem.io.OData
     
     methods
         function obj = NeuronOData(ID, source)
-            % ODATA  Serves as middleman between OData server and Matlab
+            % ODATAINTERFACE  Serves as middleman b/w OData and Matlab
             %  
             % Inputs:
             %   ID          neuron structure ID (from Viking)
@@ -275,7 +275,15 @@ classdef NeuronOData < sbfsem.io.OData
                 childEdges = array2table(obj.childData.edges);
                 childEdges.Properties.VariableNames = obj.EDGENAMES;
             end
-        end    
+        end
+        
+        function data = annotationsBySection(obj, sections)
+            str = sprintf('/Locations?$filter=Z le %u and Z ge %u and TypeCode eq 1',...
+                max(sections), min(sections));
+
+            data = webread([getServiceRoot(obj.source), str,...
+                '&$select=ID,ParentID,X,Y,Z,Radius'], weboptions);
+        end
     end
 
     % OData import and processing methods

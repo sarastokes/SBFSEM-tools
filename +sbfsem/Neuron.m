@@ -443,18 +443,27 @@ classdef Neuron < handle
                 obj.ODataClient.toNeuron();
             
             disp('Processing data');
+
+            % XY transform and then convert data to microns
+            obj.setXYZum();
+            
+            % Setup synapse columns
+            obj.setupSynapses();
+        end
+        
+        function setXYZum(obj)
             % Create an XYZ in microns column
             obj.nodes.XYZum = zeros(height(obj.nodes), 3);
             % TODO: There's an assumption about the units in here...
             obj.nodes.XYZum = bsxfun(@times,...
                 [obj.nodes.VolumeX, obj.nodes.VolumeY, obj.nodes.Z],...
-                (obj.volumeScale./1000));
-            % Create a column for radiys in microns
+                (obj.volumeScale./1e3));
+            % Create a column for radius in microns
             obj.nodes.Rum = obj.nodes.Radius * obj.volumeScale(1)./1000; 
-            
-            % Setup synapse columns
-            obj.setupSynapses();
         end
+        
+            
+            
 
         function setupSynapses(obj)
             import sbfsem.core.StructureTypes;

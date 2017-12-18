@@ -1,25 +1,25 @@
-classdef StructureTypes < double
+classdef StructureTypes
 	
 	enumeration
-		Cell (1)
-		GapJunction (2)
-		ConvPre (3)
-		ConvPost (4)
-		RibbonPre (5)
-		RibbonPost (6)
-		BipConvPre (7)
-		BipConvPost (8)
-		GABAPre (9)
-		GABAPost (10)
-		Desmosome (11)
-		BasalTA (12)
-		BasalNTA (13)
-		BasalMNTA (14)
-		Touch (15)
-		INLIPLBoundary (16)
-		IPLGCLBoundary (17)
-		Endocytosis (18)
-		Unknown (19)
+		Cell
+		GapJunction
+		ConvPre
+		ConvPost
+		RibbonPre
+		RibbonPost
+		BipConvPre
+		BipConvPost
+		GABAPre
+		GABAPost
+		Desmosome
+		BasalTA
+		BasalNTA
+		BasalMNTA
+		Touch
+		INLIPLBoundary
+		IPLGCLBoundary
+		Endocytosis
+		Unknown
 	end
 
 	methods

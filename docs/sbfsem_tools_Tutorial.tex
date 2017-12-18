@@ -1,5 +1,5 @@
 \documentclass[11pt]{beamer}
-\title{SBFSEM-tools tutorial}
+\title{SBFSEM-tools}
 \author{Sara Patterson}
 \institute{Neitz Lab, University of Washington}
 \usetheme{Goettingen}
@@ -242,7 +242,10 @@ S = xyRegistration('i', [1284 1309], true);\end{lstlisting}
 	\framesubtitle{Rotated Cylinders Method}
 	There are two options for disc renders so far.
 	\begin{lstlisting}[language=matlab]
-	sbfsem.render.Cylinder([c1403, c2578]);\end{lstlisting}
+r1403 = sbfsem.render.Cylinder(c1403);
+r1403.render();
+r2578 = sbfsem.render.Cylinder(c2578);
+r2578.render('ax', gca, 'FaceColor', [.2 .8 .2]);\end{lstlisting}
 	\begin{columns}
 		\column[]{0.55\textwidth}
 			\includegraphics[height=0.45\textheight]{smidget_path}
@@ -331,7 +334,8 @@ rodBC = sbfsem.render.Disc(1893);\end{lstlisting}
 % --------------------------------------------------- Slide --
 \begin{frame}
 	\frametitle{Links}
-	The SBFSEM-tools \href{www.github.com/sarastokes/sbfsem-tools}{\textcolor{blue}{repository}} can be found on Github.\\
+	The SBFSEM-tools \href{www.github.com/sarastokes/sbfsem-tools}{\textcolor{blue}{repository}} can be found on Github.
+	\vskip10pt
 	The software used for annotations is \href{https://connectomes.utah.edu/}{\textcolor{blue}{Viking}}, developed by Jamie Anderson and the Marc Lab at University of Utah.\\
 	Useful free programs involved in these analyses:
 	\begin{itemize}

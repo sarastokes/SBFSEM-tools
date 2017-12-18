@@ -42,7 +42,7 @@ classdef ImageStack < handle
                 nodes = ls(imPath);
                 omits = [];
                 for i = 1:size(nodes,1)
-                    if ~contains(nodes(i,:), '.png')
+                    if isempty(strfind(nodes(i,:), '.png'))
                         omits = cat(2, omits, i);
                     end
                 end

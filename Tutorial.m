@@ -7,7 +7,9 @@
 %% First add sbfsem-tools to your path by editing the filepath below:
 addpath(genpath('C:\users\...\sbfsem-tools'));
 
-%% Import the SBFSEM toolbox (otherwise you will have to add 'sbfsem.' before many of the functions)
+%% Import the SBFSEM toolbox 
+% Otherwise you will have to type 'sbfsem.Neuron' instead of 'Neuron'
+import sbfsem.*;
 
 %% Toolbox check
 % Check community toolboxes to make sure GUI Layout Toolbox is installed
@@ -38,11 +40,11 @@ c2975 = sbfsem.Neuron(2795, 'i');
 
 % I replaced NeuronApp with individual plots:
 % 3D node plot
-fh = sbfsem.ui.NodeView(c6800);
+sbfsem.ui.NodeView(c6800);
 % Stratification and synapses along the z-axis
-fh = sbfsem.ui.StratificationView(c6800);
+sbfsem.ui.StratificationView(c6800);
 % Histogram of proximal-distal synapse density:
-fh = sbfsem.ui.SomaDistanceView(c6800);
+sbfsem.ui.SomaDistanceView(c6800);
 
 % Note: most of the data structures used by sbfsem tools are objects. To
 % get an idea of what an object like "sbfsem.Neuron" contains, type it into

@@ -14,18 +14,18 @@ function endpoint = getODataURL(cellNum, source, urlType)
 
 	switch urlType
 		case 'neuron'
-			endpoint = [baseURL '/Structures(' num2str(cellNum) ')/'];
+			endpoint = [baseURL 'Structures(' num2str(cellNum) ')/'];
 		case 'location'
-			endpoint = [baseURL '/Structures(' num2str(cellNum), ')/Locations/'];
+			endpoint = [baseURL 'Structures(' num2str(cellNum), ')/Locations/'];
 			%	')/Locations/?$select=ID,ParentID,VolumeX,VolumeY,Z,Radius,X,Y,Tags,OffEdge'];
 		case 'link'
-			endpoint = [baseURL '/Structures(' num2str(cellNum)... 
+			endpoint = [baseURL 'Structures(' num2str(cellNum)... 
 				')/LocationLinks/?$select=A,B'];
 		case 'child'
-			endpoint = [baseURL '/Structures(' num2str(cellNum) ')/Children',...
+			endpoint = [baseURL 'Structures(' num2str(cellNum) ')/Children',...
                 '?$select=ID,TypeID,Tags,ParentID,Label'];
 		case 'scale'
-			endpoint = [baseURL '/Scale'];
+			endpoint = [baseURL 'Scale'];
 		otherwise
 			endpoint = baseURL;
 	end
