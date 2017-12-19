@@ -33,18 +33,18 @@ end
 %% Import from OData
 
 % Create a Neuron object Neuron(cellID, 'source');
-c6800 = sbfsem.Neuron(6800, 'temporal');
+c6800 = Neuron(6800, 'temporal');
 % Note: sources are 'temporal', 'inferior', 'rc1' but will
 % recognize any abbreviation like 't', 'inf', etc
-c2975 = sbfsem.Neuron(2795, 'i');
+c2975 = Neuron(2795, 'i');
 
 % I replaced NeuronApp with individual plots:
 % 3D node plot
-sbfsem.ui.NodeView(c6800);
+NodeView(c6800);
 % Stratification and synapses along the z-axis
-sbfsem.ui.StratificationView(c6800);
+StratificationView(c6800);
 % Histogram of proximal-distal synapse density:
-sbfsem.ui.SomaDistanceView(c6800);
+SomaDistanceView(c6800);
 
 % Note: most of the data structures used by sbfsem tools are objects. To
 % get an idea of what an object like "sbfsem.Neuron" contains, type it into
@@ -81,7 +81,7 @@ doc table
 % -------------------------------------------------------------------------
 %% Rendering
 % Import an L/M-cone annotated with closed curves
-c2542 = sbfsem.Neuron(2542, 'i');
+c2542 = Neuron(2542, 'i');
 % Render!
 lmcone = sbfsem.render.ClosedCurve(c2542, 0.3);
 % The 2nd argument is scale factor. The scale factor changes the image 
@@ -113,8 +113,8 @@ geometryData = c2542.geometries;
 %% Disc renders
 % This is still a work in progress as the code could really be optimized.
 % However, the code renders bipolar cell axons quickly
-c1411 = sbfsem.Neuron(1411, 'i');
-bcFull = sbfse.render.Disc(c1411);
+c1411 = Neuron(1411, 'i');
+bcFull = sbfsem.render.Disc(c1411);
 
 % You can also specify a specific range of sections
 axonRange = 1165:1579; % The z-sections encompassing the axon
@@ -152,13 +152,13 @@ S = xyRegistration('i', [1283 1304], true);
 % ImageStack represents the images as a doubly linked list
 % Creating ImageStack imports all .png files in that folder, 
 % relying on the numbering system created by Viking's export frames
-imStack = ImageStack(folderPath);
+imStack = sbfsem.image.ImageStack(folderPath);
 % Open in image stack app
 ImageStackApp(imStack);
 % You can use the right and left arrow keys to move through
 
 % Create a GIF
-[im, map] = stack2gif(ImageStack);
+[im, map] = stack2gif(imStack);
 imwrite(im, map, 'foldername/filename.gif',... 
 	'DelayUpdate', 0,...
 	'Loop', inf);

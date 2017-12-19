@@ -38,6 +38,10 @@ classdef Neuron < handle
     properties (Dependent = true, Transient = true, Hidden = true)
         somaRow % largest "cell" node's row
     end
+    
+    properties (Constant = true, Transient = true)
+        USETRANSFORM = true;
+    end
 
     methods
         function obj = Neuron(ID, source, varargin)
@@ -452,19 +456,28 @@ classdef Neuron < handle
         end
         
         function setXYZum(obj)
+            % Apply transform to NeitzInferiorMonkey
+            if obj.USETRANSFORM && strcmp(obj.source,'NeitzInferiorMonkey')
+                disp('Beginning transform...');
+                xyDir = [fileparts(fileparts(mfilename('fullpath'))), '\data'];
+                xydata = dlmread([xyDir, '\XY_OFFSET_NEITZINFERIORMONKEY.txt']);
+                volX = obj.nodes.VolumeX + xydata(obj.nodes.Z,2);
+                volY = obj.nodes.VolumeY + xydata(obj.nodes.Z,3);
+            else
+                volX = obj.nodes.VolumeX;
+                volY = obj.nodes.VolumeY;
+            end
+
             % Create an XYZ in microns column
             obj.nodes.XYZum = zeros(height(obj.nodes), 3);
             % TODO: There's an assumption about the units in here...
             obj.nodes.XYZum = bsxfun(@times,...
-                [obj.nodes.VolumeX, obj.nodes.VolumeY, obj.nodes.Z],...
+                [volX, volY, obj.nodes.Z],...
                 (obj.volumeScale./1e3));
             % Create a column for radius in microns
             obj.nodes.Rum = obj.nodes.Radius * obj.volumeScale(1)./1000; 
         end
         
-            
-            
-
         function setupSynapses(obj)
             import sbfsem.core.StructureTypes;
             % Create a new column for "unique" synapses 

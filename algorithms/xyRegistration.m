@@ -1,6 +1,18 @@
-function [S, data] = xyRegistration(source, sections, visualize)
+function [data, S] = xyRegistration(source, sections, visualize)
 % XYREGISTRATION  Generate X,Y scale factors per section
-% INPUT:
+% 
+% Syntax:
+%   [data, S] = xyRegistration(source, sections, visualize);
+%
+% Inputs:
+%   source              volume name or abbreviation
+%   sections            start and stop section numbers (eg [1284 1305])
+%   visualize           (false) graph output
+%   
+% Outputs:
+%   data                Nx3 matrix that is sent to updateRegistration
+%                       where cols = Z, r
+%   
 %   
 % OUTPUT:
 %	S 		structure w/ mean, median, sd, sem, n
@@ -18,10 +30,11 @@ function [S, data] = xyRegistration(source, sections, visualize)
         max(sections), min(sections));
 
 	data = webread([getServiceRoot(source), str,...
-		'&$select=ID,ParentID,X,Y,Z,Radius'], weboptions);
+		'&$select=ID,ParentID,VolumeX,VolumeY,Z,Radius'], weboptions);
 
 	% Convert to a table
 	T = struct2table(data.value);
+    T.Properties.VariableNames = {'ID', 'ParentID', 'X', 'Y', 'Z', 'Radius'};
 
 	% Catch false annotations with X/Y=0
 	T(T.X == 0 | T.Y == 0, :) = [];
@@ -64,20 +77,6 @@ function [S, data] = xyRegistration(source, sections, visualize)
 	% Analyze by section
 	[sectionGroups, sectionIDs] = findgroups(T.Z);
 
-	% Save mean, median, std, sem of x, y offset
-	S = struct();
-	S.sections = sectionIDs;
-	S.xMean = splitapply(@mean, T.XShift, sectionGroups);
-	S.yMean = splitapply(@mean, T.YShift, sectionGroups);
-    S.xMedian = splitapply(@median, T.XShift, sectionGroups);
-    S.yMedian = splitapply(@median, T.YShift, sectionGroups);
-	S.xSD = splitapply(@std, T.XShift, sectionGroups);
-	S.ySD = splitapply(@std, T.YShift, sectionGroups);
-	S.xSEM = splitapply(@sem, T.XShift, sectionGroups);
-	S.ySEM = splitapply(@sem, T.YShift, sectionGroups);
-    S.N = splitapply(@numel, T.Z, sectionGroups);
-    S.neurons = unique(T.ParentID);
-
 	if visualize
 		figure('Name', 'XY Image Registration');
 		subplot(2,1,1); hold on;
@@ -94,9 +93,22 @@ function [S, data] = xyRegistration(source, sections, visualize)
 		xlabel('Section Number');
     end
     
-    % The actual transformations to apply
-    if nargout == 2
-        data = table(S.sections, cumsum(S.xMedian), cumsum(S.yMedian),...
-            'VariableNames', {'Section', 'xOffset', 'yOffset'});
-    end
+    % Save mean, median, std, sem of x, y offset
+    S = struct();
+    S.sections = sectionIDs;
+    S.xMean = splitapply(@mean, T.XShift, sectionGroups);
+    S.yMean = splitapply(@mean, T.YShift, sectionGroups);
+    S.xMedian = splitapply(@median, T.XShift, sectionGroups);
+    S.yMedian = splitapply(@median, T.YShift, sectionGroups);
+    S.xSD = splitapply(@std, T.XShift, sectionGroups);
+    S.ySD = splitapply(@std, T.YShift, sectionGroups);
+    S.xSEM = splitapply(@sem, T.XShift, sectionGroups);
+    S.ySEM = splitapply(@sem, T.YShift, sectionGroups);
+    S.N = splitapply(@numel, T.Z, sectionGroups);
+    S.neurons = unique(T.ParentID);
     
+    % The actual transformations to apply
+    data = [S.sections, S.xMedian, S.yMedian];
+    % data = flipud(data);
+    % data(:,2) = cumsum(data(:,2));
+    % data(:,3) = cumsum(data(:,3));

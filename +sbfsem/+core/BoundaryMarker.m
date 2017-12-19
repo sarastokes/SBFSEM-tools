@@ -33,7 +33,7 @@ classdef (Abstract) BoundaryMarker < handle
             obj.pull();
         end
    
-        function refresh(obj)
+        function update(obj)
             obj.pull();
         end
         
