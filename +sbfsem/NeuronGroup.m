@@ -1,7 +1,6 @@
 classdef NeuronGroup < handle
 % NEURONGROUP  Holds an array of related Neurons
-
-    
+   
     properties (SetAccess = private)
         neurons
         IDs
@@ -14,17 +13,10 @@ classdef NeuronGroup < handle
     methods
         function obj = NeuronGroup(neurons, source)
             obj.source = validateSource(source);
-            switch class(neurons)
-                case 'double'
-                    obj.IDs = neurons;
-                    obj.neurons = [];
-                    for i = 1:numel(obj.IDs)
-                        obj.neurons = cat(1, obj.neurons,...
-                            sbfsem.Neuron(obj.IDs(i), obj.source));
-                    end
-                case 'sbfsem.Neuron'
-                    obj.IDs = arrayfun(@(x) x.ID, neurons);
-                    obj.neurons = neurons;
+            if isa(neurons, 'sbfsem.NeuronList')
+                obj.neurons = neurons;
+            else
+                obj.neurons = sbfsem.NeuronList(neurons, source);
             end
         end
 
@@ -147,7 +139,7 @@ classdef NeuronGroup < handle
             if nargin < 2
                 k = 3;
             end
-            [somaSizes, validIDs] = obj.somaDiameter(false);
+            % [somaSizes, validIDs] = obj.somaDiameter(false);
             % validNeurons = [];
             % for i = 1:numel(obj.neurons)
             %     if ismember(obj.neurons(i).ID, validIDs)

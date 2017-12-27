@@ -27,6 +27,7 @@ classdef ClosedCurve < sbfsem.core.Annotation
 
     properties (Dependent = true, Hidden = true)
     	localBounds
+        Zum
     end
     
     methods
@@ -81,6 +82,10 @@ classdef ClosedCurve < sbfsem.core.Annotation
         					max(obj.outline(:,2))];
 		end
 
+        function Zum = get.Zum(obj)
+
+        end
+
         function append(closedcurve)
             assert(isa(closedcurve, 'sbfsem.core.ClosedCurve'),...
                 'Input a ClosedCurve object');
@@ -133,9 +138,11 @@ classdef ClosedCurve < sbfsem.core.Annotation
             % Inputs:
             %   ax      axes handle
 
-            % Plot the outlines
-            patch(obj.outline(:,1), obj.outline(:,2),...
-                'w', 'Parent', ax);
+            % Convert to catmull rom spline
+            [x, y] = catmullRomSpline(...
+                obj.outline(:,1), obj.outline(:,2));
+            % Plot the outlines in white
+            patch(x, y, 'w', 'Parent', ax);
             if ~isempty(obj.cutouts)
                 for i = 1:numel(obj.cutouts)
                     curvePoints = obj.cutouts{i};
@@ -143,6 +150,10 @@ classdef ClosedCurve < sbfsem.core.Annotation
                     if nnz(isnan(curvePoints(1,:))) > 0
                         curvePoints(1,:) = curvePoints(end,:);
                     end
+                    % Convert to a catmull rom spline
+                    [x, y] = catmullRomSpline(...
+                        curvePoints(:, 1), curvePoints(:, 2));
+                    % Plot the cutouts in black
                     patch(curvePoints(:,1), curvePoints(:,2),...
                         'k', 'Parent', ax);
                 end
@@ -156,7 +167,8 @@ classdef ClosedCurve < sbfsem.core.Annotation
             % Optional inputs:
             %   see obj.binarize
             
-         	F = resize@sbfsem.core.Annotation(obj, scaleFactor, varargin{:});
+         	F = resize@sbfsem.core.Annotation(...
+                obj, scaleFactor, varargin{:});
             obj.binaryImage = F;
         end
     end

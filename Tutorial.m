@@ -6,45 +6,20 @@
 
 %% First add sbfsem-tools to your path by editing the filepath below:
 addpath(genpath('C:\users\...\sbfsem-tools'));
+% There's also a "Set path" button on MATLAB's top toolbar, in the
+% "Environment" panel. Make sure to click the button that lets you add all
+% subfolders too.
 
 %% Import the SBFSEM toolbox 
 % Otherwise you will have to type 'sbfsem.Neuron' instead of 'Neuron'
 import sbfsem.*;
 
-%% Toolbox check
-% Check community toolboxes to make sure GUI Layout Toolbox is installed
-struct2table(matlab.addons.toolbox.installedToolboxes)
-
-% Check for JSONLab in sbfsem-tools.
-if isempty(which('loadjson.m'))
-	% as long as sbfsem-tools and subfolders are on your path, this
-	% shouldn't occur
-	error('Add entire sbfsem-tools package to your path');
-else
-	% You may have other versions of loadjson.m installed. These might
-	% throw errors so if this doesn't return the version in sbfsem-tools,
-	% remove the other path
-	if isempty(strfind('sbfsem-tools', which('loadjson.m')))
-		fprintf('Removing %s from path\n', which('loadjson.m'));
-		rmpath(which('loadjson.m'));
-	end
-end
-
 %% Import from OData
-
 % Create a Neuron object Neuron(cellID, 'source');
 c6800 = Neuron(6800, 'temporal');
 % Note: sources are 'temporal', 'inferior', 'rc1' but will
 % recognize any abbreviation like 't', 'inf', etc
 c2975 = Neuron(2795, 'i');
-
-% I replaced NeuronApp with individual plots:
-% 3D node plot
-NodeView(c6800);
-% Stratification and synapses along the z-axis
-StratificationView(c6800);
-% Histogram of proximal-distal synapse density:
-SomaDistanceView(c6800);
 
 % Note: most of the data structures used by sbfsem tools are objects. To
 % get an idea of what an object like "sbfsem.Neuron" contains, type it into
@@ -53,7 +28,86 @@ c2795
 % This will return a list of the "properties" which are basically the
 % different types of data stored in the object. You could also use
 properties(c2795) % or
-properties(sbfsem.Neuron)
+properties('sbfsem.Neuron')
+
+%% Closed Curve Renders
+% Import an L/M-cone annotated with closed curves
+c2542 = Neuron(2542, 'i');
+% Render!
+lmcone = renderClosedCurve(c2542, 'sampling', 0.8);
+% The 2nd argument is scale factor. The scale factor changes the image 
+% sizes used in rendering. This has two effects:
+% First, lower scale factors reduce the computation time.
+% Second, the scale factor changes the final product. If the render looks 
+% too grainy and just looks like a stack of closed curve annotations, try 
+% reducing the scale factor to <1. If the render lacks detail, set the 
+% scale factor >1.
+
+% The render in the figure is a property of the output. Here are some 
+% helpful ways to manipulate this:
+% Change the color
+set(lmcone.renderObj, 'FaceColor', [0.2 0.5 0.9]);
+% Make the render transparent
+set(lmcone.renderObj, 'FaceAlpha', 0.5);
+% Enable 3D rotating (or use the button on the figure toolbar)
+rotate3d;
+
+% Note: the initial import doesn't create the closed curve 
+% geometries. The render function will create them
+% if they aren't present. However, if you want to access that
+% data without rendering, use this:
+c2542.setGeometries();
+% The data is stored under the "geometries" property
+geometryData = c2542.geometries;
+
+%% Disc renders
+% Import a parasol RGC (note: the larger cells can take awhile to import)
+c5 = Neuron(5, 't');
+c121 = Neuron(121, 't');
+% Create Cylinder render objects
+r5 = sbfsem.render.Cylinder(c5);
+r121 = sbfsem.render.Cylinder(c121);
+% Render - this will create a new figure
+r5.render();
+
+% If you want to add more neurons to this figure, you'll need a way of
+% telling Matlab where to send the new neurons. The easiest way to do this
+% is to make sure the figure is your "active" window (the active window is
+% whichever you last clicked on). The "gca" command (get current axis) will
+% then tell Matlab to send the new neuron to the axis the existing one is
+% plotted on. 
+% While you're at it, you might want to change the neuron's color. This can 
+% be done by ('facecolor', [r g b]).
+r121.render('ax', gca, 'facecolor', [0 0.8 0.3]);
+
+% Add a light at the current rotate position (you can do this multiple
+% times)
+camlight;
+% Occasionally if you're on rotate mode, you'll have to go back to the
+% pointer for this to take effect
+
+% Make the figure look nicer
+axis tight; axis off;
+
+% If you want a black background
+set(gcf, 'Color', 'k'); % gcf = get current figure
+axis on; % Axis must be on to change attributes
+set(gca, 'Color', 'k');
+% If you don't want the axis showing
+set(gca, 'XColor', 'k', 'YColor', 'k', 'ZColor', 'k');
+
+% OR you can select the "Show plot tools" button on the toolbar (it's the
+% last button to the right). This gives a UI to edit plot attributes.
+
+
+%% Views
+% I replaced NeuronApp with individual plots:
+% 3D node plot
+NodeView(c6800); % The rotate3d part is broken right now.. will fix soon!
+% Stratification and synapses along the z-axis
+StratificationView(c6800);
+% Histogram of proximal-distal synapse density:
+SomaDistanceView(c6800);
 
 % -------------------------------------------------------------------------
 %% Data tables
@@ -77,49 +131,6 @@ T.Location % returns the location IDs!
 % class. Typing
 doc table
 % should get you to the right area.
-
-% -------------------------------------------------------------------------
-%% Rendering
-% Import an L/M-cone annotated with closed curves
-c2542 = Neuron(2542, 'i');
-% Render!
-lmcone = sbfsem.render.ClosedCurve(c2542, 0.3);
-% The 2nd argument is scale factor. The scale factor changes the image 
-% sizes used in rendering. This has two effects:
-% First, lower scale factors reduce the computation time.
-% Second, the scale factor changes the final product. If the render looks 
-% too grainy and just looks like a stack of closed curve annotations, try 
-% reducing the scale factor to <1. If the render lacks detail, set the 
-% scale factor >1.
-
-
-% The render in the figure is a property of the output. Here are some 
-% helpful ways to manipulate this:
-% Change the color
-set(lmcone.renderObj, 'FaceColor', [0.2 0.5 0.9]);
-% Make the render transparent
-set(lmcone.renderObj, 'FaceAlpha', 0.5);
-% Enable 3D rotating (or use the button on the figure toolbar)
-rotate3d;
-
-% Note: the initial import doesn't create the closed curve 
-% geometries. The render function will create them
-% if they aren't present. However, if you want to access that
-% data without rendering, use this:
-c2542.setGeometries();
-% The data is stored under the "geometries" property
-geometryData = c2542.geometries;
-
-%% Disc renders
-% This is still a work in progress as the code could really be optimized.
-% However, the code renders bipolar cell axons quickly
-c1411 = Neuron(1411, 'i');
-bcFull = sbfsem.render.Disc(c1411);
-
-% You can also specify a specific range of sections
-axonRange = 1165:1579; % The z-sections encompassing the axon
-bcAxon = sbfsem.render.Disc(c1411, axonRange);
-
 % -------------------------------------------------------------------------
 %% IPL Boundary surface
 % Create a surface from INL-IPL or INL-GCL boundary markers
@@ -130,13 +141,15 @@ inl.refresh();
 
 % Create a surface from the marker locations
 inl.doAnalysis();
-% Increase the surface resolution (default=100 points)
-inl.doAnalysis(500);
 
 % Plot the surface:
 plot(inl);
 % To see the surface without the raw data
 plot(inl, false);
+
+% You can alsow increase the surface resolution (default=100 points)
+inl.doAnalysis(500);
+
 
 % -------------------------------------------------------------------------
 %% XY alignment

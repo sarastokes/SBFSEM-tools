@@ -6,9 +6,11 @@ function [binaryMatrix, hiso] = renderClosedCurve(neuron, varargin)
     %
     % Description:
     %   This function renders all closed curve annotations associated with
-    %   a neuron. The rendering algorithm creates a 3D (x,y,z) binary 
-    %   matrix. Closed curve outlines are rendered with the patch function
-    %   in white, cutouts are rendered in black - this converts to t/f.
+    %   a neuron. The control points are pulled from OData and smoothed
+    %   using a catmull rom spline. The rendering algorithm creates a 3D 
+    %   (x,y,z) binary matrix. Closed curve outlines are rendered with the 
+    %   patch function in white, cutouts are rendered in black - this 
+    %   converts to t/f.
     %
     % Inputs:       
     %   neuron          neuron object
@@ -102,17 +104,16 @@ function [binaryMatrix, hiso] = renderClosedCurve(neuron, varargin)
     xy = max(xy);
 
     % Resize the binary images to xy limits
+    % This usually involves adding a single pixel to the X or Y axis
     binaryMatrix = [];
     for i = 1:numel(imnodes)
         im = F{i};
         if size(im,1) < xy(1)
         	pad = xy(1)-size(im,1);
-        	fprintf('Image %u: Added %u to x-axis\n', i, pad);
             im = padarray(im, [pad, 0], 0, 'pre');
         end
         if size(im,2) < xy(2)
         	pad = xy(2)-size(im,2);
-        	fprintf('Image %u: Added %u to y-axis\n', i, pad);
             im = padarray(im, [0, pad], 0, 'pre');
         end
         binaryMatrix = cat(3, binaryMatrix, im);
@@ -133,16 +134,18 @@ function [binaryMatrix, hiso] = renderClosedCurve(neuron, varargin)
     isonormals(smoothedImages, hiso);
 
     % Set up the lighting
-    view(35, 30);
-    lgt = camlight(30, 30);
-    lgt.Style = 'ambient';
+    lightangle(45,30);
+    lightangle(225,30);
+    lighting phong;
+    view(3);
+
     set(hiso,...
-    	'FaceLighting', 'gouraud',...
+        'FaceLighting', 'gouraud',...
         'SpecularExponent', 50,...
         'SpecularColorReflectance', 0);
 
     % Scale axis to match volume dimensions
     daspect(neuron.getDAspect);
-    axis equal;
+    axis equal; axis tight;
     fh.labelXYZ();
     set(fh.ax, 'XColor', 'w', 'YColor', 'w', 'ZColor', 'w');

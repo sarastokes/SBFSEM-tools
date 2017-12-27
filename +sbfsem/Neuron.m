@@ -44,46 +44,23 @@ classdef Neuron < handle
     end
 
     methods
-        function obj = Neuron(ID, source, varargin)
+        function obj = Neuron(ID, source)
             % NEURON  Basic cell data model
             %
             % Required inputs:
             %   ID          Cell ID number in Viking
             %   source      Volume ('i', 't', 'r')
             %
-            % Optional inputs ('key', value):
-            %   ct          Cell type 
-            %   st          Subtype
-            %   pol         Polarity: on, off, onoff
-            %   prs         Inputs: LM, S, rod
-            %   strata      Stratification [0 0 0 0 0]
-            %   ann         Annotator
-            %   notes       Any format is okay
-            %
             % Use:
             %   % Import c127 in NeitzInferiorMonkey
             %   c127 = Neuron(127, 'i');
             %
-            %   % Include all the neuron attributes
-            %   c207 = Neuron(207, 't',...
-            %       'ct', 'gc', 'st', 'smooth', 'pol', 'on',...
-            %       'prs', [1 0 0], 'strata', 4, 'ann', 'SSP');
-            %
-            %   % Include only a few attributes
-            %   c127 = Neuron(127, 'i',...
-            %       'ct', 'hc', 'st', 'h2', 'ann', 'SSP');
-            %   
 
             % Check required inputs
             validateattributes(ID, {'numeric'}, {'numel', 1});
             source = validateSource(source);
             obj.ID = ID;
             obj.source = source;
-            
-            % Parse additional inputs
-            if nargin > 2
-                obj.addDescription(varargin{:});
-            end
 
             obj.ODataClient = sbfsem.io.NeuronOData(obj.ID, obj.source);
             
@@ -162,12 +139,22 @@ classdef Neuron < handle
                 '/OData/Structures(', num2str(obj.ID),...
                 ')\Locations?$filter=TypeCode eq 6']);
             
+            % Volume scale nm --> microns
+            xyzScale = obj.volumeScale./1e3;
+            
             for i = 1:numel(odata.value)
+                % Parse OData text
+                closedCurves = parseClosedCurve2(...
+                    odata.value(i).MosaicShape.Geometry.WellKnownText,...
+                    xyzScale);
+                % Add to geometry table
                 obj.geometries = [obj.geometries; table(odata.value(i).ID,...
                     odata.value(i).ParentID, odata.value(i).Z,...  
-                    {parseClosedCurve(odata.value(i).MosaicShape.Geometry.WellKnownText)})];
+                    odata.value(i).Z * xyzScale(3), {closedCurves})];
             end
-            obj.geometries.Properties.VariableNames = {'ID', 'ParentID', 'Z', 'Curve'};
+            
+            obj.geometries.Properties.VariableNames = {'ID', 'ParentID',...
+                'Z', 'Zum', 'Curve'};
             % Sort by z section
             obj.geometries = sortrows(obj.geometries, 'Z', 'descend');
         end
@@ -199,8 +186,8 @@ classdef Neuron < handle
             cellNodes = obj.nodes(row, :);
         end
         
-        function T = synIDs(obj, whichSyn)
-            % SYNIDS  Return location IDs for synapses
+        function T = synapseIDs(obj, whichSyn)
+            % SYNAPSEIDS  Return location IDs for synapses
             row = strcmp(obj.synapses.LocalName, whichSyn)... 
                 & obj.synapses.Unique == 1;
             T = obj.synapses(row,:);
@@ -250,10 +237,11 @@ classdef Neuron < handle
             
             % Find the synapse structures matching synapse name
             if ischar(syn)
-                row = strcmp(obj.synapses.LocalName, syn);
-            else
-                row = vertcat(obj.synapses.LocalName{:}) == syn;                
+                syn = sbfsem.core.StructureTypes(syn);
             end
+            
+            row = vertcat(obj.synapses.LocalName{:}) == syn;                
+           
             IDs = obj.synapses.ID(row,:);
 
             % Find the unique instances of each synapse ID
@@ -353,48 +341,11 @@ classdef Neuron < handle
             end
         end
 
-        function addDescription(obj, varargin)
-            % DESCRIBE  Add neuron's description, work in progress
-            ip = inputParser();
-            ip.CaseSensitive = false;
-            ip.addParameter('ct', [],  @(x) any(validatestring(upper(x),... 
-                getCellTypes(1))));
-            ip.addParameter('st', [], @ischar);
-            ip.addParameter('pol', [], @(x) ischar(x) || isnumeric(x));
-            ip.addParameter('prs', [], @isnumeric);
-            ip.addParameter('strata', [], @isnumeric);
-            ip.addParameter('ann', [], @ischar);
-            ip.addParameter('notes', []);
-            ip.parse(varargin{:});   
-
-            % Check then set the neuron's properties
-            obj.data.cellType = validateCellType(ip.Results.ct);
-            obj.data.subtype = validateSubTypes(ip.Results.st, obj.data.cellType);
-            obj.data.onoff = validatePolarity(ip.Results.pol);
-            obj.data.inputs = validateConeInputs(ip.Results.prs);
-            obj.data.strata = validateStrata(ip.Results.strata); 
-            obj.data.annotator = ip.Results.ann;                             
-            obj.data.notes = ip.Results.notes;         
-        end
-
-        function analyze(obj, DisplayName)
-            % ANALYZE  Run and append an analysis
-            % Inputs: 
-            %   DisplayName   Analysis name
-
-            validatestring(DisplayName,...
-                {'PrimaryDendriteDiameter', 'DendriticFieldHull'});
-        end
-        
         function addAnalysis(obj, analysis, overwrite)
             % ADDANALYSIS  Append or update an analysis
             if nargin < 3 
                 overwrite = false;
             end
-
-            % if isempty(obj.analysis)
-            %     obj.analysis = containers.Map;
-            % end
 
             validateattributes(analysis, {'sbfsem.analysis.NeuronAnalysis'}, {});
 
@@ -419,14 +370,14 @@ classdef Neuron < handle
             fprintf('Added %s analysis\n', analysis.DisplayName);
         end
 
-        function saveNeuron(obj)
-            % SAVENEURON  Save changes to neuron
+        function save(obj)
+            % SAVE  Save changes to neuron
             uisave(obj, sprintf('c%u', obj.data.cellNum));
             fprintf('Saved!\n');
         end
                  
         function printSyn(obj)
-            % summarize synapses to cmd line
+            % PRINTSYN  Print synapse summary to the command line
             [a, b] = findgroups(obj.synapses.TypeID);
             b2 = sbfsem.core.VikingStructureTypes(b);
             x = splitapply(@numel, obj.synapses.TypeID, a);
@@ -434,9 +385,14 @@ classdef Neuron < handle
             for ii = 1:numel(x)
                 fprintf('%u %s\n', x(ii), b2(ii));
             end
-            fprintf('\n');
-        end % printSyn
-    end % methods  
+            fprintf('\n--------------\n detailed names:\n');
+            for i = 1:numel(synapseNames)
+                fprintf('%u %s\n',...
+                    size(obj.getSynapseXYZ(synapseNames(i)), 1),...
+                    char(synapseNames(i)));
+            end
+        end
+    end
 
     methods (Access = private)
         function pull(obj)
