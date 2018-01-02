@@ -20,7 +20,7 @@ function exportDAE(filename, varargin)
 		DOM.createElement('asset'));
 
     % Defines units for mesh
-	unitNode = assetNode.apendChild(...
+	unitNode = assetNode.appendChild(...
 		DOM.createElement('unit'));
 	unitNode.setAttribute('meter', '1');
 	unitNode.setAttribute('name', 'meter');
@@ -39,7 +39,7 @@ function exportDAE(filename, varargin)
     
     sketchup = visualScene.appendChild(...
         DOM.createElement('node'));
-    sketchup.setAttributes('name', 'SketchUp');
+    sketchup.setAttribute('name', 'SketchUp');
     
     libraryNodes = rootNode.appendChild(...
         DOM.createElement('library_nodes'));
@@ -68,7 +68,7 @@ function exportDAE(filename, varargin)
         instanceNode.setAttribute(...
             'url', id('#', 4, i));
                 
-        node = libraryNodes.appendNode(...
+        node = libraryNodes.appendChild(...
             DOM.createElement('node'));
         node.setAttribute(...
             'id', id('', 4, i));
@@ -80,7 +80,7 @@ function exportDAE(filename, varargin)
         instanceGeometry.setAttribute(...
             'url', id('#', 5, i));
         
-        bindMaterial = instanceGeometry.appendNode(...
+        bindMaterial = instanceGeometry.appendChild(...
             DOM.createElement('bind_material'));
         bindMaterial.appendChild(...
             DOM.createElement('technique_common'));
@@ -89,8 +89,7 @@ function exportDAE(filename, varargin)
             DOM.createElement('geometry'));
         geometry.setAttribute('id', id('',5,i));
 
-        mesh = geometry.appendChild(...
-            DOM.createElement('mesh'));
+        mesh = geometry.appendChild(DOM.createElement('mesh'));
         
         source = mesh.appendChild(...
             DOM.createElement('source'));
@@ -105,7 +104,7 @@ function exportDAE(filename, varargin)
         floatArray.appendChild(...
             DOM.createTextNode(sprintf('%g', V')));
         
-        techniqueCommon = source.appendNode(...
+        techniqueCommon = source.appendChild(...
             DOM.createElement('technique_common'));
         
         accessor = techniqueCommon.appendChild(...
@@ -122,7 +121,6 @@ function exportDAE(filename, varargin)
                 DOM.createElement('param'));
             param.setAttribute('name', name);
             param.setAttribute('source', id('#', 7, i));
-            param.setAttribute('stride', '3');
         end
         
         vertices = mesh.appendChild(...
@@ -130,7 +128,7 @@ function exportDAE(filename, varargin)
         vertices.setAttribute('id', id('', 8, i));
         
         input = vertices.appendChild(...
-            DOM.createElement('vertices'));
+            DOM.createElement('input'));
         input.setAttribute('offset', '0');
         input.setAttribute('semantic', 'VERTEX');
         input.setAttribute('source', id('#', 6, i));
@@ -138,16 +136,13 @@ function exportDAE(filename, varargin)
             DOM.createElement('triangles'));
         triangles.setAttribute('count', num2str(size(F, 1)));
         
-        input = triangles.appendChild(...
-            DOM.createElement('input'));
+        input = triangles.appendChild(DOM.createElement('input'));
         input.setAttribute('offset', '0');
         input.setAttribute('semantic', 'POSITION');
         input.setAttribute('source', id('#', 8, i));
         
-        p = triangles.appendChild(...
-            DOM.createElement('input'));
-        p.appendChild(...
-            DOM.createTextNode(sprintf('%d', (F-1)')));    
+        p = triangles.appendChild(DOM.createElement('p'));
+        p.appendChild(DOM.createTextNode(sprintf('%d', (F-1)')));    
     end
     
     scene = rootNode.appendChild(...

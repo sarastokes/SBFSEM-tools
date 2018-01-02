@@ -8,7 +8,8 @@ classdef Cylinder < handle
     %   ID          Neuron ID number 
     %   subGraphs   Graph segments 
     %   G           Graph
-    %   FV          Struct with faces, vertices of each segmetb
+    %   FV          Struct with faces, vertices of each segment
+    %   reduceFac   Percent of faces to retain in DAE (1 = 100%)
     %
     % Methods:
     %   obj.render('ax', axHandle, 'facecolor', 'b'); 
@@ -16,12 +17,12 @@ classdef Cylinder < handle
     %   fh = plot(obj); 
     %   obj.dae();
     %
-    %   See also: DENDRITESEGMENTATION, GENCYL
+    %   See also: DENDRITESEGMENTATION, GENCYL, PLOT3T
     %
     %   History:
     %       11Dec2017 - SSP 
     %       21Dec2017 - SSP - cleaned up, dae export, improved lighting
-    
+    %
     % Examples:
     %{
         r1411 = sbfsem.render.Cylinder(sbfsem.Neuron(1411, 'i'));
@@ -33,37 +34,70 @@ classdef Cylinder < handle
         % Export both to COLLADA .dae files
         dae(r1411); dae(r1441);
     %}
+    % ---------------------------------------------------------------------
     
     properties (SetAccess = private)
         ID
         subGraphs
         G
         FV
+        
+        reduceFac = 1;
+        smoothIter = 1;
     end
-    
-    properties (Transient = true, Hidden = true)
-        neuron
-    end
-    
+
     properties (Constant = true, Hidden = true)
-        CIRCLEPTS = 12;
-        CYLINDERPTS = 20;
-        BRIDGEPTS = 2;
+        CIRCLEPTS = 10;         % Points for line3
+        CYLINDERPTS = 20;       % Points per around RC
+        BRIDGEPTS = 2;          % Points per 2 annotations for RC
     end
     
     methods
-        function obj = Cylinder(neuron)
+        function obj = Cylinder(neuron, varargin)
             assert(isa(neuron, 'sbfsem.Neuron'), 'Input a Neuron object');
             
+            ip = inputParser();
+            addParameter(ip, 'method', 1, @(x) ismember(x, [1 2]));
+            addParameter(ip, 'reduceFac', 1);
+            addParameter(ip, 'smoothIter', 1);
+            parse(ip, varargin{:});
+
             obj.ID = neuron.ID;
-            obj.neuron = neuron;
             obj.G = graph(neuron);
             
+            obj.setReduction(ip.Results.reduceFac);
+            obj.setSmoothIter(ip.Results.smoothIter);
+            
+            % Divide neuron into degree<3 segments
             [~, obj.subGraphs] = dendriteSegmentation(neuron);
-            obj.FV = obj.createPolygonMeshes();
+
+            % Create the meshes
+            if ip.Results.method == 1
+                obj.FV = obj.createPolygonMeshes();
+            else
+                obj.FV = obj.createCurveMeshes();
+            end
+        end
+
+        function setReduction(obj, x)
+            % SETREDUCTION
+            %
+            % Input:
+            %   x           Reduction factor between 0-1
+            %               where 1 keeps all faces, 0.5 keeps 50%
+            % -------------------------------------------------------------
+            assert(x >= 0 & x <= 1, 'Reduction factor must be between 0-1');
+            obj.reduceFac = x;
+        end
+        
+        function setSmoothIter(obj, numIter)
+            % SETSMOOTHING
+            obj.smoothIter = numIter;
         end
         
         function fh = plot(obj)
+            % PLOT  Show the graph used for dendrite segmentation
+            
             fh = sbfsem.ui.FigureView(1);
             plot(obj.G, 'Layout', 'force', 'Parent', fh.ax);
             axis tight;
@@ -71,39 +105,74 @@ classdef Cylinder < handle
         end
         
         function render(obj, varargin)
+            % RENDER
+            %
+            % Optional key/value inputs:
+            %   ax              Existing axis handle (default = new figure)
+            %   facecolor       Color for render faces
+            %   useSegments     Render as a single patch
+            %   reduce          Apply patch face reduction
+
             ip = inputParser();
             ip.CaseSensitive = false;
             addParameter(ip, 'faceColor', [0.5 0 0.8],...
                 @(x) isvector(x) || ischar(x));
             addParameter(ip, 'ax', [], @ishandle);
             addParameter(ip, 'useSegments', false, @islogical);
-            addParameter(ip, 'reduce', 0, @(x)...
-                validateattributes(x, {'numeric'}, {'<=', 1, '>=',0}));
+            addParameter(ip, 'reduce', false, @islogical);
             parse(ip, varargin{:});
+            
+            if obj.reduceFac == 1
+                doReduction = false;
+            else
+                doReduction = ip.Results.reduce;
+                if doReduction
+                    fprintf('Reduced patch to %u %%\n', 100*obj.reduceFac);
+                end
+            end
             
             faceColor = ip.Results.faceColor;
             
             if isempty(ip.Results.ax)
                 fh = sbfsem.ui.FigureView(1);
                 ax = fh.ax;
+                lightangle(45,30);
+                lightangle(225,30);
             else
                 ax = ip.Results.ax;
             end
             
             hold(ax, 'on');
             
-            for i = 1:numel(obj.FV)
-                patch(obj.FV{i},...
+            if ip.Results.useSegments
+                for i = 1:numel(obj.FV)
+                    p = patch(obj.FV{i},...
+                        'FaceColor', faceColor,...
+                        'EdgeColor', 'none',...
+                        'Tag', sprintf('c%u', obj.ID),...
+                        'Parent', ax);
+                    if doReduction
+                        reducepatch(p, obj.reduceFac);
+                    end
+                end
+            else
+                allFV = obj.condense();
+                if obj.smoothIter ~= 0
+
+                    allFV = obj.smooth(allFV, obj.smoothIter);
+                end
+                p = patch(allFV,...
                     'FaceColor', faceColor,...
                     'EdgeColor', 'none',...
                     'Tag', sprintf('c%u', obj.ID),...
                     'Parent', ax);
+                if doReduction
+                    reducepatch(p, obj.reduceFac);
+                end
             end
-
+            
             axis(ax, 'equal');
             axis(ax, 'tight');
-            lightangle(45,30);
-            lightangle(225,30);
             lighting phong;
         end
         
@@ -115,25 +184,33 @@ classdef Cylinder < handle
             filePath = uigetdir();
             
             disp('Condensing meshes');
-            FV = obj.condense();
+            allFV = obj.condense();
+            
+            if obj.reduceFac ~= 1
+                allFV = reducepatch(allFV, obj.reduceFac);
+                fprintf('Reduced patch to %u%%\n', obj.reduceFac * 100);
+            end
             
             fprintf('Saving as %s\n', [filePath filesep fname]);
-            obj.writeDAE([filePath, filesep, fname],...
-                FV.vertices, FV.faces);
+            writeDAE([filePath, filesep, fname],...
+                allFV.vertices, allFV.faces);
         end
         
         function FV = condense(obj)
-            % CONDENSE  Wrapper for geom3d concatenateMeshes See also:
-            % CONCATENATEMESHES
+            % CONDENSE  Single face/vertex struct
+            %
+            % See also: CONCATENATEMESHES
             FV = concatenateMeshes(vertcat(obj.FV{:}));
         end
     end
     
     methods (Access = private)
         function FV = createPolygonMeshes(obj) 
-            if isempty(obj.subGraphs)
-                obj.subGraphs = dendriteSegmentation(obj.neuron);
-            end
+            % CREATEPOLYGONMESHES
+            %
+            % Creates a polygon mesh of each dendrite segment using two
+            % algorithms for creating rotated cylinders. The algorithm used
+            % is determined for each segment individually.
             
             % Pull data from table
             locations = obj.subGraphs.XYZum;
@@ -143,16 +220,21 @@ classdef Cylinder < handle
             
             for i = 1:height(obj.subGraphs)
                 if size(obj.subGraphs.XYZum{i}, 1) > 2
-                    [fv, gencylFlag] = obj.Line3(locations{i}, radii{i});
-                    fv = obj.smooth(fv);
+                    [fv, gencylFlag] = obj.Line3(locations{i}, radii{i});                    
                     if gencylFlag
-                        fv = [];
+                        fprintf('Segment %u - switched algorithms\n', i);
                         [x, y, z] = gencyl(locations{i}', radii{i});
-                        [fv.faces, fv.vertices] = surf2patch(...
-                            x, y, z, 'triangles');
-                    end                   
-                else
-                    % Use GENCYL for small sections
+                        if nnz(isnan(x)) > 0
+                            % Very rarely, gencyl produces a few NaNs
+                            % If this becomes more frequent I'll fix it
+                            fprintf('Found %u NaNs\n', nnz(isnan(x)));                            
+                        else                                  
+                            fv = [];
+                            [fv.faces, fv.vertices] = surf2patch(...
+                                x, y, z, 'triangles');
+                        end
+                    end
+                else % Gencyl for smaller sections
                     [x, y, z] = gencyl(locations{i}', radii{i});
                     [fv.faces, fv.vertices] = surf2patch(...
                         x, y, z, 'triangles');
@@ -160,61 +242,21 @@ classdef Cylinder < handle
                 FV = cat(1, FV, fv);
             end
         end
-    end
-    
-    methods (Access = private)
-        function [X, Y, Z, A] = rotatedCylinder(obj, locations, radii)
-            % ROTATEDCYLINDER  Generates series of rotated cylinders See
-            % also: gencyl
-            
-            N = numel(radii);
-            
-            D = diff(locations , 1 , 2 );
-            L = sqrt(sum(D.^2));
-            
-            % Interpolate radius
-            if obj.BRIDGEPTS > 2
-                radii = interp1( 1:N , radii ,...
-                    linspace(1,N, obj.BRIDGEPTS*(N-1) - (N-2) ) , 'spline' );
-            end
-            
-            % Axis and angle of rotation for each cylinder
-            Qvec = cross( [0;0;1]*ones(1,N-1) , D );
-            A = acos(dot([0;0;1]*ones(1,N-1), D)./L);
-            
-            % Init
-            endPt = 0;
-            endRadius = 1;
-            X = zeros((N-1) * obj.BRIDGEPTS, obj.CYLINDERPTS+1);
-            Y = zeros((N-1) * obj.BRIDGEPTS, obj.CYLINDERPTS+1);
-            Z = zeros((N-1) * obj.BRIDGEPTS, obj.CYLINDERPTS+1);
-            
-            for i = 1:(N-1)
-                % Start and end indices
-                startPt = endPt + 1;
-                endPt = i*obj.BRIDGEPTS;
-                
-                % Radius points
-                startRadius = endRadius;
-                endRadius = startRadius + (obj.BRIDGEPTS-1);
-                
-                % Create matlab cylinder
-                [tx, ty, tz] = cylinder(radii(startRadius:endRadius), obj.CYLINDERPTS);
-                
-                % Get the quaternion rotation matrix
-                Q = obj.qrotation(Qvec(:,i), A(i));
-                
-                % Rotate and scale cylinder
-                ty = ty(:)'; tx = tx(:)'; tz = tz(:)';
-                C = bsxfun(@plus, Q * vertcat(tx, ty, L(i)*tz),...
-                    locations(:,1));
-                
-                X(startPt:endPt,:) = reshape(C(1,:)', obj.BRIDGEPTS, obj.CYLINDERPTS+1);
-                Y(startPt:endPt,:) = reshape(C(2,:)', obj.BRIDGEPTS, obj.CYLINDERPTS+1);
-                Z(startPt:endPt,:) = reshape(C(3,:)', obj.BRIDGEPTS, obj.CYLINDERPTS+1);
+
+        function FV = createCurveMeshes(obj)
+            locations = obj.subGraphs.XYZum;
+            radii = obj.subGraphs.Rum;
+
+            FV = {};
+
+            for i = 1:height(obj.subGraphs)
+                fv = curveToMesh2(locations{i}, radii{i});
+                FV = cat(1, FV, fv);
             end
         end
-        
+    end
+    
+    methods (Access = private)       
         function [FV, gencylFlag] = Line3(obj, data, radius)
             x = data(:,1);
             y = data(:,2);
@@ -224,6 +266,7 @@ classdef Cylinder < handle
             % Flags situations where fminsearch doesn't converge. These
             % segments will then be sent to alternative rendering method.
             gencylFlag = 0;
+            options = optimset('Display', 'off');
             
             % Vertex points around each circle
             angles=0:(360/N):359.999;
@@ -254,16 +297,14 @@ classdef Cylinder < handle
             % In plane rotation of 2d circle coordinates
             jm = 0;
             
-            % Number of triangelized cylinder elements added to plot the 3D
-            % line
+            % Track the number of cylinder elements
             numCylinders = 0;
             
             % Calculate the 3D circle coordinates of the first circle/cylinder
             [a, b] = obj.getab(normal(1, :));
             circm = obj.normalCircle(angles, jm, a, b);
             
-            % If not a closed line, add a half sphere made by 5 cylinders
-            % add the line start.
+            % Add a half sphere at line start
             for j=5:-0.5:1
                 % Translate the circle on it's position on the line
                 r = sqrt(1-(j/5)^2);
@@ -281,7 +322,7 @@ classdef Cylinder < handle
             
             % Loop through all line pieces.
             for i=1:length(data)-1
-                % Create main cylinder between 2 line points This consists
+                % Create main cylinder between 2 line points. This consists
                 % of two connected circles.
                 iNormal=normal(i,:); iData=data(i,:);
                 
@@ -311,7 +352,7 @@ classdef Cylinder < handle
                 % Create in between circle to smoothly connect line pieces.
                 ijNormal = iNormal + jNormal;
                 ijNormal = ijNormal ./ sqrt(sum(ijNormal.^2));
-                ijData = 0.5858*jData...
+                ijData = 0.5858* jData...
                     + 0.4142*(0.5*((jData + bufferDist*jNormal)...
                     + (jData - bufferDist*iNormal)));
                 
@@ -320,8 +361,9 @@ classdef Cylinder < handle
                 % coordinates of two circles with 3 coordinates.
                 [a, b] = obj.getab(ijNormal);
                 [jm, ~, exitFlag] = fminsearch(...
-                    @(j) obj.minimizeRot([0 120 240], circmo, j, a, b), jm);
-                if exitFlag == -1
+                    @(j) obj.minimizeRot([0 120 240], circmo, j, a, b), jm,...
+                    options);
+                if exitFlag == 0
                     gencylFlag = 1;
                 end
                 
@@ -345,8 +387,9 @@ classdef Cylinder < handle
                 % coordinates of two circles with 3 coordinates.
                 [a, b] = obj.getab(jNormal);                
                 [jm, ~, exitFlag] = fminsearch(...
-                    @(j) obj.minimizeRot([0, 120, 240], circmo, j, a, b), jm);
-                if exitFlag == -1
+                    @(j) obj.minimizeRot([0, 120, 240], circmo, j, a, b), jm,...
+                    options);
+                if exitFlag == 0
                     gencylFlag = 0;
                 end
                 
@@ -355,9 +398,7 @@ classdef Cylinder < handle
                 circmo = obj.normalCircle([0, 120, 240], jm, a, b);
             end
             
-            % If not a closed line, add a half sphere made by 5 cylinders
-            % add the line end. Otherwise add the starting circle to the
-            % line end.
+            % Add a half sphere made by 5 cylinders
             for j=1:0.5:5
                 % Translate the circle on it's position on the line
                 r = sqrt(1-(j/5)^2);
@@ -385,7 +426,7 @@ classdef Cylinder < handle
             end
         end
         
-        function [err,circm]=minimizeRot(obj, angles, circmo, angleoffset, a, b)
+        function [err,circm] = minimizeRot(obj, angles, circmo, angleoffset, a, b)
             % This function calculates a distance "error", between the same
             % coordinates in two circles on a line.
             [circm]=obj.normalCircle(angles,angleoffset,a,b);
@@ -395,25 +436,17 @@ classdef Cylinder < handle
     end
     
     methods (Static)
-        function q = qrotation(vec, ang)
-            %ROTATION  Quaternion rotation matrix
-            cphi = cos(ang/2);
-            sphi = sin(ang/2);
-            
-            vec = vec/norm(vec);
-            vec = vec(:)';
-            vals = num2cell([cphi vec*sphi]);
-            [a, b, c, d] = vals{:};
-            
-            q = [ 1 - 2*c^2 - 2*d^2 , 2*b*c - 2*d*a     , 2*b*d + 2*c*a ; ...
-                2*b*c + 2*d*a     , 1 - 2*b^2 - 2*d^2 , 2*c*d - 2*b*a ; ...
-                2*b*d - 2*c*a     , 2*c*d + 2*b*a     , 1 - 2*c^2 - 2*b^2 ];
-        end
-        
-        function FV = smooth(FV)
-            % SMOOTH  Structure input/output for geom3d smoothMesh See
-            % also: SMOOTHMESH
-            [FV.vertices, FV.faces] = smoothMesh(FV.vertices, FV.faces);
+        function FV = smooth(FV, numIter)
+            % SMOOTH  Structure input/output for geom3d smoothMesh 
+            % 
+            % Inputs:
+            %   numIter     Number of smooth iterations (default = 1)
+            %
+            % See also: SMOOTHMESH
+            if nargin < 2
+                numIter = 1;
+            end
+            [FV.vertices, FV.faces] = smoothMesh(FV.vertices, FV.faces, numIter);
         end
         
         function [X, a, b] = normalCircle(angles, angleoffset, a, b)
@@ -442,129 +475,149 @@ classdef Cylinder < handle
             b = b / sqrt(b * b');
         end
         
-        function writeDAE(filename,varargin)
+        function saveDAE(filename, FV)
             % WRITEDAE  Write a mesh to a Collada .dae scene file.
+
+            F = FV.faces;
+            V = FV.vertices;
             
-            function s = id(p,n,i)
-                s = sprintf('%sID%d',p,n+(i-1)/2*10);
-            end
+            % Name scene as the filename without path or .dae
+            sceneName = strsplit(filename, filesep);
+            sceneName = sceneName{end};
+            sceneName(end-3:end) = [];
             
-            docNode = com.mathworks.xml.XMLUtils.createDocument('COLLADA');
-            docRootNode = docNode.getDocumentElement;
-            docRootNode.setAttribute(...
+            % COLLADA setup
+            DOM = com.mathworks.xml.XMLUtils.createDocument('COLLADA');
+            rootNode = DOM.getDocumentElement;
+            
+            rootNode.setAttribute(...
                 'xmlns','http://www.collada.org/2005/11/COLLADASchema');
-            docRootNode.setAttribute('version','1.4.1');
-            asset = docNode.createElement('asset');
-            unit = docNode.createElement('unit');
-            unit.setAttribute('meter','0.0254000');
-            unit.setAttribute('name','inch');
-            asset.appendChild(unit);
-            up_axis = docNode.createElement('up_axis');
-            up_axis.appendChild(...
-                docNode.createTextNode('Y_UP'));
-            asset.appendChild(up_axis);
-            docRootNode.appendChild(asset);
+            rootNode.setAttribute('version', '1.4.1');
+
+            assetNode = rootNode.appendChild(DOM.createElement('asset'));
+
+            dateNode = AssetNode.appendChild(DOM.createElement('created'));
+            dateNode.appendChild(DOM.createTextNode(...
+                datestr(now, 'yyyy-mm-ddTHH:MM:SSZ')));
+            authorNode = ContributorNode.appendChild(...
+                DOM.createElement('authoring_tool'));
+            authorNode.appendChild(DOM.createTextNode('SBFSEMtools'));
+
+            unitNode = assetNode.appendChild(DOM.createElement('unit'));
+            unitNode.setAttribute('meter', '1');
+            unitNode.setAttribute('name', 'micrometer');
+
+            upNode = assetNode.appendChild(DOM.createElement('up_axis'));
+            upNode.appendChild(DOM.createTextNode('Z_UP'));
             
-            visual_scenes = docNode.createElement('library_visual_scenes');
-            visual_scene = docNode.createElement('visual_scene');
-            visual_scene.setAttribute('id','ID2');
-            sketchup = docNode.createElement('node');
-            sketchup.setAttribute('name','SketchUp');
+            visualSceneLibrary = rootNode.appendChild(...
+                DOM.createElement('library_visual_scenes'));
+            visualScene = visualSceneLibrary.appendChild(...
+                DOM.createElement('visual_scene'));
+            visualScene.setAttribute('id', 'ID2');
+
+            sceneNode = visualScene.appendChild(...
+                DOM.createElement('node'));
+            sceneNode.setAttribute('name', sceneName);
             
-            library_nodes = docNode.createElement('library_nodes');
+            library_nodes = rootNode.appendChild(...
+                DOM.createElement('library_nodes'));            
+            library_geometries = rootNode.appendChild(...
+                DOM.createElement('library_geometries'));
+
+            % write faces and vertices
             
-            library_geometries = docNode.createElement('library_geometries');
+            node = sceneNode.appendChild(...
+                DOM.createElement('node'));
+            node.setAttribute('id', 'ID3');
+            node.setAttribute('name', 'instance0');
+                
+            matrix = node.appendChild(...
+                DOM.createElement('matrix'));
+            matrix.appendChild(...
+                DOM.createTextNode(sprintf('%d ',eye(4))));
+
+            instance_node = node.appendChild(...
+                DOM.createElement('instance_node'));
+            instance_node.setAttribute('url', '#ID4');
             
-            for i = 1:2:numel(varargin)
-                V = varargin{i};
-                F = varargin{i+1};
-                
-                node = docNode.createElement('node');
-                node.setAttribute('id',id('',3,i));
-                node.setAttribute('name',sprintf('instance_%d',i-1));
-                
-                matrix = docNode.createElement('matrix');
-                matrix.appendChild(docNode.createTextNode(sprintf('%d ',eye(4))));
-                node.appendChild(matrix);
-                instance_node = docNode.createElement('instance_node');
-                instance_node.setAttribute('url',id('#',4,i));
-                node.appendChild(instance_node);
-                sketchup.appendChild(node);
-                
-                node = docNode.createElement('node');
-                node.setAttribute('id',id('',4,i));
-                node.setAttribute('name',sprintf('skp%d',i-1));
-                instance_geometry = docNode.createElement('instance_geometry');
-                instance_geometry.setAttribute('url',id('#',5,i));
-                bind_material = docNode.createElement('bind_material');
-                bind_material.appendChild(docNode.createElement('technique_common'));
-                instance_geometry.appendChild(bind_material);
-                node.appendChild(instance_geometry);
-                library_nodes.appendChild(node);
-                
-                geometry = docNode.createElement('geometry');
-                geometry.setAttribute('id',id('',5,i));
-                mesh = docNode.createElement('mesh');
-                source = docNode.createElement('source');
-                source.setAttribute('id',id('',6,i));
-                float_array = docNode.createElement('float_array');
-                float_array.setAttribute('id',id('',7,i));
-                float_array.setAttribute('count',num2str(numel(V)));
-                float_array.appendChild(...
-                    docNode.createTextNode(sprintf('%g ',V')));
-                source.appendChild(float_array);
-                technique_common = docNode.createElement('technique_common');
-                accessor = docNode.createElement('accessor');
-                accessor.setAttribute('count',num2str(size(V,1)));
-                accessor.setAttribute('source',id('#',7,i));
-                accessor.setAttribute('stride','3');
-                for name = {'X','Y','Z'}
-                    param = docNode.createElement('param');
-                    param.setAttribute('name',name);
-                    param.setAttribute('type','float');
-                    accessor.appendChild(param);
-                end
-                technique_common.appendChild(accessor);
-                source.appendChild(technique_common);
-                mesh.appendChild(source);
-                vertices = docNode.createElement('vertices');
-                vertices.setAttribute('id',id('',8,i));
-                input = docNode.createElement('input');
-                input.setAttribute('semantic','POSITION');
-                input.setAttribute('source',id('#',6,i));
-                vertices.appendChild(input);
-                mesh.appendChild(vertices);
-                triangles = docNode.createElement('triangles');
-                triangles.setAttribute('count',num2str(size(F,1)));
-                input = docNode.createElement('input');
-                input.setAttribute('offset','0');
-                input.setAttribute('semantic','VERTEX');
-                input.setAttribute('source',id('#',8,i));
-                triangles.appendChild(input);
-                p = docNode.createElement('p');
-                p.appendChild(...
-                    docNode.createTextNode(sprintf('%d ',(F-1)')));
-                triangles.appendChild(p);
-                mesh.appendChild(triangles);
-                geometry.appendChild(mesh);
-                library_geometries.appendChild(geometry);
+            node = library_nodes.appendChild(...
+                DOM.createElement('node'));
+            node.setAttribute('id', 'ID4');
+            node.setAttribute('name','skp0');
+
+            instance_geometry = node.appendChild(...
+                DOM.createElement('instance_geometry'));
+            instance_geometry.setAttribute('url', '#ID5');
+
+            bind_material = instance_geometry.appendChild(...
+                DOM.createElement('bind_material'));
+            bind_material.appendChild(...
+                DOM.createElement('technique_common'));
+            
+            geometry = library_geometries.appendChild(...
+                DOM.createElement('geometry'));
+            geometry.setAttribute('id', 'ID5');
+
+            meshNode = geometry.appendChild(...
+                DOM.createElement('mesh'));
+            
+            source = meshNode.appendChild(...
+                DOM.createElement('source'));
+            source.setAttribute('id', 'ID6');
+
+            float_array = source.appendChild(...
+                DOM.createElement('float_array'));
+            float_array.setAttribute('id', 'ID7');
+            float_array.setAttribute('count', num2str(numel(V)));
+            float_array.appendChild(...
+                DOM.createTextNode(sprintf('%g ',V')));
+
+            technique_common = source.appendChild(...
+                DOM.createElement('technique_common'));
+            accessor = technique_common.appendChild(...
+                DOM.createElement('accessor'));
+            accessor.setAttribute('count', num2str(size(V,1)));
+            accessor.setAttribute('source', '#ID7');
+            accessor.setAttribute('stride','3');
+
+            for name = {'X','Y','Z'}
+                param = accessor.appendChild(...
+                    DOM.createElement('param'));
+                param.setAttribute('name', name);
+                param.setAttribute('type', 'float');
             end
             
-            visual_scene.appendChild(sketchup);
-            visual_scenes.appendChild(visual_scene);
-            docRootNode.appendChild(visual_scenes);
-            docRootNode.appendChild(library_nodes);
+            vertices = meshNode.appendChild(...
+                DOM.createElement('vertices'));
+            vertices.setAttribute('id', 'ID8');
+            inputNode = vertices.appendChild(...
+                DOM.createElement('input'));
+            inputNode.setAttribute('semantic', 'POSITION');
+            inputNode.setAttribute('source', '#ID6');
+
+            triangleNode = meshNode.appendChild(...
+                DOM.createElement('triangles'));
+            triangleNode.setAttribute('count', num2str(size(F,1)));
+            inputNode = triangleNode.appendChild(...
+                DOM.createElement('input'));
+            inputNode.setAttribute('offset', '0');
+            inputNode.setAttribute('semantic', 'VERTEX');
+            inputNode.setAttribute('source', '#ID8');
+
+            pNode = triangleNode.appendChild(...
+                DOM.createElement('p'));
+            pNode.appendChild(...
+                DOM.createTextNode(sprintf('%d ',(F-1)')));
             
-            docRootNode.appendChild(library_geometries);
+            scene = rootNode.appendChild(...
+                DOM.createElement('scene'));
+            instance_visual_scene = scene.appendChild(...
+                DOM.createElement('instance_visual_scene'));
+            instance_visual_scene.setAttribute('url', '#ID2');
             
-            scene = docNode.createElement('scene');
-            instance_visual_scene = docNode.createElement('instance_visual_scene');
-            instance_visual_scene.setAttribute('url','#ID2');
-            scene.appendChild(instance_visual_scene);
-            docRootNode.appendChild(scene);
-            
-            f = fopen(filename,'w');
-            fprintf(f,'%s',xmlwrite(docNode));
+            f = fopen(filename, 'w');
+            fprintf(f,'%s', xmlwrite(DOM));
             fclose(f);
         end
     end

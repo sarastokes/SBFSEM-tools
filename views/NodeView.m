@@ -6,7 +6,15 @@ classdef NodeView < sbfsem.ui.TogglePartsView
 
 	methods
 		function obj = NodeView(neuron)
+            % Setup from superclass
             obj@sbfsem.ui.TogglePartsView();
+
+            % Add context menu to axis
+            c = uicontextmenu;
+            obj.ax.UIContextMenu = c;
+            uimenu(c, 'Label', 'Rotate On', 'Callback', @obj.onAxisMenu);
+            uimenu(c, 'Label', 'Grid on', 'Callback', @obj.onAxisMenu);
+
             assert(isa(neuron, 'sbfsem.Neuron'),...
                 'Input a neuron object');
             obj.neuron = neuron;
@@ -98,6 +106,28 @@ classdef NodeView < sbfsem.ui.TogglePartsView
                 set(obj.parts('body'), 'MarkerSize', 2);
             else
                 set(obj.parts('body'), 'MarkerSize', 4);
+            end
+        end
+
+        function onAxisMenu(obj, src, ~)
+            disp(src.Label)
+            switch src.Label
+                case 'Grid'
+                    if strfind(src.Label, 'off')
+                        grid(obj.ax, 'off');
+                        src.Label = 'Grid on';
+                    else
+                        grid(obj.ax, 'on');
+                        src.Label = 'Grid off';
+                    end
+                case 'Rota'
+                    if strfind(src.Label, 'off')
+                        rotate3d(obj.ax, 'off');
+                        src.Label = 'Rotate on';
+                    else
+                        rotate3d(obj.ax, 'on');
+                        src.Label = 'Rotate off';
+                    end
             end
         end
 

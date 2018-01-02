@@ -38,5 +38,4 @@ function mat = getImageRGB(im, rgb, clipFlag) %#ok<INUSD>
         %mat = rotateZ(r, c, -90);
         mat = [r,c]';
     end
-
 end

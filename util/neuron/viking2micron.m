@@ -9,11 +9,12 @@ function xyzMicrons = viking2micron(xyz, source)
 	% 3Nov2017 - SSP
 
 	source = validateSource(source);
-	volumeScale = getODataScale(source);
+	volumeScale = getODataScale(source); % nm
+    volumeScale = volumeScale./1e3; % um
 
-    if size(xyz, 1) == 1
+    if size(xyz, 2) == 1
         xyzMicrons = xyz * volumeScale(1);
-    elseif size(xyz,2) == 2
+    elseif size(xyz, 2) == 2
         xyzMicrons = bsxfun(@times, xyz, volumeScale(1:2));
     else
     	xyzMicrons = bsxfun(@times, xyz, volumeScale);

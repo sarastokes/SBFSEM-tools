@@ -16,6 +16,8 @@ classdef StructureTypes
 		BasalNTA
 		BasalMNTA
 		Touch
+        CisternPre
+        CisternPost
 		INLIPLBoundary
 		IPLGCLBoundary
 		Endocytosis
@@ -118,9 +120,10 @@ classdef StructureTypes
 					obj = StructureTypes.Touch;
 				case VikingStructureTypes.GapJunction
 					obj = StructureTypes.GapJunction;
+				case VikingStructureTypes.CisternPre
+					obj = StructureTypes.CisternPre;
 				case VikingStructureTypes.CisternPost;
 					obj = StructureTypes.Unknown;
-					disp('Found CisternPost')
 				case VikingStructureTypes.Endocytosis
 					obj = StructureTypes.Endocytosis;
 				case VikingStructureTypes.Unknown

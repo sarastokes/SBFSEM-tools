@@ -19,7 +19,7 @@ classdef Neuron < handle
         nodes
         % Table of the links between annotations
         edges
-        % Volume dimensions
+        % Volume dimensions (nm per pixel)
         volumeScale
         % Attributes of each synapse
         synapses
@@ -33,6 +33,9 @@ classdef Neuron < handle
     
     properties (Transient = true, Hidden = true)
         ODataClient
+        GeometryClient
+        applyXYShift
+        includeSynapses
     end
     
     properties (Dependent = true, Transient = true, Hidden = true)
@@ -44,7 +47,7 @@ classdef Neuron < handle
     end
 
     methods
-        function obj = Neuron(ID, source)
+        function obj = Neuron(ID, source, varargin)
             % NEURON  Basic cell data model
             %
             % Required inputs:
@@ -62,7 +65,17 @@ classdef Neuron < handle
             obj.ID = ID;
             obj.source = source;
 
+            ip = inputParser();
+            ip.CaseSensitive = false;
+            addParameter(ip, 'xyShift', false, @islogical);
+            addParameter(ip, 'synapses', true, @islogical);
+            parse(ip, varargin{:});
+            
+            obj.applyXYShift = ip.Results.xyShift;
+            obj.includeSynapses = ip.Results.synapses;
+
             obj.ODataClient = sbfsem.io.NeuronOData(obj.ID, obj.source);
+            obj.GeometryClient = [];
             
             % Fetch OData and parse
             obj.pull();
@@ -77,6 +90,17 @@ classdef Neuron < handle
             if ~isempty(obj.geometries)
                 obj.setGeometries();
             end
+        end
+
+        function getGeometries(obj)
+            % GETGEOMETRIES  
+            obj.GeometryClient = sbfsem.io.GeometryOData(obj.ID, obj.source);
+            obj.geometries = obj.GeometryClient.pull();
+        end
+
+        function getSynapses(obj)
+            % GETSYNAPSES
+            obj.includeSynapses = true;
         end
         
         function somaRow = get.somaRow(obj)
@@ -122,41 +146,6 @@ classdef Neuron < handle
                 disp('Including closed curves');
                 % TODO add close curve geometries
             end
-        end
-
-        function setGeometries(obj)
-            % SETGEOMETRIES  Fetch closed curve OData and parse
-            obj.geometries = [];
-            % Make sure closed curve structures exist
-            if nnz(obj.nodes.Geometry == 6) == 0
-                disp('No closed curve structures detected');
-                return;
-            end
-            fprintf('Importing geometries for %u locations\n',...
-                nnz(obj.nodes.Geometry == 6));
-            % Return ClosedCurve data from server
-            odata = readOData([getServerName(), obj.source,...
-                '/OData/Structures(', num2str(obj.ID),...
-                ')\Locations?$filter=TypeCode eq 6']);
-            
-            % Volume scale nm --> microns
-            xyzScale = obj.volumeScale./1e3;
-            
-            for i = 1:numel(odata.value)
-                % Parse OData text
-                closedCurves = parseClosedCurve2(...
-                    odata.value(i).MosaicShape.Geometry.WellKnownText,...
-                    xyzScale);
-                % Add to geometry table
-                obj.geometries = [obj.geometries; table(odata.value(i).ID,...
-                    odata.value(i).ParentID, odata.value(i).Z,...  
-                    odata.value(i).Z * xyzScale(3), {closedCurves})];
-            end
-            
-            obj.geometries.Properties.VariableNames = {'ID', 'ParentID',...
-                'Z', 'Zum', 'Curve'};
-            % Sort by z section
-            obj.geometries = sortrows(obj.geometries, 'Z', 'descend');
         end
 
         function synapseNodes = getSynapseNodes(obj, onlyUnique)
@@ -399,8 +388,9 @@ classdef Neuron < handle
             % PULL  Fetch and parse neuron's OData
 
             % Get the relevant data with OData queries
-            [obj.viking, obj.nodes, obj.edges, obj.synapses, obj.volumeScale] = ...
+            [obj.viking, obj.nodes, obj.edges, obj.synapses] = ...
                 obj.ODataClient.toNeuron();
+            obj.volumeScale = getODataScale(obj.source); %nm/pix
             
             disp('Processing data');
 
@@ -409,19 +399,62 @@ classdef Neuron < handle
             
             % Setup synapse columns
             obj.setupSynapses();
+
+            if nnz(obj.nodes.Geometry == 6)
+                obj.getGeometries();
+                fprintf('Imported %u closed curve geometries\n',... 
+                    height(obj.geometries));
+            end
         end
         
         function setXYZum(obj)
-            % Apply transform to NeitzInferiorMonkey
-            if obj.USETRANSFORM && strcmp(obj.source,'NeitzInferiorMonkey')
-                disp('Beginning transform...');
-                xyDir = [fileparts(fileparts(mfilename('fullpath'))), '\data'];
-                xydata = dlmread([xyDir, '\XY_OFFSET_NEITZINFERIORMONKEY.txt']);
-                volX = obj.nodes.VolumeX + xydata(obj.nodes.Z,2);
-                volY = obj.nodes.VolumeY + xydata(obj.nodes.Z,3);
-            else
-                volX = obj.nodes.VolumeX;
-                volY = obj.nodes.VolumeY;
+            % Apply transforms to NeitzInferiorMonkey
+            volX = obj.nodes.VolumeX;
+            volY = obj.nodes.VolumeY;
+            
+            if strcmp(obj.source, 'NeitzInferiorMonkey')
+                if obj.USETRANSFORM
+                    disp('Applying XY transform...');
+                    xyDir = [fileparts(fileparts(mfilename('fullpath'))), '\data'];
+                    xydata = dlmread([xyDir,...
+                        '\XY_OFFSET_NEITZINFERIORMONKEY.txt']);
+                    volX = obj.nodes.VolumeX + xydata(obj.nodes.Z,2);
+                    volY = obj.nodes.VolumeY + xydata(obj.nodes.Z,3);
+                end
+                
+                if obj.applyXYShift
+                    if nnz(obj.nodes.Z == 1121) > 0
+                        [volX, volY] = xyShift(obj, [1121, 1122], volX, volY);
+                    end
+                    if nnz(obj.nodes.Z == 1117) > 0
+                        [volX, volY] = xyShift(obj, [1117, 1118], volX, volY);
+                    end
+                end
+            
+                % Hack to bridge 915-936 gap
+                if min(obj.nodes.Z) <= 916 && max(obj.nodes.Z) >= 935
+                    disp('Fixing 915-936 gap...');
+                    xyBelow = obj.nodes{obj.nodes.Z == 936,...
+                        {'VolumeX','VolumeY'}};
+                    % If multiple annotations on s936, take the average
+                    if size(xyBelow, 1) > 1
+                        disp('Averaging s935 annotations...');
+                        xyBelow = mean(xyBelow, 1);
+                    end
+                    % Find the first annotation above the gap
+                    section = 916;
+                    while nnz(obj.nodes.Z == section) == 0
+                        section = section - 1;
+                    end
+                    xyAbove = obj.nodes{obj.nodes.Z == section,...
+                        {'VolumeX', 'VolumeY'}};
+                    % Find the offset
+                    xyOffset = xyBelow - xyAbove;
+                    % Apply the offset to all annotations above the gap
+                    aboveGap = obj.nodes.Z <= 916;
+                    volX(aboveGap, 1) = volX(aboveGap, 1) + xyOffset(1);
+                    volY(aboveGap, 1) = volY(aboveGap, 1) + xyOffset(2);
+                end                
             end
 
             % Create an XYZ in microns column
