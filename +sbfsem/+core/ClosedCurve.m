@@ -48,9 +48,6 @@ classdef ClosedCurve < sbfsem.core.Annotation
                 data = data.geometries;
             end
             
-            assert(istable(data) & height(data) == 1,...
-                'Data should be a single row of geometries table');
-            
             curvePts = data.Curve{:};
             obj.Z = [data.Z, data.Zum];
             obj.parentID = data.ParentID;

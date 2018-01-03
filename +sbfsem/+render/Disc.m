@@ -5,8 +5,8 @@ classdef Disc < sbfsem.render.RenderView
 %   obj = Disc(neuron, varargin);
 %   % Specify a subset of the Z sections
 %   obj = Disc(neuron, 'sections', 1:10);
-%   % Change the resize factor (inherited from RenderView)
-%   obj = Disc(neuron, 'scaleFactor', 0.8);
+%   % Change the resize factor (default = 1)
+%   obj = Disc(neuron, 'sampling', 0.8);
 %
 % Properties:
 %   All inherited from RenderView
@@ -14,7 +14,10 @@ classdef Disc < sbfsem.render.RenderView
 %   12Nov2017 - SSP
 %
 % See also SBFSEM.CORE.DISC, SBFSEM.RENDER.RENDERVIEW
-	
+	properties (SetAccess = private)
+        binaryMatrix
+    end
+    
 	methods
 		function obj = Disc(neuron, varargin)
             % DISCRENDER  Create a render figure and object
@@ -22,7 +25,7 @@ classdef Disc < sbfsem.render.RenderView
 
             ip = inputParser();
             addParameter(ip, 'sections', [], @isnumeric);
-            addParameter(ip, 'scaleFactor', obj.RESIZEFACTOR, @isnumeric);
+            addParameter(ip, 'sampling', 1, @isnumeric);
             parse(ip, varargin{:});
 
             if isempty(ip.Results.sections)
@@ -68,15 +71,16 @@ classdef Disc < sbfsem.render.RenderView
             if numel(unique(xy)) > 2
             	% Find the maximum for X and Y dimensions
             	xy = max(xy);
-            	binaryMatrix = obj.padBinaryImages(xy, F);
+            	obj.binaryMatrix = obj.padBinaryImages(xy, F);
             else
             	disp('Uniform images, skipping padding');
-            	binaryMatrix = [];
+            	obj.binaryMatrix = [];
             	for i = 1:numel(obj.imNodes)
-            		binaryMatrix = cat(3, binaryMatrix, F{i});
+            		obj.binaryMatrix = cat(3, obj.binaryMatrix, F{i});
             	end
             end    
-            obj.createScene(binaryMatrix);     
+            obj.createScene(obj.binaryMatrix);
+
 		end
 	end
 end

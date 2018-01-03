@@ -1,10 +1,19 @@
 classdef Neuron < handle
-    % Analysis and graphs based only on nodes, without edges
-    % 14Jun2017 - SSP - created
-    % 01Aug2017 - SSP - switched createUi to separate NeuronApp class
-    % 25Aug2017 - SSP - added analysis property & methods
-    % 2Oct2017 - SSP - ready for odata-based import
-    % 12Nov2017 - SSP - in sync with odata changes
+% NEURON
+% 
+% Description:
+%   A Matlab representation of a neuron ('Structure') in Viking
+%
+% Methods:
+%   For a complete list, see the docs or type 'methods('Neuron')'
+%
+% History:
+%   14Jun2017 - SSP - created
+%   01Aug2017 - SSP - switched createUi to separate NeuronApp class
+%   25Aug2017 - SSP - added analysis property & methods
+%   2Oct2017 - SSP - ready for odata-based import
+%   12Nov2017 - SSP - in sync with odata changes
+% -------------------------------------------------------------------------
     
     properties (SetAccess = private, GetAccess = public)
         % Cell ID in Viking
@@ -29,6 +38,8 @@ classdef Neuron < handle
         lastModified 
         % Analyses related to the neuron
         analysis = containers.Map();
+        % Render of neuron
+        model = [];
     end
     
     properties (Transient = true, Hidden = true)
@@ -88,8 +99,23 @@ classdef Neuron < handle
             % UPDATE  Reflect changes to OData
             obj.pull();
             if ~isempty(obj.geometries)
-                obj.setGeometries();
+                obj.getGeometries();
             end
+        end
+
+        function renderObj = build(obj, renderType)
+            switch lower(renderType)
+            case {'cylinder', 'cyl'}
+                renderObj = sbfsem.render.ClosedCurve(obj, varargin{:});
+            case {'closedcurve', 'cc', 'curve'}
+                renderObj = sbfsem.render.ClosedCurve(obj, varargin{:});
+            case 'disc'
+                renderObj = sbfsem.render.Disc(obj, varargin{:})
+            otherwise
+                warning('Render type %s not found', renderType);
+                return;
+            end
+            obj.model = renderObj;
         end
 
         function getGeometries(obj)
@@ -141,7 +167,7 @@ classdef Neuron < handle
                 min(xyz(:,2) - r), max(xyz(:,2) + r)];  
 
             % Now check for closed curves
-            obj.setGeometries();
+            obj.getGeometries();
             if ~isempty(obj.geometries)
                 disp('Including closed curves');
                 % TODO add close curve geometries

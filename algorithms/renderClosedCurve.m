@@ -61,7 +61,7 @@ function [binaryMatrix, hiso] = renderClosedCurve(neuron, varargin)
     imnodes = cell(0,1);
     for i = 1:height(T)
         imnodes = cat(1, imnodes,...
-            sbfsem.core.ClosedCurve(T.Curve{i}));
+             sbfsem.core.ClosedCurve(T(i,:)));
     end
 
     % Find the xy limits to use as bounding box
@@ -145,7 +145,7 @@ function [binaryMatrix, hiso] = renderClosedCurve(neuron, varargin)
         'SpecularColorReflectance', 0);
 
     % Scale axis to match volume dimensions
-    daspect(neuron.getDAspect);
+    % daspect(neuron.getDAspect);
     axis equal; axis tight;
     fh.labelXYZ();
     set(fh.ax, 'XColor', 'w', 'YColor', 'w', 'ZColor', 'w');
