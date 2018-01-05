@@ -25,8 +25,12 @@ classdef Cylinder < handle
     %
     % Examples:
     %{
-        r1411 = sbfsem.render.Cylinder(sbfsem.Neuron(1411, 'i'));
-        r1441 = sbfsem.render.Cylinder(sbfsem.Neuron(1441, 'i'));
+        % Import the neurons
+        c1411 = Neuron(1411, 'i');
+        c1441 = Neuron(1441, 'i');
+        % Build the 3D models
+        c1411.build();
+        c1441.build();
         % Render in a new figure
         r1411.render();
         % Add to existing figure
@@ -54,7 +58,7 @@ classdef Cylinder < handle
     
     methods
         function obj = Cylinder(neuron, varargin)
-            assert(isa(neuron, 'sbfsem.Neuron'), 'Input a Neuron object');
+            assert(isa(neuron, 'Neuron'), 'Input a Neuron object');
             
             ip = inputParser();
             addParameter(ip, 'method', 1, @(x) ismember(x, [1 2]));
@@ -177,6 +181,8 @@ classdef Cylinder < handle
         end
         
         function dae(obj, fname)
+            % DAE
+            
             if nargin < 2
                 fname = sprintf('c%u.dae', obj.ID);
             end
@@ -192,8 +198,7 @@ classdef Cylinder < handle
             end
             
             fprintf('Saving as %s\n', [filePath filesep fname]);
-            writeDAE([filePath, filesep, fname],...
-                allFV.vertices, allFV.faces);
+            obj.saveDAE([filePath, filesep, fname], allFV);
         end
         
         function FV = condense(obj)
@@ -235,15 +240,20 @@ classdef Cylinder < handle
                         end
                     end
                 else % Gencyl for smaller sections
-                    [x, y, z] = gencyl(locations{i}', radii{i});
-                    [fv.faces, fv.vertices] = surf2patch(...
-                        x, y, z, 'triangles');
+                    try
+                        [x, y, z] = gencyl(locations{i}', radii{i});
+                        [fv.faces, fv.vertices] = surf2patch(...
+                            x, y, z, 'triangles');
+                    catch
+                        fprintf('Small segments gencyl failed at %u\n', i);
+                    end
                 end
                 FV = cat(1, FV, fv);
             end
         end
 
         function FV = createCurveMeshes(obj)
+            % CREATECURVEMESHES  A work in progress method
             locations = obj.subGraphs.XYZum;
             radii = obj.subGraphs.Rum;
 
@@ -276,18 +286,15 @@ classdef Cylinder < handle
             
             D = sqrt((diff(x)).^2 + (diff(y)).^2 + (diff(z)).^2);
             
-            if ((min(D)/2.2) < bufferDist)
+            if (min(D)/2.2) < bufferDist
                 bufferDist = min(D)/2.2;
-            end
+            end            
             
-            % Check if the plotted line is closed
-            isClosed = isequal(data(1,:), data(end,:));
-            if isClosed
-                disp('Found a closed line');
-            end
+            % Calculate normals
+            normal = diff(data);
+            % Keep the line point count consistent
+            normal = [normal; normal(end,:)];
             
-            % Calculate normal vectors on every line point (Nx3)
-            normal = [diff(data); data(end,:) - data(end-1,:)];
             normal = normal ./ (sqrt(normal(:,1).^2 + normal(:,2).^2 ...
                 + normal(:,3).^2) * ones(1,3));
             
@@ -418,7 +425,6 @@ classdef Cylinder < handle
             Fb(N*2, 1) = 1;
             Fb(N*2, 3) = 1 + N;
             
-            % Create TRI face list
             FV.faces = zeros(N*2*(numCylinders-1), 3);
             for i = 1:numCylinders-1
                 FV.faces(((i-1)*N*2+1):((i)*N*2), 1:3) =...
@@ -462,7 +468,7 @@ classdef Cylinder < handle
         
         function [a, b] = getab(normal)
             % A normal vector only defines two rotations not the in plane
-            % rotation. Thus a (random) v ector is needed which is not
+            % rotation. Thus a (random) vector is needed which is not
             % orthogonal with the normal vector.
             randomv = [0.57745, 0.5774, 0.57735];
 
@@ -485,30 +491,32 @@ classdef Cylinder < handle
             sceneName = strsplit(filename, filesep);
             sceneName = sceneName{end};
             sceneName(end-3:end) = [];
-            
-            % COLLADA setup
+
+            % Create the COLLADA document
             DOM = com.mathworks.xml.XMLUtils.createDocument('COLLADA');
             rootNode = DOM.getDocumentElement;
-            
+
             rootNode.setAttribute(...
                 'xmlns','http://www.collada.org/2005/11/COLLADASchema');
             rootNode.setAttribute('version', '1.4.1');
 
-            assetNode = rootNode.appendChild(DOM.createElement('asset'));
+            asset = rootNode.appendChild(DOM.createElement('asset'));
 
-            dateNode = AssetNode.appendChild(DOM.createElement('created'));
+            dateNode = asset.appendChild(DOM.createElement('created'));
             dateNode.appendChild(DOM.createTextNode(...
                 datestr(now, 'yyyy-mm-ddTHH:MM:SSZ')));
-            authorNode = ContributorNode.appendChild(...
+
+            contributor = asset.appendChild(DOM.createElement('contributor'));
+            authorNode = contributor.appendChild(...
                 DOM.createElement('authoring_tool'));
             authorNode.appendChild(DOM.createTextNode('SBFSEMtools'));
 
-            unitNode = assetNode.appendChild(DOM.createElement('unit'));
-            unitNode.setAttribute('meter', '1');
-            unitNode.setAttribute('name', 'micrometer');
+            unitNode = asset.appendChild(DOM.createElement('unit'));
+            unitNode.setAttribute('meter', '0.1');
+            unitNode.setAttribute('name', 'meter');
 
-            upNode = assetNode.appendChild(DOM.createElement('up_axis'));
-            upNode.appendChild(DOM.createTextNode('Z_UP'));
+            upAxis = asset.appendChild(DOM.createElement('up_axis'));
+            upAxis.appendChild(DOM.createTextNode('Z_UP'));
             
             visualSceneLibrary = rootNode.appendChild(...
                 DOM.createElement('library_visual_scenes'));

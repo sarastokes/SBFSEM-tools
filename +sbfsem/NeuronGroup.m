@@ -1,5 +1,35 @@
 classdef NeuronGroup < handle
-% NEURONGROUP  Holds an array of related Neurons
+% NEURONGROUP  
+%
+% Description:
+%   A group of neuron objects
+%
+% Constructor:
+%   obj = NEURONGROUP(neurons, source);
+% where neurons can be Neuron objects or an array of ID numbers
+%
+% Properties:
+%   neurons             NeuronList holding the Neuron objects
+%   IDs                 Neuron ID numbers
+%   analyses            NeuronAnalysis results
+%   source              Volume name
+%   description         Info on the NeuronGroup
+%   plotColor           Color the neuron group somas are plotted with
+%
+% Methods:
+%   n = obj.numel           Returns number of neurons in list
+%   obj.add(neuron)         Append a Neuron object
+%   obj.describe(str)       Add a description to the NeuronGroup
+%   x = somaDiameter(obj)   Get soma diameters
+%   obj.somaPlot(varargin)  Plot soma mosaic
+%   obj.setPlotColor(rgb)   Set plot color for mosaics
+%
+%
+% History:
+%   30Nov2017 - SSP
+%   4Jan2018 - SSP - Improved NeuronList implementation
+%
+% -------------------------------------------------------------------------
    
     properties (SetAccess = private)
         neurons
@@ -13,11 +43,17 @@ classdef NeuronGroup < handle
     methods
         function obj = NeuronGroup(neurons, source)
             obj.source = validateSource(source);
-            if isa(neurons, 'sbfsem.NeuronList')
+            if isa(neurons, 'sbfsem.core.NeuronList')
                 obj.neurons = neurons;
             else
-                obj.neurons = sbfsem.NeuronList(neurons, source);
+                obj.neurons = sbfsem.core.NeuronList(neurons, source);
             end
+            obj.IDs = obj.neurons.getIDs();
+        end
+        
+        function n = numel(obj)
+            % NUMEL  Number of neurons in group
+            n = obj.neurons.length();
         end
 
         function add(obj, neuron)
@@ -25,12 +61,12 @@ classdef NeuronGroup < handle
             % Input:
             %   neuron      ID numbers or Neurons
             % TODO: consolidate constructor and add
-            if isa(neuron, 'sbfsem.Neuron')
+            if isa(neuron, 'Neuron')
                 for i = 1:numel(neuron)
                     obj.IDs = cat(1, obj.IDs, neuron);
-                    for i = 1:numel(obj.IDs)
+                    for j = 1:numel(obj.IDs)
                         obj.neurons = cat(1, obj.neurons,...
-                            sbfsem.Neuron(obj.IDs(i), obj.source));
+                            Neuron(obj.IDs(j), obj.source));
                     end
                 end
             else
@@ -71,8 +107,12 @@ classdef NeuronGroup < handle
                 validateSizes = false;
             end
             
-            somaSizes = cell2mat(arrayfun(@(x) x.getSomaSize(true),...
-                obj.neurons, 'UniformOutput', false));
+            somaSizes = [];
+            x = sbfsem.core.NeuronListIterator(obj);
+            while x.hasNext
+                elt = x.next();
+                somaSizes = cat(1, somaSizes, elt.getSomaSize(true));
+            end
             
             % Check for incomplete neurons
             if validateSizes
@@ -109,17 +149,18 @@ classdef NeuronGroup < handle
             end
 
             [somaSizes, validIDs] = obj.somaDiameter(validateSizes);
-
-            validNeurons = [];
-            for i = 1:numel(obj.neurons)
-                if ismember(obj.neurons(i).ID, validIDs)
-                    validNeurons = cat(1, validNeurons, obj.neurons(i));
+            
+            xyz = [];
+            x = sbfsem.core.NeuronListIterator(obj);
+            while x.hasNext
+                elt = x.next();
+                if ismember(elt.ID, validIDs)
+                    xyz = cat(1, xyz, elt.getSomaXYZ);
                 end
             end
-            xyz = cell2mat(arrayfun(@(x) x.getSomaXYZ, validNeurons,...
-                'UniformOutput', false));
+            x.reset();
 
-            for i = 1:numel(validNeurons)
+            for i = 1:size(xyz, 1)
                 viscircles(ax, xyz(i, 1:2), somaSizes(i),...
                     'LineWidth', ip.Results.LineWidth,... 
                     'EdgeColor', ip.Results.Color);

@@ -5,9 +5,9 @@ SBFSEM-tools is a Matlab toolbox developed for serial EM data and connectomics i
 SBFSEM-tools imports annotation data through Viking's OData service and parses the results into Matlab data types. This happens behind the scenes so the average user can work with familiar objects (neuron, synapse, etc). Other features include:
 - Single neuron analysis: dendritic field area, dendrite diameter, soma size, stratification, synapse distribution
 - Group analysis: density recovery profile, nearest neighbor, synapse statistics
-- 3D volume rendering of polygon annotations and free-form traces over a stack of EM images. 2D projections of dendritic fields.
-- Z-axis image alignment
-- Generate surfaces from IPL boundary markers.
+- 3D volume rendering of circle (Disc) annotations, polygon (ClosedCurve) annotations and free-form traces over a stack of EM images. 
+- 2D projections of dendritic fields.
+- Image registration: surfaces from IPL boundary markers, XY offset calculations.
 - Misc UIs for visualizing EM images and annotations
 
 See the tutorial and documentation for the most up to date information. 

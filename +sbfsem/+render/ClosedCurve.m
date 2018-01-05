@@ -27,7 +27,7 @@ classdef ClosedCurve < sbfsem.render.RenderView
 			end
 
 			if isempty(neuron.geometries)
-				neuron.setGeometries();
+				neuron.getGeometries();
 			end
 
             % Get geometries and sort by section
@@ -57,7 +57,10 @@ classdef ClosedCurve < sbfsem.render.RenderView
             fprintf('= (%u  %u), (%u  %u)\n', round(obj.boundingBox));
 
             % Determine the number of sections for entire render
-            sections = flipud(unique(arrayfun(@(x) x.Z, obj.imNodes)));
+            % sections = flipud(unique(arrayfun(@(x) x.Z(1), obj.imNodes,...
+            %    'UniformOutput', false)));
+            sections = vertcat(obj.imNodes.Z);
+            sections = flipud(unique(sections(:,1)));
 
             fprintf('Rendering %u annotations across %u sections\n',...
                 numel(obj.imNodes), numel(sections));
@@ -66,7 +69,7 @@ classdef ClosedCurve < sbfsem.render.RenderView
             xy = zeros(numel(obj.imNodes), 2);
             for i = 1:numel(sections)
                 sectionNodes = obj.imNodes(bsxfun(@eq,...
-                    arrayfun(@(x) x.Z, obj.imNodes), sections(i)));
+                    arrayfun(@(x) x.Z(1), obj.imNodes), sections(i)));
                 % Create the binary image
                 im = sbfsem.render.BinaryView(sectionNodes,...
                     obj.boundingBox, obj.scaleFactor);

@@ -1,9 +1,10 @@
-function exportSceneDAE(axHandle, fName)
+function exportSceneDAE(axHandle, fName, reduceFac)
 % EXPORTSCENEDAE
 %
 % Inputs:
 %	axHandle 		axis containing patches
 %	fName 			filename
+%   reduceFac       Percent of faces to keep
 %
 % Note:
 %   Will open a dialog box to get target file path. The '.dae' extension
@@ -11,21 +12,32 @@ function exportSceneDAE(axHandle, fName)
 %
 % History:
 %   2Jan2018 - SSP - created from exportDAE.m
+%   4Jan2018 - SSP - added option to specify a full file path
 % -------------------------------------------------------------------------
 
-% Setup file name and path
-fPath = uigetdir();
-
-if isempty(fPath)
-    return;
-else
-    % Check for correct file extension
-    if strcmp(fName(end-2:end), '.dae')
-        fName = [fName, '.dae'];
+% If there are no fileseps, it's just a filename
+if isempty(strfind(fName, filesep))
+    fPath = uigetdir();
+    if isempty(fPath)
+        % Leave if user presses 'Cancel'
+        return;
+    else
+        fName = [fPath, filesep, fName];
     end
-    fPath = [fPath, filesep, fName];
 end
-fprintf('Saving to %s\n', fPath);
+
+% Check for correct file extension
+if strcmp(fName(end-2:end), '.dae')
+    fName = [fName, '.dae'];
+end
+fprintf('Saving to %s\n', fName);
+
+% Set the patch reduction
+if nargin == 3
+    assert(reduceFac > 0 & reduceFac < 1, 'reduceFac should be 0-1');
+else
+    reduceFac = [];
+end
 
 % TODO: convert any existing lines/surfaces
 allPatches = findall(axHandle, 'Type', 'patch');
@@ -91,6 +103,10 @@ libGeometries = rootNode.appendChild(DOM.createElement('library_geometries'));
 for i = 1:numel(graphNames)
     % Get the faces and vertices matching the current Tag
     FV = allFV(graphNames{i});
+    % Reduce the number of faces
+    if ~isempty(reduceFac)
+        FV = reducepatch(FV, reduceFac);
+    end
     F = FV.faces;
     V = FV.vertices;
     fprintf('%s - %u faces and %u vertices\n',... 
@@ -147,7 +163,7 @@ for i = 1:numel(graphNames)
     
     vertices = meshNode.appendChild(DOM.createElement('vertices'));
     vertices.setAttribute('id', id('', 8, i));
-    vertexInput = vertexInput.appendChild(DOM.createElement('input'));
+    vertexInput = vertices.appendChild(DOM.createElement('input'));
     vertexInput.setAttribute('semantic', 'POSITION');
     vertexInput.setAttribute('source', id('#', 6, i));
     
@@ -167,7 +183,7 @@ instanceVisualScene = scene.appendChild(...
     DOM.createElement('instance_visual_scene'));
 instanceVisualScene.setAttribute('url', '#ID2');
 
-fid = fopen(fPath, 'w');
+fid = fopen(fName, 'w');
 fprintf(fid, '%s', xmlwrite(DOM));
 fclose(fid);
 

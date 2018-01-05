@@ -1,15 +1,15 @@
 function xy = axonCheck(neuron, dims)
 	% AXONCHECK  Quickly visualize neuron plot
 	%
-	% 13Aug2017 - SSP - created
+	%   13Aug2017 - SSP - created
+    %   3Jan2017 - SSP - updated neuron methods
     
     if nargin < 2
         dims = 2;
     end
 
-	row = strcmp(neuron.dataTable.LocalName, 'cell');
-	xyz = neuron.dataTable.XYZum(row,:);
-    soma = getSomaXYZ(neuron);
+	xyz = neuron.getCellXYZ();
+    soma = neuron.getSomaXYZ();
     figure(); hold on;
     if dims == 2
     	xy = plot(xyz(:,1), xyz(:,2), '.k');

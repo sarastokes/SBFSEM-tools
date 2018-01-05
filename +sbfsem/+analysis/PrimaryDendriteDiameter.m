@@ -29,7 +29,7 @@ classdef PrimaryDendriteDiameter < sbfsem.analysis.NeuronAnalysis
     
     methods
         function obj = PrimaryDendriteDiameter(neuron, varargin)
-            validateattributes(neuron, {'sbfsem.Neuron'}, {});
+            validateattributes(neuron, {'Neuron'}, {});
             obj@sbfsem.analysis.NeuronAnalysis(neuron);
             
             obj.doAnalysis(varargin{:});
@@ -91,14 +91,12 @@ classdef PrimaryDendriteDiameter < sbfsem.analysis.NeuronAnalysis
             end
             
             % Compute dendrite size stats per distance bin
-            h.counts = n;
-            h.edges = edges;
+            h.counts = n';
+            h.edges = edges(2:end)';
             h.avg = splitapply(@mean, dendrite, bins);
             h.std = splitapply(@std, dendrite, bins);
             h.sem = splitapply(@sem, dendrite, bins);
             h.median = splitapply(@median, dendrite, bins);
-            % Save as a table in the final data structure
-            d.histdata = struct2table(h, 'AsArray', true);
             
             % Compute stats on just the search window
             d.searchWindow = [edges(searchBins(1)), edges(searchBins(2))];
@@ -121,22 +119,23 @@ classdef PrimaryDendriteDiameter < sbfsem.analysis.NeuronAnalysis
             d.params.ind = ip.Results.ind;
             
             % Save to object
-            obj.data = d;
+            obj.data = h;
+            obj.data.inWindow = d;
         end
         
-        function fh = visualize(obj)
+        function fh = plot(obj)
             % VISUALIZE  Plot the analysis results
             fh = figure('Name', sprintf('c%u dendrite analysis',...
                 obj.target.ID));
             ax = axes('Parent', fh,...
                 'Box', 'off', 'TickDir', 'out');
             hold on;
-            errorbar(obj.data.edges(2:end), obj.data.avg, obj.data.sem,...
+            errorbar(obj.data.edges, obj.data.avg, obj.data.sem,...
                 'k', 'LineWidth', 1);
-            plot(obj.data.edges(2:end), obj.data.median,...
+            plot(obj.data.edges, obj.data.median,...
                 'b', 'LineWidth', 1);
             % keep this for easy copy to other plots
-            plot(obj.data.edges(2:end), obj.data.avg,...
+            plot(obj.data.edges, obj.data.avg,...
                 'k', 'LineWidth', 1)
             legend(ax, 'mean', 'median');
             set(legend, 'EdgeColor', 'w', 'FontSize', 10);

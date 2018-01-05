@@ -27,8 +27,7 @@ function [binaryMatrix, hiso] = renderClosedCurve(neuron, varargin)
     %
     % 9Nov2017 - SSP
 
-    assert(isa(neuron, 'sbfsem.Neuron'),...
-        'Input Neuron object');
+    assert(isa(neuron, 'Neuron'), 'Input Neuron object');
 
     % Parse additional inputs
     ip = inputParser();
@@ -55,13 +54,15 @@ function [binaryMatrix, hiso] = renderClosedCurve(neuron, varargin)
     if ip.Results.update || isempty(neuron.geometries)
         neuron.setGeometries();
     end
-    T  = neuron.geometries;
+    T = neuron.geometries;
 
     % Convert to ClosedCurve
+    Z = [];
     imnodes = cell(0,1);
     for i = 1:height(T)
         imnodes = cat(1, imnodes,...
              sbfsem.core.ClosedCurve(T(i,:)));
+         Z = cat(1, Z, T.Z(i,:));
     end
 
     % Find the xy limits to use as bounding box
@@ -118,34 +119,40 @@ function [binaryMatrix, hiso] = renderClosedCurve(neuron, varargin)
         end
         binaryMatrix = cat(3, binaryMatrix, im);
     end
-
-    % Smooth the binary images to increase cohesion
-    smoothedImages = smooth3(binaryMatrix);
-
-    % Create the 3D structure
-    fh = sbfsem.ui.FigureView(1);
-    set([fh.figureHandle, fh.ax], 'Color', 'k');
     
-    hiso = patch(isosurface(smoothedImages),...
-    	'Parent', fh.ax,...
-        'FaceColor', faceColor,...
-        'EdgeColor', 'none',...
-        'FaceAlpha', faceAlpha);
-    isonormals(smoothedImages, hiso);
+    % Combine multiple section annotations
+    [zGroups, zNames] = findgroups(Z);
+    
+    hiso = volumeRender(binaryMatrix);
+    
+    % % Smooth the binary images to increase cohesion
+    % smoothedImages = smooth3(binaryMatrix);
 
-    % Set up the lighting
-    lightangle(45,30);
-    lightangle(225,30);
-    lighting phong;
-    view(3);
+    % % Create the 3D structure
+    % fh = sbfsem.ui.FigureView(1);
+    % set([fh.figureHandle, fh.ax], 'Color', 'k');
+    
+    % hiso = patch(isosurface(smoothedImages),...
+    % 	'Parent', fh.ax,...
+    %     'FaceColor', faceColor,...
+    %     'EdgeColor', 'none',...
+    %     'FaceAlpha', faceAlpha,...
+    %     'Tag', sprintf('c%u', neuron.ID));
+    % isonormals(smoothedImages, hiso);
 
-    set(hiso,...
-        'FaceLighting', 'gouraud',...
-        'SpecularExponent', 50,...
-        'SpecularColorReflectance', 0);
+    % % Set up the lighting
+    % lightangle(45,30);
+    % lightangle(225,30);
+    % lighting phong;
+    % view(3);
 
-    % Scale axis to match volume dimensions
-    % daspect(neuron.getDAspect);
-    axis equal; axis tight;
-    fh.labelXYZ();
-    set(fh.ax, 'XColor', 'w', 'YColor', 'w', 'ZColor', 'w');
+    % set(hiso,...
+    %     'FaceLighting', 'gouraud',...
+    %     'SpecularExponent', 50,...
+    %     'SpecularColorReflectance', 0);
+
+    % % Scale axis to match volume dimensions
+    % % daspect(neuron.getDAspect);
+    % axis equal; axis tight;
+    % fh.labelXYZ();
+    % set(fh.ax, 'XColor', 'w', 'YColor', 'w', 'ZColor', 'w');

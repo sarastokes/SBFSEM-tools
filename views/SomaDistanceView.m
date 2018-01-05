@@ -12,8 +12,11 @@ classdef SomaDistanceView < sbfsem.ui.TogglePartsView
     methods
         function obj = SomaDistanceView(neuron)
             obj@sbfsem.ui.TogglePartsView();
-            assert(isa(neuron, 'sbfsem.Neuron'),...
-                'Input a neuron object');
+            assert(isa(neuron, 'Neuron'), 'Input a neuron object');
+            
+            if ~neuron.includeSynapses
+                neuron.getSynapses();
+            end
             
             obj.neuron = neuron;
             obj.somaLocation = neuron.getSomaXYZ();
@@ -42,14 +45,31 @@ classdef SomaDistanceView < sbfsem.ui.TogglePartsView
     methods (Access = private)
 
     	function adjustUI(obj)
+            set(obj.figureHandle,...
+                'Menubar', 'none',...
+                'Toolbar', 'none',...
+                'NumberTitle', 'off',...
+                'Name', 'Soma Distance View');
+            
     		% Normalize cell annotations
     		ymax = sort(arrayfun(@(x) max(x.YData), obj.ax.Children), 'descend');
     		ymax = ymax(2);
     		ydata = get(obj.parts('body'), 'YData');
     		set(obj.parts('body'), 'YData', ymax*(ydata/max(abs(ydata))));
 
-            xlabel(obj.ax, 'Distance from soma');
+            xlabel(obj.ax, 'Distance from soma (microns)');
             ylabel(obj.ax, 'Number of synapses');
+            
+            % Instructions
+            uicontrol(obj.ui.ctrl,...
+                'Style', 'text',...
+                'String', 'Edit table to change bin numbers');
+            uicontrol(obj.ui.ctrl,...
+                'Style', 'text',...
+                'String', 'Toggle synapses on and off with checkboxes');
+            uicontrol(obj.ui.ctrl,...
+                'Style', 'text',...
+                'String', 'Note: dendrites stratification is normalized to the max synapse count');
     	end
 
         function [plotObj, numBins] = getHistogramPart(obj, partName, numBins)

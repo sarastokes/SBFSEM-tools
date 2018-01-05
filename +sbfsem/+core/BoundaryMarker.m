@@ -1,4 +1,11 @@
 classdef (Abstract) BoundaryMarker < handle
+    % BOUNDARYMARKER
+    %
+    % Abstract class parent for IPL-GCL and INL-IPL boundary markers
+    %
+    % 11Nov2017 - SSP
+    % 4Jan2017 - SSP - standardized function names
+    % ---------------------------------------------------------------------
 	
 	properties (SetAccess = private, GetAccess = public)
 		source
@@ -39,7 +46,7 @@ classdef (Abstract) BoundaryMarker < handle
         
         function doAnalysis(obj, numPts)
             if isempty(obj.markerLocations)
-                obj.refresh();
+                obj.update();
             end
             
             if nargin < 2 
@@ -83,6 +90,8 @@ classdef (Abstract) BoundaryMarker < handle
                 scatter3(fh.ax, xyz(:, 1), xyz(:, 2), xyz(:,3), 'fill');
             end
             view(fh.ax, 3);
+            grid(fh.ax, 'on');
+            axis(fh.ax, 'equal');
         end
 
         function addToScene(obj, ax, markerSize)

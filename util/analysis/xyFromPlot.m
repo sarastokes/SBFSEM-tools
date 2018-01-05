@@ -6,6 +6,7 @@ function [xy, ind] = xyFromPlot(data)
 	% 12Aug2017 - SSP - created
 
 	if ~isa(data, 'matlab.graphics.chart.primitive.Line')
+        warning('Input should be a line');
 		return;
 	end
 

@@ -44,7 +44,7 @@ classdef ClosedCurve < sbfsem.core.Annotation
             %	Inputs:
             %		data        row of geometry table
             
-            if isa(data, 'sbfsem.Neuron')
+            if isa(data, 'Neuron')
                 data = data.geometries;
             end
             
@@ -159,6 +159,7 @@ classdef ClosedCurve < sbfsem.core.Annotation
             if isempty(ip.Results.ax)
                 fh = figure('Name', 'ClosedCurve Outline');
                 ax = axes('Parent', fh);
+                axis(ax, 'equal');
             else
                 ax = ip.Results.ax;
                 hold(ax, 'on');

@@ -32,7 +32,7 @@ classdef (Abstract) RenderView < sbfsem.ui.FigureView
             %
             % 10Nov2017 - SSP
             
-            assert(isa(neuron, 'sbfsem.Neuron'), 'Input neuron object');
+            assert(isa(neuron, 'Neuron'), 'Input neuron object');
             
             obj@sbfsem.ui.FigureView(1);
             obj.ID = neuron.ID;
@@ -69,11 +69,11 @@ classdef (Abstract) RenderView < sbfsem.ui.FigureView
                 'EdgeColor', 'none');
             isonormals(smoothedImages, obj.renderObj);
             
-            view(obj.ax, 35, 30);
+            view(obj.ax, 3);
             
             % Set up the lighting
-            obj.lightObj = camlight(obj.CAMANGLE(1), obj.CAMANGLE(2));
-            obj.lightObj.Style = 'Local';
+            lightangle(45,30);
+            lightangle(225,30);
             set(obj.renderObj,...
                 'FaceLighting', 'gouraud',...
                 'SpecularExponent', obj.SPECULAREXP,...
@@ -104,12 +104,10 @@ classdef (Abstract) RenderView < sbfsem.ui.FigureView
                 im = F{i};
                 if size(im,1) < xy(1)
                     pad = xy(1)-size(im,1);
-                    fprintf('%ux = %u,   ', i, pad);
                     im = padarray(im, [pad, 0], 0, 'pre');
                 end
                 if size(im,2) < xy(2)
                     pad = xy(2)-size(im,2);
-                    fprintf('%uy = %u,   ', i, pad);
                     im = padarray(im, [0, pad], 0, 'pre');
                 end
                 binaryMatrix = cat(3, binaryMatrix, im);
