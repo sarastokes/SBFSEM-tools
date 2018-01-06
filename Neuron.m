@@ -88,14 +88,14 @@ classdef Neuron < handle
             else
                 obj.includeSynapses = includeSynapses;
             end
+            
+            fprintf('-----c%u-----\n', obj.ID);
 
             obj.ODataClient = sbfsem.io.NeuronOData(obj.ID, obj.source);
             if obj.includeSynapses
                 obj.SynapseClient = sbfsem.io.SynapseOData(obj.ID, obj.source);
-                disp(['Importing c', num2str(obj.ID), ' with synapses']);
             else
                 obj.SynapseClient = [];
-                disp(['Importing c', num2str(obj.ID), ' without synapses']);
             end
             obj.GeometryClient = [];
             
@@ -103,7 +103,9 @@ classdef Neuron < handle
             obj.pull();
 
             % Track when the Neuron object was created
-            obj.lastModified = datestr(now);  
+            obj.lastModified = datestr(now);
+            
+            fprintf('\n\n');
         end
         function getGeometries(obj)
             % GETGEOMETRIES  Import ClosedCurve-related OData
@@ -239,14 +241,15 @@ classdef Neuron < handle
         end
 
         function synapseNames = synapseNames(obj, toChar)
-            % synapseNames  Returns a list of synapse types
+            % SYNAPSENAMES  Returns a list of synapse types
+            obj.synapseCheck();
             if nargin < 2
                 toChar = false;
             end
             synapseNames = unique(vertcat(obj.synapses.LocalName{:}));
             if toChar
-                synapseNames = vertcat(arrayfun(@(x) char(x) ,synapseNames,...
-                    'UniformOutput', false));
+                synapseNames = vertcat(arrayfun(@(x) char(x),...
+                    synapseNames, 'UniformOutput', false));
             end
         end
 
@@ -282,6 +285,7 @@ classdef Neuron < handle
             % GETSYNAPSENODES  Returns a table with only synapse annotations
             % Inputs:
             %   onlyUnique      t/f  return only unique locations
+            obj.synapseCheck();
             if nargin < 2
                 onlyUnique = true;
             end
@@ -307,6 +311,7 @@ classdef Neuron < handle
         
         function T = synapseIDs(obj, whichSyn)
             % SYNAPSEIDS  Return location IDs for synapses
+            obj.synapseCheck();
             row = strcmp(obj.synapses.LocalName, whichSyn)... 
                 & obj.synapses.Unique == 1;
             T = obj.synapses(row,:);
@@ -350,6 +355,7 @@ classdef Neuron < handle
             % INPUTS:   syn             synapse name
             %           useMicrons      true/false
 
+            obj.synapseCheck();
             if nargin < 3 % default unit is microns
                 useMicrons = true;
             end
@@ -366,7 +372,7 @@ classdef Neuron < handle
             % Find the unique instances of each synapse ID
             row = ismember(obj.nodes.ParentID, IDs) & obj.nodes.Unique;
 
-            % get the xyz values for only those rows
+            % Get the xyz values for only those rows
             if useMicrons
                 xyz = obj.nodes{row, 'XYZum'};
             else
@@ -497,6 +503,8 @@ classdef Neuron < handle
                  
         function printSyn(obj)
             % PRINTSYN  Print synapse summary to the command line
+            obj.synapseCheck();
+            
             [a, b] = findgroups(obj.synapses.TypeID);
             b2 = sbfsem.core.VikingStructureTypes(b);
             x = splitapply(@numel, obj.synapses.TypeID, a);
@@ -531,16 +539,22 @@ classdef Neuron < handle
 
             end
             obj.volumeScale = getODataScale(obj.source); %nm/pix
-            
-            disp('Processing data');
 
             % XY transform and then convert data to microns
             obj.nodes = obj.setXYZum(obj.nodes);
             
             if nnz(obj.nodes.Geometry == 6)
                 obj.getGeometries();
-                fprintf('Imported %u closed curve geometries\n',... 
+                fprintf('     %u closed curve geometries\n',... 
                     height(obj.geometries));
+            end
+        end
+        
+        function synapseCheck(obj)
+            % SYNAPSECHECK  If no synapses, import them
+            
+            if isempty(obj.synapses)
+                obj.getSynapses();
             end
         end
         
@@ -551,7 +565,7 @@ classdef Neuron < handle
             
             if strcmp(obj.source, 'NeitzInferiorMonkey')
                 if obj.USETRANSFORM
-                    disp('Applying XY transform...');
+                    % disp('Applying XY transform...');
                     xyDir = [fileparts(mfilename('fullpath')), '\data'];
                     xydata = dlmread([xyDir,...
                         '\XY_OFFSET_NEITZINFERIORMONKEY.txt']);

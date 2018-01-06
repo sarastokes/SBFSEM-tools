@@ -18,6 +18,8 @@ classdef StructureTypes
 		Touch
         CisternPre
         CisternPost
+        PlaqueLikePre
+        PlaqueLikePost
 		INLIPLBoundary
 		IPLGCLBoundary
 		Endocytosis
@@ -120,6 +122,10 @@ classdef StructureTypes
 					obj = StructureTypes.Touch;
 				case VikingStructureTypes.GapJunction
 					obj = StructureTypes.GapJunction;
+                case VikingStructureTypes.PlaqueLikePre
+                    obj = StructureTypes.PlaqueLikePre;
+                case VikingStructureTypes.PlaqueLikePost
+                    obj = StructureTypes.PlaqueLikePost;
 				case VikingStructureTypes.CisternPre
 					obj = StructureTypes.CisternPre;
 				case VikingStructureTypes.CisternPost;

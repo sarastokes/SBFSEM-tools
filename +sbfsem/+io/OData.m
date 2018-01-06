@@ -8,7 +8,7 @@ classdef OData < handle
 	methods
 		function obj = OData(source)
 			obj.source = validateSource(source);
-			obj.baseURL = [getServerName(), '\', 'OData\'];
+			obj.baseURL = [getServerName(), '/', 'OData/'];
 		end
 	end
 
