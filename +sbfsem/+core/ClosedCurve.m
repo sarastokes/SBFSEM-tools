@@ -153,7 +153,7 @@ classdef ClosedCurve < sbfsem.core.Annotation
             addParameter(ip, 'EdgeAlpha', 1,...
                 @(x) validateattributes(x, {'numeric'}, {'<',1, '>',0}));
             addParameter(ip, 'LineWidth', 1, @isnumeric);
-            addParameter(ip, 'Tag', ['c', num2str(obj.parentID)], @ischar);
+            addParameter(ip, 'Tag', ['o', num2str(obj.parentID)], @ischar);
             parse(ip, varargin{:});
             
             if isempty(ip.Results.ax)

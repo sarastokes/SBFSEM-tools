@@ -1,4 +1,4 @@
-function [segments, segmentTable] = dendriteSegmentation(neuron, visualize)
+function [segments, segmentTable, nodeIDs] = dendriteSegmentation(neuron, visualize)
     % DENDRITESEGMENTATION  Split neuron into non-branching segments
     %
     % Inputs:
@@ -9,6 +9,8 @@ function [segments, segmentTable] = dendriteSegmentation(neuron, visualize)
     %   segmentTable    Information on each segment
     %
     % 14Dec2017 - SSP - moved from sbfsem.render.Cylinder
+    % 06Jan2017 - SSP - added nodeIDs output
+    % ---------------------------------------------------------------------
     
     if nargin < 2
         visualize = false;

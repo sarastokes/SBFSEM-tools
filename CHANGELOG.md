@@ -1,10 +1,10 @@
 # Changelog
 
-### 1Jan2017
+### 1Jan2018
 - Closed curves are now rendered with Catmull-Rom splines (rather than just the control points).
 - Improved the default lighting on render figures.
 
-### 3Jan2017
+### 3Jan2018
 - RenderApp
 - Synapses no longer automatically download (huge speed improvement). To import synapses, the 3rd argument of Neuron should be set to true:
 ```
@@ -29,3 +29,12 @@ c2542 = Neuron(2542, 'i');
 c2542.build('closed curve');
 '''
 - I moved Neuron out of the sbfsem folder so no more sbfsem.Neuron or importing sbfsem. Just use Neuron.
+
+### 5Jan2018
+- Fixed bugs, added dependencies
+- Preliminary methods for rendering synapses (synapseSphere.m) and cone outlines (ConeMosaic.m)
+
+### 11Jan2018
+- Dev version of RenderApp 2.0 (working additions: update, remove, cone mosaic. not working: synapses, Z registration, legends)
+- Function for limiting render to dendrites (clipMesh.m)
+- Synapses are in the docs now, the everything else post-5Jan2018 is not

@@ -19,6 +19,7 @@ function h = volumeRender(vol, varargin)
 	addParameter(ip, 'FaceColor', [0.5 0.5 0.5],...
 		@(x) ischar(x) || isvector(x));
 	addParameter(ip, 'FaceAlpha', 1, @isnumeric);
+	addParameter(ip, 'Tag', [], @ischar);
 	addParameter(ip, 'doSmooth', true, @islogical);
 	parse(ip, varargin{:});
 
@@ -34,15 +35,20 @@ function h = volumeRender(vol, varargin)
 	% Create the 3D volume
 	h = patch(isosurface(vol),...
 		'FaceColor', ip.Results.FaceColor,...
+		'FaceAlpha', ip.Results.FaceAlpha,...
 		'EdgeColor', 'none',...
 		'FaceLighting', 'gouraud',...
-		'FaceAlpha', ip.Results.FaceAlpha,...
         'SpecularExponent', 50,...
         'SpecularColorReflectance', 0);
+	isonormals(vol, h);
+
+	if ~isempty(ip.Results.Tag)
+		set(h, 'Tag', ip.Results.Tag);
+	end
 	
     % Set up the lighting
-    lightangle(45,30);
-    lightangle(225,30);
+    lightangle(45, 30);
+    lightangle(225, 30);
     lighting phong;
     
     % Format the axis

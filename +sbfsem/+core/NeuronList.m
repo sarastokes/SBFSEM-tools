@@ -1,8 +1,12 @@
 classdef NeuronList < List
     % NEURONLIST
     %
+    % Description:
+    %   A class to abstract functions on a group of neurons
+    %
     % Constructor:
     %   obj = NeuronList(neurons, source);
+    %
     % Inputs:
     %   neurons                     Array of neurons or vector of cell IDs
     %   source                      Volume name (if providing cell IDs)
@@ -18,6 +22,7 @@ classdef NeuronList < List
     %	add(obj, ID)				Add neuron(s)
     %	remove(obj, ID) 			Remove neuron(s)
     %	elt = get(obj, ID) 			Get a neuron by ID number
+    %   elt = getn(obj, n)          Get neuron by position in list
     %	n = length(obj)				Number of neurons
     %	tf = isempty(obj)			Whether list is empty
     %	tf = ismember(obj,ID)		Whether list contains IDs
@@ -26,7 +31,10 @@ classdef NeuronList < List
     % Notes:
     %   New neurons can be specified as ID numbers or Neurons
     %
-    % 6Dec2017 - SSP
+    % History:
+    %   6Dec2017 - SSP
+    %   4Jan2017 - SSP - Added GETN to retrieve by position in list
+    % ---------------------------------------------------------------------
     
     % Examples:
     %{
@@ -34,10 +42,10 @@ classdef NeuronList < List
         h1hc = sbfsem.NeuronList([28 447 619], 'i');
     
         % Input existing neurons, no source needed
-        c28 = sbfsem.Neuron(28, 'i');
-        c447 = sbfsem.Neuron(417, 'i');
-        c619 = sbfsem.Neuron(619, 'i');
-        h1hc = sbfsem.NeuronList([c28, c447, c619]);
+        c28 = Neuron(28, 'i');
+        c447 = Neuron(417, 'i');
+        c619 = Neuron(619, 'i');
+        h1hc = sbfsem.core.NeuronList([c28, c447, c619]);
     %}
     
     properties (Access = private)
@@ -91,6 +99,11 @@ classdef NeuronList < List
             elts = obj.list(locs);
         end
         
+        function elts = getn(obj, ind)
+            % GETN  Return neuron by position in list
+            elts = obj.list(ind);
+        end
+        
         function elts = remove(obj, IDs)
             % REMOVE  Remove neuron by ID number
             locs = obj.locationsOf(IDs);
@@ -122,7 +135,7 @@ classdef NeuronList < List
             % DISP  Print the list of IDs to cmd line
             fprintf('NeuronList with %u neurons: \n',...
                 numel(obj.idMap));
-            disp(obj.idMap);
+            disp(obj.idMap');
         end
     end
     
@@ -137,13 +150,8 @@ classdef NeuronList < List
     end
     
     methods (Access = private)
-        function loc = id2loc(obj, ID)
-            % ID2LOC Find location of a cell ID
-            loc = find(obj.idMap == ID);
-        end
-        
         function [neurons, source] = parseInput(obj, elts)
-            if isa(elts, 'sbfsem.Neuron')
+            if isa(elts, 'Neuron')
                 neurons = elts;
                 source = elts.source;
             elseif isa(elts, 'sbfsem.NeuronGroup')
@@ -155,7 +163,7 @@ classdef NeuronList < List
                 neurons = [];
                 for i = 1:numel(elts)
                     neurons = cat(1, neurons,...
-                        sbfsem.Neuron(elts(i), obj.source));
+                        Neuron(elts(i), obj.source));
                 end
             end
         end

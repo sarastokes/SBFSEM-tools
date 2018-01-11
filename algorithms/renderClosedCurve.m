@@ -121,7 +121,7 @@ function [binaryMatrix, hiso] = renderClosedCurve(neuron, varargin)
     end
     
     % Combine multiple section annotations
-    [zGroups, zNames] = findgroups(Z);
+    % [zGroups, zNames] = findgroups(Z);
     
     hiso = volumeRender(binaryMatrix);
     

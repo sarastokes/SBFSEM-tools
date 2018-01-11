@@ -10,6 +10,7 @@ classdef Cylinder < handle
     %   G           Graph
     %   FV          Struct with faces, vertices of each segment
     %   reduceFac   Percent of faces to retain in DAE (1 = 100%)
+    %   method      Try alternative algorithm 2 (default = 1)
     %
     % Methods:
     %   obj.render('ax', axHandle, 'facecolor', 'b'); 
@@ -54,6 +55,7 @@ classdef Cylinder < handle
         CIRCLEPTS = 10;         % Points for line3
         CYLINDERPTS = 20;       % Points per around RC
         BRIDGEPTS = 2;          % Points per 2 annotations for RC
+        CURVEPTS = 16;          % Points for curveToMesh2
     end
     
     methods
@@ -63,6 +65,7 @@ classdef Cylinder < handle
             ip = inputParser();
             addParameter(ip, 'method', 1, @(x) ismember(x, [1 2]));
             addParameter(ip, 'reduceFac', 1);
+            addParameter(ip, 'curvePts', obj.CURVEPTS, @isnumeric);
             addParameter(ip, 'smoothIter', 1);
             parse(ip, varargin{:});
 
@@ -79,7 +82,9 @@ classdef Cylinder < handle
             if ip.Results.method == 1
                 obj.FV = obj.createPolygonMeshes();
             else
-                obj.FV = obj.createCurveMeshes();
+                % Smoothing is v detrimental to the curve meshes
+                obj.setSmoothIter(0);
+                obj.FV = obj.createCurveMeshes(ip.Results.curvePts);
             end
         end
 
@@ -162,7 +167,6 @@ classdef Cylinder < handle
             else
                 allFV = obj.condense();
                 if obj.smoothIter ~= 0
-
                     allFV = obj.smooth(allFV, obj.smoothIter);
                 end
                 p = patch(allFV,...
@@ -205,7 +209,11 @@ classdef Cylinder < handle
             % CONDENSE  Single face/vertex struct
             %
             % See also: CONCATENATEMESHES
-            FV = concatenateMeshes(vertcat(obj.FV{:}));
+            if numel(obj.FV) == 1
+                FV = obj.FV{1};
+            else
+                FV = concatenateMeshes(vertcat(obj.FV{:}));
+            end
         end
     end
     
@@ -252,7 +260,7 @@ classdef Cylinder < handle
             end
         end
 
-        function FV = createCurveMeshes(obj)
+        function FV = createCurveMeshes(obj, curvePts)
             % CREATECURVEMESHES  A work in progress method
             locations = obj.subGraphs.XYZum;
             radii = obj.subGraphs.Rum;
@@ -260,7 +268,7 @@ classdef Cylinder < handle
             FV = {};
 
             for i = 1:height(obj.subGraphs)
-                fv = curveToMesh2(locations{i}, radii{i});
+                fv = curveToMesh2(locations{i}, radii{i}, curvePts);
                 FV = cat(1, FV, fv);
             end
         end

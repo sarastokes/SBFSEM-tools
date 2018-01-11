@@ -19,7 +19,7 @@ function FV = curveToMesh2(curve, radius, nCorners)
 %
 % -------------------------------------------------------------------------
 	if nargin < 3
-		nCorners = 8;
+		nCorners = 16;
 	end
 
 	nNodes = size(curve, 1);
@@ -66,6 +66,6 @@ function FV = curveToMesh2(curve, radius, nCorners)
 	    mod(inds + nCorners + add1 - 1, nVerts) + 1 ...
 	    mod(inds + nCorners - 1, nVerts) + 1];
 
-	faces(1:end-nCorners, :) = [];
+	faces(end-nCorners:end, :) = [];
 
 	FV = struct('faces', faces, 'vertices', vertices);

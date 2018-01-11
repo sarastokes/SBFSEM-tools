@@ -1,11 +1,21 @@
 function fh = colorByStrata(neuron, numDimensions)
 	% COLORBYSTRATA
-	%	Input:
-	%		neuron object
+    %
+    % Description:
+    %   Plot annotations colored by stratification
+    %
+    % Syntax:
+    %   fh = COLORBYSTRATA(neuron, numDimensions);
+    %
+	% Input:
+	%	neuron object
+	% Optional input:
+	%   numDimensions 	plot dimensions (default = 2)
 	%
-	% 	Optional input:
-	%		numDimensions 	[2] 	2d or 3d plot
-	%
+    % Output:
+    %   fh              figure handle
+    %
+    %----------------------------------------------------------------------
 	
 	assert(isa(neuron, 'Neuron'), 'Input Neuron object');
 	if nargin < 2

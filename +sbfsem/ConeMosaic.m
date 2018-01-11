@@ -95,11 +95,14 @@ classdef ConeMosaic < handle
             fprintf('Imported %u new IDs\n', numel(newIDs));
         end
         
-        function plot(obj, coneType, ax)
+        function plot(obj, coneType, ax, tag)
             % PLOT  Plot the mosaic
             if nargin < 3
                 fh = figure('Name', 'Cone Outlines');
                 ax = axes('Parent', fh);
+            end
+            if nargin < 4
+                tag = '';
             end
             
             switch coneType
@@ -108,7 +111,8 @@ classdef ConeMosaic < handle
                         obj.getCones('LM');
                     end
                     arrayfun(@(x) x.trace('ax', ax,...
-                        'EdgeColor', 'k',...
+                        'EdgeColor', 'k',...,...
+                        'Tag', tag,...
                         'FaceColor', 'none'), obj.lmCones);
                 case 'S'
                     if isempty(obj.sCones)
@@ -116,7 +120,8 @@ classdef ConeMosaic < handle
                     end
                     arrayfun(@(x) x.trace('ax', ax,...
                         'FaceColor', [0, 0.4, 1],...
-                        'FaceAlpha', 0.1,...
+                        'FaceAlpha', 0.1,...,...
+                        'Tag', tag,...
                         'EdgeColor', [0, 0.4, 1]), obj.sCones);
             end
             

@@ -152,7 +152,7 @@
 	\end{tabular}
 	\end{center}
 	
-	The biggest difference is that RenderApp does NOT include synapses. Personally, I always have child structures turned off in VikingView - I'll get around to adding them eventually, but if this is a priority for you, let me know.
+	The biggest difference is that RenderApp does NOT include synapses. The next update will include these, as well as the ability to remove (not just hide) neurons and update their OData/3D model.
 	% ------------------------------------------------- Section -- 	
 	\section{Neuron}
 	% ------------------------------------------------- Section -- 
@@ -195,7 +195,7 @@
 		\textit{Syntax:} \texttt{obj.update();}
 		%
 		\item \textbf{getSynapses}\\
-		\textit{Description:} Import the synapses (`child structures') from OData.\\
+		\textit{Description:} Import the synapses (`child structures') from OData. If the synapses aren't imported, this is called automatically by any synapse method. Use this if you're actively annotating and want to update the synapse OData.\\
 		\textit{Syntax:} \texttt{obj.getSynapses}
 		%
 		\item \textbf{getGeometries}\\
@@ -206,14 +206,14 @@
 		\textit{Description:} Create a 3D model (saved to obj.model). Available render types are cylinder (default), closedcurve and disc.\\
 		\textit{Syntax:} \texttt{obj.build(renderType)};
 		%
-		\item \textbf{graph}\\
-		\textit{Description:} Convert the neuron into an undirected or directed graph. For more information on what this enables, see MATLAB's \href{https://www.mathworks.com/help/matlab/graph-and-network-algorithms.html}{graph class documentation}.\\
-		\textit{Syntax:} \texttt{G = obj.graph();}
-		% 
 		\item \textbf{render}\\
 		\textit{Description:} Render the neuron's 3D model.\\
 		\textit{Syntax:} \texttt{obj.render(`ax', axisHandle, `FaceColor', rgb);}
 		%
+		\item \textbf{graph}\\
+		\textit{Description:} Convert the neuron into an undirected or directed graph. For more information on what this enables, see MATLAB's \href{https://www.mathworks.com/help/matlab/graph-and-network-algorithms.html}{graph class documentation}.\\
+		\textit{Syntax:} \texttt{G = obj.graph();}
+		% 
 		\item \textbf{printSyn}\\
 		\textit{Description:} Print a summary of the neuron's synapses to the command line.\\
 		\textit{Syntax:} \texttt{obj.printSyn;}
@@ -389,21 +389,6 @@
 	c121.build();
 	c121.model.setReduction(0.8);
 	c121.render('reduce', true);\end{lstlisting}
-	
-	% A brief outline of the steps involved:
-	% \begin{enumerate}
-	% 	\item Query OData service for the all annotations in a given cell ID. Save the XYZ coordinates, radius and location ID of each annotation. 
-	% 	\item Query OData service for all links between annotations.
-	% 	\item Apply XY transforms to compensate for major shifts in section alignment.
-	% 	\item Query OData service for the volume dimensions - use these to convert XYZ coordinates and radius from pixels to microns.
-	% 	\item Convert the annotations and links between each annotation into the nodes and edges of an undirected graph.
-	% 	\item Create an undirected graph from all nodes (annotations/locations) and edges (location links).
-	% 	\item Use depth-first search (\texttt{dfsearch}) to divide nodes into segments of degree $\le$ 2. This avoids rendering dendrite branches.
-	% 	\item Link each segment back to the parent node of degree $>$ 2. This way some nodes are repeated but each edge is represented only once.
-	% 	\item Find the magnitude and angle of the distances between all connected nodes. Use this to get a quaternion rotation matrix for each edge.
-	% 	\item Input the radii to MATLAB's built-in 3D \texttt{cylinder} function, which creates a cylinder orthogonal to the XY plane.
-	% 	\item Rotate each node's cylinder by it's quaternion rotation matrix.
-	% \end{enumerate}
 	% --------------------------------------------Subsubsection --	
 	\subsubsection{Blender Export}
 	% --------------------------------------------Subsubsection --
@@ -502,7 +487,12 @@
 	% -----------------------------------------------Subsection --
 	\subsection{Outlines}
 	% -----------------------------------------------Subsection --
-
+	% -------------------------------------------------- Figure --
+	\begin{wrapfigure}{l}{0.25\linewidth}
+		\includegraphics[width=\linewidth]{cone_mosaic}
+		\label{mosaicfig}
+	\end{wrapfigure}
+	% -------------------------------------------------- Figure --
 	Outlines of single closed curve annotations can also be added to a render using the \texttt{outline} option. I use this option for cone mosaics \ref{mosaicfig}
 	
 	\begin{lstlisting}[language=matlab]
@@ -511,36 +501,50 @@
 	% Import a neighboring S-cone:
 	c5752 = Neuron(5752, 'i');
 	% Build the renders:
-	c5751.build('outline');
-	c5752.build('outline');
+	c5751.build('outline'); c5752.build('outline');
 	% Plot both to the same figure
 	c5751.render('EdgeColor', 'k');
-	c5752.render('ax', gca,...
-	'FaceColor', [0, 0.4, 1],...
-	'FaceAlpha', 0.1,...
-	'EdgeColor', [0, 0.4, 1]);\end{lstlisting}	
-	% -------------------------------------------------- Figure --
-	\begin{wrapfigure}{r}{0.2\linewidth}
-		\includegraphics[width=\linewidth]{cone_mosaic}
-		\label{mosaicfig}
-	\end{wrapfigure}
-		% -------------------------------------------------- Figure --
-	% -----------------------------------------------Subsection -- 
-	\subsection{VikingPlot}
-	% -----------------------------------------------Subsection -- 
-	Editing the MATLAB figure generated by VikingPlot can be a good alternative to Blender. A few useful commands:
+	c5752.render('ax', gca, 'FaceColor', [0, 0.4, 1],...
+		'FaceAlpha', 0.1, 'EdgeColor', [0, 0.4, 1]);\end{lstlisting}	
+	For NeitzInferiorMonkey, I labeled each LM-cone outline with \texttt{lmTRACE} and each S-cone outline with \texttt{sTRACE}. To query OData for structures with these tags and plot, use the \texttt{ConeMosaic} class.	
+
+		\begin{wrapfigure}{r}{0.2\linewidth}
+			\includegraphics[width=\linewidth]{c6800_synapses}
+		\end{wrapfigure}
+	% -----------------------------------------------Subsection --
+	\subsection{Synapses}
+	% -----------------------------------------------Subsection --
+	This code is new - future updates will make adding synapses easier. For now, \texttt{synapseSphere.m} adds a single synapse type to a neuron render. \texttt{synapseSphere} has the standard render optional key/value inputs (FaceColor (default = red), FaceAlpha (default=1)). Additionally, there's a synapse size scaling factor - each synapse as a unit sphere (1 micron) multiplied by the synapse scaling factor (default = 0.5).
 	\begin{lstlisting}[language=matlab]
-	% Make sure the figure is the active window.
-	ax = gca; % Create a handle to the axis
-	ax.Children % Returns a list of child structures
-	% There should be PATCH and LIGHT objects.
-	% Use numerical indexing to generate handles to the objects
-	% NOTE: The numbering might be different on your figure
-	lightObj = ax.Children(1);
-	renderObj = ax.Children(2);
-	% A few useful properties to edit for PATCH objects:
-	renderObj.FaceColor = [0, 0.8, 0.3];
-	renderObj.FaceAlpha = 0.7;\end{lstlisting}
+	c6800 = Neuron(6800, 'i', true);
+	c6800.build(); c6800.render();
+	% Add a single synapse type
+	% SYNAPSESPHERE(neuron, axHandle, synapseName, varargin)
+	synapseSphere(gca, 'ConvPre');
+	% Render all synapses with decreased size
+	names = c6800.synapseNames;
+	for i = 1:numel(names)
+		synapseSphere(c6800, names(i), 'ax', gca,...
+			'FaceColor', names(i).StructureColor, 'sf', 0.3);
+	end\end{lstlisting}
+
+	% % -----------------------------------------------Subsection -- 
+	% \subsection{VikingPlot}
+	% % -----------------------------------------------Subsection -- 
+	% Editing the MATLAB figure generated by VikingPlot can be a good alternative to Blender. A few useful commands:
+	% \begin{lstlisting}[language=matlab]
+	% % Make sure the figure is the active window.
+	% ax = gca; % Create a handle to the axis
+	% ax.Children % Returns a list of child structures
+	% % There should be PATCH and LIGHT objects.
+	% % Use numerical indexing to generate handles to the objects
+	% % NOTE: The numbering might be different on your figure
+	% lightObj = ax.Children(1);
+	% renderObj = ax.Children(2);
+	% % A few useful properties to edit for PATCH objects:
+	% renderObj.FaceColor = [0, 0.8, 0.3];
+	% renderObj.FaceAlpha = 0.7;\end{lstlisting}
+
 	% ------------------------------------------------- Section -- 
 	\section{Image Registration}
 	% ------------------------------------------------- Section --

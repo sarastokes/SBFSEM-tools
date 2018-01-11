@@ -13,6 +13,7 @@ classdef Neuron < handle
 %   25Aug2017 - SSP - added analysis property & methods
 %   2Oct2017 - SSP - ready for odata-based import
 %   12Nov2017 - SSP - in sync with odata changes
+%   4Jan2018 - SSP - divided odata, added render method calls
 % -------------------------------------------------------------------------
     
     properties (SetAccess = private, GetAccess = public)
@@ -91,6 +92,7 @@ classdef Neuron < handle
             
             fprintf('-----c%u-----\n', obj.ID);
 
+            obj.volumeScale = getODataScale(obj.source); %nm/pix
             obj.ODataClient = sbfsem.io.NeuronOData(obj.ID, obj.source);
             if obj.includeSynapses
                 obj.SynapseClient = sbfsem.io.SynapseOData(obj.ID, obj.source);
@@ -171,6 +173,7 @@ classdef Neuron < handle
 
         function dae(obj, fName)
             % DAE  Export model as COLLADA file
+            % -------------------------------------------------------------
             if isempty(obj.model)
                 warning('No model - use BUILD function first');
                 return;
@@ -186,47 +189,18 @@ classdef Neuron < handle
             end
         end
 
-        function fh = render(obj, varargin)
+        function render(obj, varargin)
             % RENDER
             %   
-            % TODO: Condense ClosedCurve code
+            % -------------------------------------------------------------
             
             if ~isempty(obj.model)
                 if isa(obj.model, 'sbfsem.core.ClosedCurve')
                     obj.model.trace(varargin{:});
                 elseif isnumeric(obj.model) % Closed curve volume
-                    ip = inputParser();
-
-                    addParameter(ip, 'FaceColor', [0.5 0.5 0.5],...
-                        @(x) ischar(x) || isvector(x));
-                    addParameter(ip, 'FaceAlpha', 1, @isnumeric);
-                    parse(ip, varargin{:});
-
-                    fh = sbfsem.ui.FigureView(1);
-                    set([fh.figureHandle, fh.ax], 'Color', 'k');
-                    
-                    smoothedImages = smooth3(obj.model);
-                    hiso = patch(isosurface(smoothedImages),...
-                        'Parent', fh.ax,...
-                        'FaceColor', ip.Results.FaceColor,...
-                        'FaceAlpha', ip.Results.FaceAlpha,...
-                        'EdgeColor', 'none',...
-                        'Tag', ['c', num2str(obj.ID)]);
-                    isonormals(smoothedImages, hiso);
-
-                    lightangle(45,30);
-                    lightangle(225,30);
-                    lighting phong;
-                    view(3);
-                    set(hiso,...
-                        'FaceLighting', 'gouraud',...
-                        'SpecularExponent', 50,...
-                        'SpecularColorReflectance', 0);
-
-                    axis equal; axis tight;
-                    fh.labelXYZ();
-                    set(fh.ax, 'XColor', 'w',...
-                        'YColor', 'w', 'ZColor', 'w');
+                    volumeRender(obj.model,...
+                        'Tag', ['c', num2str(obj.ID)],...
+                        varargin{:});
                 else
                     obj.model.render(varargin{:});
                 end
@@ -242,7 +216,7 @@ classdef Neuron < handle
 
         function synapseNames = synapseNames(obj, toChar)
             % SYNAPSENAMES  Returns a list of synapse types
-            obj.synapseCheck();
+            obj.checkSynapses();
             if nargin < 2
                 toChar = false;
             end
@@ -259,6 +233,7 @@ classdef Neuron < handle
             %   useMicrons  [true]      microns or pixels     
             % OUTPUTS:
             %   boundingBox     [xmin ymin xmax ymax]
+            % -------------------------------------------------------------
 
             if nargin < 2
                 useMicrons = true;
@@ -282,10 +257,11 @@ classdef Neuron < handle
         end
 
         function synapseNodes = getSynapseNodes(obj, onlyUnique)
-            % GETSYNAPSENODES  Returns a table with only synapse annotations
+            % GETSYNAPSENODES  Returns a table of only synapse annotations
             % Inputs:
             %   onlyUnique      t/f  return only unique locations
-            obj.synapseCheck();
+            % -------------------------------------------------------------
+            obj.checkSynapses();
             if nargin < 2
                 onlyUnique = true;
             end
@@ -311,7 +287,7 @@ classdef Neuron < handle
         
         function T = synapseIDs(obj, whichSyn)
             % SYNAPSEIDS  Return location IDs for synapses
-            obj.synapseCheck();
+            obj.checkSynapses();
             row = strcmp(obj.synapses.LocalName, whichSyn)... 
                 & obj.synapses.Unique == 1;
             T = obj.synapses(row,:);
@@ -354,8 +330,9 @@ classdef Neuron < handle
             % GETSYNAPSEXYZ  Get xyz of synapse type
             % INPUTS:   syn             synapse name
             %           useMicrons      true/false
+            % -------------------------------------------------------------
 
-            obj.synapseCheck();
+            obj.checkSynapses();
             if nargin < 3 % default unit is microns
                 useMicrons = true;
             end
@@ -365,10 +342,8 @@ classdef Neuron < handle
                 syn = sbfsem.core.StructureTypes(syn);
             end
             
-            row = vertcat(obj.synapses.LocalName{:}) == syn;                
-           
+            row = vertcat(obj.synapses.LocalName{:}) == syn;                           
             IDs = obj.synapses.ID(row,:);
-
             % Find the unique instances of each synapse ID
             row = ismember(obj.nodes.ParentID, IDs) & obj.nodes.Unique;
 
@@ -376,7 +351,7 @@ classdef Neuron < handle
             if useMicrons
                 xyz = obj.nodes{row, 'XYZum'};
             else
-                xyz = obj.dataTable{row, {'X','Y', 'Z'}};
+                xyz = obj.dataTable{row, {'X', 'Y', 'Z'}};
             end
         end 
         
@@ -389,8 +364,7 @@ classdef Neuron < handle
             
             row = strcmp(obj.nodes.ID, obj.somaNode);
             id = obj.dataTable.LocationID(row, :);
-            
-            % copy to clipboard
+
             if toClipboard
                 clipboard('copy', id);
             end
@@ -420,8 +394,7 @@ classdef Neuron < handle
             %   ax      axesHandle to apply daspect
             %
             
-            xyz = obj.volumeScale/max(abs(obj.volumeScale));
-            
+            xyz = obj.volumeScale/max(abs(obj.volumeScale));           
             if nargin == 2
                 assert(isa(ax, 'matlab.graphics.axis.Axes'),...
                     'Input an axes handle');
@@ -429,7 +402,7 @@ classdef Neuron < handle
             end
         end
 
-        function [G, p] = graph(obj, varargin)
+        function [G, nodeIDs] = graph(obj, varargin)
             % NEURON2GRAPH  Create a graph representation
             %   Inputs:
             %       directed        [f]     directed or undirected
@@ -437,8 +410,9 @@ classdef Neuron < handle
             %       visualize       [f]     plot the graph?
             %   Outputs:
             %       G               graph or digraph
-            %       p               plot handle
-            %
+            %       nodesIDs        array (ith entry is loc ID of node i)
+            % -------------------------------------------------------------
+            
             ip = inputParser();
             addParameter(ip, 'directed', false, @islogical);
             addParameter(ip, 'synapses', false, @islogical);
@@ -460,9 +434,14 @@ classdef Neuron < handle
             end
 
             if ip.Results.visualize
-                p = plot(G);
-            else
-                p = [];
+                figure();
+                plot(G);
+            end
+            
+            if nargout == 2
+                % Lookup table for locationIDs of nodes where ith entry is
+                % the location ID of node i.
+                nodeIDs = str2double(G.Nodes{:,:});
             end
         end
 
@@ -472,7 +451,8 @@ classdef Neuron < handle
                 overwrite = false;
             end
 
-            validateattributes(analysis, {'sbfsem.analysis.NeuronAnalysis'}, {});
+            assert(isa(analysis, 'sbfsem.analysis.NeuronAnalysis'),...
+                'Input must be of class NeuronAnalysis');
 
             % Analysis holds a reference to target neuron
             if isprop(analysis, 'target') && ~isempty(analysis.target)
@@ -503,8 +483,9 @@ classdef Neuron < handle
                  
         function printSyn(obj)
             % PRINTSYN  Print synapse summary to the command line
-            obj.synapseCheck();
             
+            obj.checkSynapses();
+            % Viking synapse names first
             [a, b] = findgroups(obj.synapses.TypeID);
             b2 = sbfsem.core.VikingStructureTypes(b);
             x = splitapply(@numel, obj.synapses.TypeID, a);
@@ -513,6 +494,7 @@ classdef Neuron < handle
             for ii = 1:numel(x)
                 fprintf('%u %s\n', x(ii), b2(ii));
             end
+            % Then detailed SBFSEM-tools names
             fprintf('\n-------------------\nDetailed names:\n');
             synapseNames = obj.synapseNames;
             for i = 1:numel(synapseNames)
@@ -538,7 +520,6 @@ classdef Neuron < handle
                 obj.setupSynapses();
 
             end
-            obj.volumeScale = getODataScale(obj.source); %nm/pix
 
             % XY transform and then convert data to microns
             obj.nodes = obj.setXYZum(obj.nodes);
@@ -550,7 +531,7 @@ classdef Neuron < handle
             end
         end
         
-        function synapseCheck(obj)
+        function checkSynapses(obj)
             % SYNAPSECHECK  If no synapses, import them
             
             if isempty(obj.synapses)
@@ -585,8 +566,7 @@ classdef Neuron < handle
                 % Hack to bridge 915-936 gap
                 if min(nodes.Z) <= 916 && max(nodes.Z) >= 935
                     disp('Fixing 915-936 gap...');
-                    xyBelow = nodes{nodes.Z == 936,...
-                        {'VolumeX','VolumeY'}};
+                    xyBelow = nodes{nodes.Z == 936, {'VolumeX','VolumeY'}};
                     % If multiple annotations on s936, take the average
                     if size(xyBelow, 1) > 1
                         disp('Averaging s935 annotations...');
@@ -599,6 +579,12 @@ classdef Neuron < handle
                     end
                     xyAbove = nodes{nodes.Z == section,...
                         {'VolumeX', 'VolumeY'}};
+                    if size(xyAbove,1) ~= size(xyBelow,1)
+                        % idBelow = nodes{nodes.Z == 936, 'ID'};
+                        % idAbove = nodes{nodes.Z == section, 'ID'};
+                        disp('Averaging sections above...');
+                        xyAbove = mean(xyAbove,1);
+                    end
                     % Find the offset
                     xyOffset = xyBelow - xyAbove;
                     % Apply the offset to all annotations above the gap
