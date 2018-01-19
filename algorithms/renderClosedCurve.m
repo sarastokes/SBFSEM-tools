@@ -1,4 +1,4 @@
-function [binaryMatrix, hiso] = renderClosedCurve(neuron, varargin)
+function [binaryMatrix, hiso, boundingBox] = renderClosedCurve(neuron, varargin)
     % RENDERCLOSEDCURVE  3D structure from arbitrary geometry
     %
     % Syntax:

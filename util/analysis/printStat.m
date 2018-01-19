@@ -1,14 +1,24 @@
-function str = printStat(vec, showN)
-	% PRINTSTAT  Print the mean and SEM to cmd line
+function varargout = printStat(vec, showN)
+	% PRINTSTAT  
+    %
+    % Description:
+    %   Print basic stats to cmd line in format: MEAN +- SEM (N)
 	%
-	% INPUTS:
-	%	vec 		vector of data
-	%	showN		include N (default = false)
+	% Input:
+	%	vec 		Data (vector)
+    % Optional input:
+	%	showN		Include N (default = true)
+    %
+    % Output:
+    %   stats       Char printed to the cmd line
 	%
-	% 12Aug2017 - SSP - created
+    % History:
+	%   12Aug2017 - SSP - created
+    %   18Jan2018 - SSP - changed default N, output options
+    % ---------------------------------------------------------------------
 
 	if nargin < 2
-		showN = false;
+		showN = true;
 	end
 
 	str = sprintf('%.3f +- %.3f', mean(vec), sem(vec));
@@ -16,3 +26,7 @@ function str = printStat(vec, showN)
 		str = [str, sprintf(' (n=%u)', numel(vec))];
 	end
 	fprintf([str '\n']);
+    
+    if nargout > 0
+        varargout(1) = {str};
+    end

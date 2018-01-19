@@ -3,8 +3,8 @@ function exportDAE(filename, varargin)
 	%
 	% Input:
 	%	filename 		path to .dae file
-	%	F 				faces
 	%	V 				vertices
+	%	F 				faces
 	%
 	% 20Dec2017 - SSP
 
@@ -49,7 +49,7 @@ function exportDAE(filename, varargin)
     
     for i = 1:2:numel(varargin)
         V = varargin{i};
-        F = varargin{i};
+        F = varargin{i+1};
         
         node = sketchup.appendChild(...
             DOM.createElement('node'));
@@ -150,7 +150,6 @@ function exportDAE(filename, varargin)
     instanceVisualScene = scene.appendChild(...
         DOM.createElement('instance_visual_schene'));
     instanceVisualScene.setAttribute('url', '#ID2');
-    
     
     f = fopen(filename, 'w');
     fprintf(f, '%s', xmlwrite(DOM));

@@ -1,5 +1,5 @@
 classdef NeuronOData < sbfsem.io.OData
-%NEURONODATA
+% NEURONODATA
 %
 % Description:
 %   Handles OData queries related to a single neuron ("Structure")
@@ -25,7 +25,6 @@ classdef NeuronOData < sbfsem.io.OData
 %   t = obj.getNodes()
 %   t = obj.getEdges()
 %   [a,b,c] = pull();
-%   obj.update();
 % 
 % Use:
 %   % Create OData object (cell 127 from NeitzInferiorMonkey)
@@ -48,7 +47,7 @@ classdef NeuronOData < sbfsem.io.OData
     
     methods
         function obj = NeuronOData(ID, source)
-            % ODATAINTERFACE  Serves as middleman b/w OData and Matlab
+            % NEURONODATA  Serves as middleman b/w OData and Matlab
             %  
             % Inputs:
             %   ID          neuron structure ID (from Viking)
@@ -107,22 +106,28 @@ classdef NeuronOData < sbfsem.io.OData
              
         function [viking, nodes, edges] = pull(obj)
             % PULL  Fetches all data (nodes, edges, child)
+            
+            obj.update();
 
             viking = obj.vikingData;
             nodes = obj.getNodes();
             edges = obj.getEdges();
         end
-        
+    end
+    
+    methods (Access = private)
         function update(obj)
             % UPDATE  Fetches all existing data
             
-            obj.vikingData = readOData(getODataURL(obj.parentID, obj.source, 'neuron')); 
+            obj.vikingData = readOData(getODataURL(obj.ID, obj.source, 'neuron')); 
             if ~isempty(obj.nodeData)
-                obj.fetchLocationData(obj.ID);
+                obj.nodeData = [];
+                obj.nodeData = obj.fetchLocationData(obj.ID);
             end
 
             if ~isempty(obj.edgeData)
-                obj.fetchLinkData(obj.ID);
+                obj.edgeData = [];
+                obj.edgeData = obj.fetchLinkData(obj.ID);
             end
         end
     end

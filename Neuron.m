@@ -41,7 +41,7 @@ classdef Neuron < handle
         model = [];
     end
     
-    properties (Transient = true, Hidden = true)
+    properties (Transient = true)
         ODataClient
         GeometryClient
         SynapseClient
@@ -109,6 +109,7 @@ classdef Neuron < handle
             
             fprintf('\n\n');
         end
+        
         function getGeometries(obj)
             % GETGEOMETRIES  Import ClosedCurve-related OData
             if isempty(obj.GeometryClient)
@@ -138,8 +139,10 @@ classdef Neuron < handle
         
         function update(obj)
             % UPDATE  Updates existing OData
-            % If you haven't imported synapses the update will skip them            
+            % If you haven't imported synapses the update will skip them
+            fprintf('NEURON: Updating OData for c%u\n', obj.ID);
             obj.pull();
+            obj.lastModified = datestr(now);
         end
 
         function model = build(obj, renderType, varargin)
@@ -153,6 +156,10 @@ classdef Neuron < handle
             %--------------------------------------------------------------
             if nargin < 2
                 renderType = 'cylinder';
+            end
+            
+            if ~isempty(obj.model)
+                obj.model = [];
             end
             
             switch lower(renderType)

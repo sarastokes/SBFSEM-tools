@@ -48,19 +48,31 @@ classdef OData < handle
 	end
 
 	methods
-		function annotationsBySection(obj, sections)
-
+		function data = annotationsBySection(obj, sections, expandLinks)
+            if nargin < 3
+                expandLinks = false;
+            else
+                assert(islogical(expandLinks), 'Expand links is t/f');
+            end
 			str = ['/Locations?$filter=Z le ' num2str(max(sections)),...
 				' and Z ge ', num2str(min(sections)),...
-				' and TypeCode eq 1'];
+				' and TypeCode eq 1',...
+                '&$select=ID,ParentID,X,Y,Z,Radius'];            
 
-			data = webread([getServiceRoot(obj.source), str,...
-				'&$select=ID,ParentID,X,Y,Z,Radius'], weboptions);
+			data = webread([getServiceRoot(obj.source), str], weboptions);
 		end
 
-		function structureByLabel(obj, str)
-			
-		end
+		function data = getLinkedIDs(obj, ID, vitread)
+            % GETLINKEDIDS  From ID, get other linked location IDs
+            % Inputs:
+            %   ID          The location ID
+            %   vitread     Direction (t/f), empty for both
+            str = [getServiceRoot(obj.source),...
+                '/Locations(' num2str(ID) ')',...
+                '&$expand=LocationLinksA'];
+            
+            data = webread(str, weboptions);
+        end
 	end
 
 	methods (Static = true, Access = protected)
