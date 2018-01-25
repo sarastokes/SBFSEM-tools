@@ -1,15 +1,45 @@
 classdef (Abstract) RenderView < sbfsem.ui.FigureView
+    % RENDERVIEW
+    %
+    % Description:
+    %   Abstract class for volume renders
+    %
+    % Constructor:
+    %   obj = sbfsem.render.RenderView(neuron)
+    %
+    % Protected properties:
+    %   ID              Neuron ID
+    %   source          Volume name
+    %   renderObj       Render object (patch)
+    %   capObj          Isocaps object
+    %   boundingBox     XY limits around render
+    %   imNodes         Annotations (sbfsem.core.ClosedCurve/Disc)
+    %
+    % Constant properties:
+    %   Patch defaults, cam angle, bounding margin (0)
+    %
+    % Public methods:
+    %   bbox = obj.findBoudningBox(obj);
+    %   obj.update();
+    % Protected methods:
+    %   obj.createScene(binaryMatrix);
+    % Static methods:
+    %   obj.padBinaryImages();
+    %   
+    % See also:
+    %   SBFSEM.RENDER.CLOSEDCURVE, SBFSEM.CORE.CLOSEDCURVE
+    %
+    % History:
+    %   15Nov2017 - SSP
+    %   21Jan2018 - xyz scaling, isocaps, docs
+    % ---------------------------------------------------------------------
     
     properties (SetAccess = protected)
         ID
         source
         renderObj
-        lightObj
         capObj
         boundingBox
-    end
-    
-    properties (Transient = true, SetAccess = protected)
         imNodes
     end
     
@@ -45,14 +75,32 @@ classdef (Abstract) RenderView < sbfsem.ui.FigureView
         end
         
         function update(obj)
+            % UPDATE
             neuron = Neuron(obj.ID, obj.source);
             neuron.setGeometries;
             obj.doRender(neuron.geometries);
+        end
+
+        function set(obj, propName, propValue)
+            % SET  Quicky set patch properties
+            % Similar to clicking patch and using set(gco,...)
+            % ------------------------------------------------------------
+            try
+                set(obj.renderObj, propName, propValue);
+                set(obj.capObj, propName, propValue);
+            catch
+                warning('RENDERVIEW', [' Unknown property: ', propName]);
+            end
         end
     end
     
     methods (Access = protected)
         function createScene(obj, binaryMatrix)
+            % CREATESCENE  Setup figure for volume render of binary matrix
+            % Inputs:
+            %   binaryMatrix   X by Y by Z 3D logical matrix
+            % -------------------------------------------------------------
+                       
             % Smooth binary images to increase cohesion
             % TODO: apply extra gauss conv to z-axis only?
             smoothedImages = smooth3(binaryMatrix);
@@ -62,44 +110,46 @@ classdef (Abstract) RenderView < sbfsem.ui.FigureView
                 'Parent', obj.ax,...
                 'FaceColor', obj.FACECOLOR,...
                 'FaceAlpha', obj.FACEALPHA,...
-                'EdgeColor', 'none');
-            obj.capObj = patch(isosurface(smoothedImages,0),...
+                'EdgeColor', 'none',...
+                'FaceLighting', 'gouraud',...
+                'SpecularExponent', obj.SPECULAREXP,...
+                'SpecularColorReflectance', obj.SPECULARCOLORREFLECTANCE);
+            % Ensure 3D structure water-tight
+            obj.capObj = patch(isocaps(smoothedImages),...
                 'FaceColor', obj.FACECOLOR,...
                 'FaceAlpha', obj.FACEALPHA,...
-                'EdgeColor', 'none');
+                'EdgeColor', 'none',...
+                'FaceLighting', 'gouraud',...
+                'SpecularExponent', obj.SPECULAREXP,...
+                'SpecularColorReflectance', obj.SPECULARCOLORREFLECTANCE);
+            % Normals
             isonormals(smoothedImages, obj.renderObj);
-            
-            view(obj.ax, 3);
             
             % Set up the lighting
             lightangle(45,30);
             lightangle(225,30);
-            set(obj.renderObj,...
-                'FaceLighting', 'gouraud',...
-                'SpecularExponent', obj.SPECULAREXP,...
-                'SpecularColorReflectance', obj.SPECULARCOLORREFLECTANCE);
             
             % Scale axis to match volume dimensions
-            daspect(obj.ax, getDAspectFromOData(obj.source));
             axis(obj.ax, 'equal');
             obj.labelXYZ();
+            view(obj.ax, 3);
         end
         
         function boundingBox = findBoundingBox(obj)
+            % FINDBOUNDINGBOX  Get the render bounding box
             allBounds = vertcat(obj.imNodes.localBounds);
             boundingBox = [ min(allBounds(:,1)), max(allBounds(:,2)),... 
-                            min(allBounds(:,3)), max(allBounds(:,4))];
-            
+                            min(allBounds(:,3)), max(allBounds(:,4))];            
             if obj.BOUNDINGMARGIN > 0
+                disp(['Bounding margin: ', num2str(obj.BOUNDINGMARGIN)]);
                 boundingBox = boundingBox * (1 + obj.BOUNDINGMARGIN);
             end
         end
     end
     methods (Static)
         function binaryMatrix = padBinaryImages(xy, F)
-            % Resize the binary images to xy limits
+            % PADBINARYIMAGES  Resize the binary images to xy limits
             binaryMatrix = [];
-            disp('Padded x,y axes of following images');
             for i = 1:numel(F)
                 im = F{i};
                 if size(im,1) < xy(1)

@@ -45,7 +45,6 @@ classdef Neuron < handle
         ODataClient
         GeometryClient
         SynapseClient
-        applyXYShift
         includeSynapses
     end
     
@@ -58,14 +57,13 @@ classdef Neuron < handle
     end
 
     methods
-        function obj = Neuron(ID, source, includeSynapses, xyShift)
+        function obj = Neuron(ID, source, includeSynapses)
             % NEURON  Basic cell data model
             %
             % Required inputs:
             %   ID                  Cell ID number in Viking
             %   source              Volume ('i', 't', 'r')
             %   includeSynapses     Import synapses (default=false)
-            %   xyShift             Temporary hack for BCs in NeitzInf
             %
             % Use:
             %   % Import c127 in NeitzInferiorMonkey
@@ -77,12 +75,6 @@ classdef Neuron < handle
             source = validateSource(source);
             obj.ID = ID;
             obj.source = source;
-            
-            if nargin < 4
-                obj.applyXYShift = false;
-            else
-                obj.applyXYShift = xyShift;
-            end
             
             if nargin < 3
                 obj.includeSynapses = false;
@@ -326,11 +318,15 @@ classdef Neuron < handle
 
             if useDiameter
                 um = max(obj.nodes.Rum) * 2;
+                if nargout == 0
+                    fprintf('c%u soma diameter = %.3f um\n', obj.ID, um);
+                end
             else
                 um = max(obj.nodes.Rum);
+                if nargout == 0
+                    fprintf('c%u soma radius = %.3f um\n', obj.ID, um);
+                end
             end
-            
-            % fprintf('Soma size = %.2f um diameter\n', 2*um);
         end
         
         function xyz = getSynapseXYZ(obj, syn, useMicrons)
@@ -547,11 +543,12 @@ classdef Neuron < handle
         end
         
         function nodes = setXYZum(obj, nodes)
-            % Apply transforms to NeitzInferiorMonkey
-            volX = nodes.VolumeX;
-            volY = nodes.VolumeY;
+            % SETXYZUM  Convert Viking pixels to microns
             
-            if strcmp(obj.source, 'NeitzInferiorMonkey')
+            volX = nodes.VolumeX;
+            volY = nodes.VolumeY;            
+            % Apply transforms to NeitzInferiorMonkey            
+            if strcmp(obj.source, 'NeitzInferiorMonkey')                            
                 if obj.USETRANSFORM
                     % disp('Applying XY transform...');
                     xyDir = [fileparts(mfilename('fullpath')), '\data'];
@@ -559,46 +556,7 @@ classdef Neuron < handle
                         '\XY_OFFSET_NEITZINFERIORMONKEY.txt']);
                     volX = nodes.VolumeX + xydata(nodes.Z,2);
                     volY = nodes.VolumeY + xydata(nodes.Z,3);
-                end
-                
-                if obj.applyXYShift
-                    if nnz(nodes.Z == 1121) > 0
-                        [volX, volY] = xyShift(obj, [1121, 1122], volX, volY);
-                    end
-                    if nnz(nodes.Z == 1117) > 0
-                        [volX, volY] = xyShift(obj, [1117, 1118], volX, volY);
-                    end
-                end
-            
-                % Hack to bridge 915-936 gap
-                if min(nodes.Z) <= 916 && max(nodes.Z) >= 935
-                    disp('Fixing 915-936 gap...');
-                    xyBelow = nodes{nodes.Z == 936, {'VolumeX','VolumeY'}};
-                    % If multiple annotations on s936, take the average
-                    if size(xyBelow, 1) > 1
-                        disp('Averaging s935 annotations...');
-                        xyBelow = mean(xyBelow, 1);
-                    end
-                    % Find the first annotation above the gap
-                    section = 916;
-                    while nnz(nodes.Z == section) == 0
-                        section = section - 1;
-                    end
-                    xyAbove = nodes{nodes.Z == section,...
-                        {'VolumeX', 'VolumeY'}};
-                    if size(xyAbove,1) ~= size(xyBelow,1)
-                        % idBelow = nodes{nodes.Z == 936, 'ID'};
-                        % idAbove = nodes{nodes.Z == section, 'ID'};
-                        disp('Averaging sections above...');
-                        xyAbove = mean(xyAbove,1);
-                    end
-                    % Find the offset
-                    xyOffset = xyBelow - xyAbove;
-                    % Apply the offset to all annotations above the gap
-                    aboveGap = nodes.Z <= 916;
-                    volX(aboveGap, 1) = volX(aboveGap, 1) + xyOffset(1);
-                    volY(aboveGap, 1) = volY(aboveGap, 1) + xyOffset(2);
-                end                
+                end                            
             end
 
             % Create an XYZ in microns column
@@ -609,6 +567,9 @@ classdef Neuron < handle
                 (obj.volumeScale./1e3));
             % Create a column for radius in microns
             nodes.Rum = nodes.Radius * obj.volumeScale(1)./1000; 
+        end
+        
+        function applyTransforms(obj)
         end
         
         function setupSynapses(obj)

@@ -42,8 +42,7 @@ classdef BinaryView < handle
 			if ~isempty(boundingBox)
 				set(ax, 'XLim', boundingBox(1:2),...
 					'YLim', boundingBox(3:4));
-			end
-			daspect(ax, getDAspectFromOData('i'));
+            end
 			axis(ax, 'equal');
 			axis(ax, 'off');
 

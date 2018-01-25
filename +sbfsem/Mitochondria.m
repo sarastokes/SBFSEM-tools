@@ -20,7 +20,7 @@ classdef Mitochondria < sbfsem.core.Ultrastructure
     end
    
     methods
-        function obj = Mitochondria(source, ID)
+        function obj = Mitochondria(ID, source)
             % If no parent ID, all mitochondria annotations are pulled
             obj@sbfsem.core.Ultrastructure(source);
             
@@ -28,7 +28,6 @@ classdef Mitochondria < sbfsem.core.Ultrastructure
             if nargin < 2
                 obj.ID = NaN;
             else
-                assert(isinteger(ID), 'ID must be an integer');
                 obj.ID = ID;
             end
             
@@ -56,8 +55,27 @@ classdef Mitochondria < sbfsem.core.Ultrastructure
                     data = cat(1, data, struct2array(importeddata.value));
                 end
             else
-                % TODO: mitochondria associated with specific parent ID
+                importeddata = readOData([obj.baseURL,...
+                    'Structures?$filter=TypeID eq ' num2str(obj.TYPEID),...
+                    ' and ParentID eq ' num2str(obj.ID),...
+                    '&$select=ID']);
             end
+            % Catch situations where there are no returned locations
+            if isempty(importeddata.value)
+                fprintf('No mitochondria found for %u\n', obj.ID);
+                obj.mito = [];
+                return;
+            end
+
+            annotationIDs = struct2array(importeddata.value);
+            data = [];
+            for i = 1:numel(annotationIDs)
+                importeddata = readOData([obj.baseURL,...
+                    'Structures(', num2str(annotationIDs(i)), ')',...
+                    '/Locations?$select=ID,ParentID,X,Y,Z']);
+                data = cat(1, data, struct2array(importeddata.value))
+            end
+            fprintf('Found %u mitochondria\n');
             
             obj.mito = data;
             

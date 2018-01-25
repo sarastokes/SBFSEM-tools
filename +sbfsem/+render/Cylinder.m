@@ -11,6 +11,9 @@ classdef Cylinder < handle
     %   FV          Struct with faces, vertices of each segment
     %   reduceFac   Percent of faces to retain in DAE (1 = 100%)
     %   method      Try alternative algorithm 2 (default = 1)
+    % Dependent properties:
+    %   allFV       Single condensed FV structure
+    %
     %
     % Methods:
     %   obj.render('ax', axHandle, 'facecolor', 'b'); 
@@ -50,6 +53,10 @@ classdef Cylinder < handle
         reduceFac = 1;
         smoothIter = 1;
     end
+    
+    properties (GetAccess = public, Dependent = true, Hidden = true)
+        allFV
+    end
 
     properties (Constant = true, Hidden = true)
         CIRCLEPTS = 10;         % Points for line3
@@ -85,6 +92,16 @@ classdef Cylinder < handle
                 % Smoothing is v detrimental to the curve meshes
                 obj.setSmoothIter(0);
                 obj.FV = obj.createCurveMeshes(ip.Results.curvePts);
+            end
+        end
+        
+        function allFV = get.allFV(obj)
+            % Dependent get method for single FV struct
+            if ~isempty(obj.FV)
+                allFV = obj.condense();
+            else
+                warning('CYLINDER: FV is empty');
+                allFV = [];
             end
         end
 
@@ -130,6 +147,7 @@ classdef Cylinder < handle
             addParameter(ip, 'useSegments', false, @islogical);
             addParameter(ip, 'reduce', false, @islogical);
             parse(ip, varargin{:});
+            faceColor = ip.Results.faceColor;
             
             if obj.reduceFac == 1
                 doReduction = false;
@@ -139,20 +157,17 @@ classdef Cylinder < handle
                     fprintf('Reduced patch to %u %%\n', 100*obj.reduceFac);
                 end
             end
-            
-            faceColor = ip.Results.faceColor;
-            
+
             if isempty(ip.Results.ax)
                 fh = sbfsem.ui.FigureView(1);
                 ax = fh.ax;
                 lightangle(45,30);
                 lightangle(225,30);
+                hold(ax, 'on');
             else
                 ax = ip.Results.ax;
             end
-            
-            hold(ax, 'on');
-            
+
             if ip.Results.useSegments
                 for i = 1:numel(obj.FV)
                     p = patch(obj.FV{i},...
@@ -164,12 +179,12 @@ classdef Cylinder < handle
                         reducepatch(p, obj.reduceFac);
                     end
                 end
-            else
-                allFV = obj.condense();
+            else % Condense into a single mesh
+                meshFV = obj.allFV;
                 if obj.smoothIter ~= 0
-                    allFV = obj.smooth(allFV, obj.smoothIter);
+                    meshFV = obj.smooth(meshFV, obj.smoothIter);
                 end
-                p = patch(allFV,...
+                p = patch(meshFV,...
                     'FaceColor', faceColor,...
                     'EdgeColor', 'none',...
                     'Tag', sprintf('c%u', obj.ID),...
@@ -193,16 +208,15 @@ classdef Cylinder < handle
             
             filePath = uigetdir();
             
-            disp('Condensing meshes');
-            allFV = obj.condense();
+            meshFV = obj.allFV;
             
             if obj.reduceFac ~= 1
-                allFV = reducepatch(allFV, obj.reduceFac);
+                meshFV = reducepatch(meshFV, obj.reduceFac);
                 fprintf('Reduced patch to %u%%\n', obj.reduceFac * 100);
             end
             
             fprintf('Saving as %s\n', [filePath filesep fname]);
-            obj.saveDAE([filePath, filesep, fname], allFV);
+            obj.saveDAE([filePath, filesep, fname], meshFV);
         end
         
         function FV = condense(obj)
@@ -223,7 +237,9 @@ classdef Cylinder < handle
             %
             % Creates a polygon mesh of each dendrite segment using two
             % algorithms for creating rotated cylinders. The algorithm used
-            % is determined for each segment individually.
+            % is determined for each segment individually. The two
+            % algorithms are modified versions of gencyl and plot3t.
+            % -------------------------------------------------------------
             
             % Pull data from table
             locations = obj.subGraphs.XYZum;

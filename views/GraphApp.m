@@ -56,7 +56,7 @@ classdef GraphApp < handle
             end
             
             obj.hasSynapses = false;
-            [~, obj.segments, obj.idMap] = dendriteSegmentation(neuron);
+            [~, obj.segments, obj.idMap] = dendriteSegmentation(obj.neuron);
             obj.createUi();
         end
     end
@@ -106,6 +106,21 @@ classdef GraphApp < handle
                     set(findall(obj.ax, 'Tag', char(names(i))),...
                         'Visible', 'off');
                 end
+            end
+        end
+
+        function onCheckOffEdges(obj, src, ~)
+            if src.Value == 1
+                if isempty(obj.offedges)
+                    row = obj.neuron.nodes.OffEdge == 1;
+                    T = obj.neuron.nodes(row,:);
+                    obj.offedges = [];
+                    for i = 1:height(T)
+                        xyz = T.XYZum;
+                        IDs = T.IDs;
+                    end
+                end
+            else
             end
         end
 
@@ -270,6 +285,10 @@ classdef GraphApp < handle
                 'String', 'Include synapses',...
                 'Value', 0,...
                 'Callback', @obj.onIncludeSynapses);
+            obj.ui.offedges = uicontrol(obj.ui.root,...
+                'Style', 'checkbox',... 
+                'String', 'Show off edges',...
+                'Callback', @obj.onCheckOffEdges);
             obj.ui.colorSeg = uicontrol(obj.ui.root,...
                 'Style', 'checkbox',...
                 'String', 'Color segments',...

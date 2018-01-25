@@ -38,3 +38,12 @@ c2542.build('closed curve');
 - Dev version of RenderApp 2.0 (working additions: update, remove, cone mosaic. not working: synapses, Z registration, legends)
 - Function for limiting render to dendrites (clipMesh.m)
 - Synapses are in the docs now, the everything else post-5Jan2018 is not
+
+### 19Jan2018
+- Huge update to RenderApp
+- Preliminary working version of GraphApp (Tulip replacement)
+- Fixed an issue with NeuronOData where update() wasn't actually updating nodes/edges
+
+### 25Jan2018
+- New alignment function: branchRegistration. See data/NeitzInferiorMonkeyRegistration.m for more details
+- Fixed issue with closed curve render XYZ scaling

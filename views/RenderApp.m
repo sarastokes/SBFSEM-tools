@@ -616,7 +616,8 @@ classdef RenderApp < handle
                 'Callback', @obj.onExportCollada);
             uimenu(mh.export, 'Label', 'Send neurons to workspace',...
                 'Callback', @obj.onExportNeuron);
-            mh.help = uimenu(obj.figureHandle, 'Label', 'Help',...
+            mh.help = uimenu(obj.figureHandle, 'Label', 'Help');
+            uimenu(mh.help, 'Label', 'Keyboard controls',...
                 'Callback', @obj.openHelpDlg);
             
             % Main layout with 2 panels (UI, axes)

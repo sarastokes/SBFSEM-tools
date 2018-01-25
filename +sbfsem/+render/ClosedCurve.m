@@ -8,6 +8,7 @@ classdef ClosedCurve < sbfsem.render.RenderView
     %
     %
     % 10Nov2017 - SSP
+    % ---------------------------------------------------------------------
     
     properties (SetAccess = private)
         binaryMatrix
@@ -57,7 +58,7 @@ classdef ClosedCurve < sbfsem.render.RenderView
             fprintf('= (%u  %u), (%u  %u)\n', round(obj.boundingBox));
 
             % Determine the number of sections for entire render
-            % sections = flipud(unique(arrayfun(@(x) x.Z(1), obj.imNodes,...
+            % sections = flipud(unique(arrayfun(@(x) x.Z(1),obj.imNodes,...
             %    'UniformOutput', false)));
             sections = vertcat(obj.imNodes.Z);
             sections = flipud(unique(sections(:,1)));
@@ -82,16 +83,16 @@ classdef ClosedCurve < sbfsem.render.RenderView
             if numel(unique(xy)) > 2
             	% Find the maximum for X and Y dimensions
             	xy = max(xy);
-            	binaryMatrix = obj.padBinaryImages(xy, renderImage);
+            	M = obj.padBinaryImages(xy, renderImage);
             else
             	disp('Uniform images, skipping padding');
-            	binaryMatrix = [];
+            	M = [];
             	for i = 1:numel(obj.imNodes)
-            		binaryMatrix = cat(3, binaryMatrix, renderImage{i});
+            		M = cat(3, M, renderImage{i});
             	end
             end
-            obj.createScene(binaryMatrix);
-            obj.binaryMatrix = binaryMatrix;
+            obj.createScene(M);
+            obj.binaryMatrix = M;
         end
 	end
 end

@@ -153,8 +153,14 @@ classdef ClosedCurve < sbfsem.core.Annotation
             addParameter(ip, 'EdgeAlpha', 1,...
                 @(x) validateattributes(x, {'numeric'}, {'<',1, '>',0}));
             addParameter(ip, 'LineWidth', 1, @isnumeric);
-            addParameter(ip, 'Tag', ['o', num2str(obj.parentID)], @ischar);
+            addParameter(ip, 'Tag', []);
             parse(ip, varargin{:});
+            
+            if isempty(ip.Results.Tag)
+                tag = ['o', num2str(obj.parentID)];
+            else
+                tag = ip.Results.Tag;
+            end
             
             if isempty(ip.Results.ax)
                 fh = figure('Name', 'ClosedCurve Outline');
@@ -185,7 +191,7 @@ classdef ClosedCurve < sbfsem.core.Annotation
                 'LineWidth', ip.Results.LineWidth,...
                 'FaceLighting', 'none',...
                 'EdgeLighting', 'none',...
-                'Tag', ip.Results.Tag);
+                'Tag', tag);
         end
         
         function addAnnotation(obj, ax)

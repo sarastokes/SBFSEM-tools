@@ -7,8 +7,18 @@ function hideAxes(ax)
     % Inputs:
     %   ax      Axis handle
     %
-    % 6Jan2017 - SSP
+    % History:
+    %   6Jan2018 - SSP
+    %   24Jan2018 - SSP - added option to show axes again
     % ---------------------------------------------------------------------
+    if nargin < 1
+        ax = gca;
+    else
+        assert(ishandle(ax), 'Input an axes handle');
+    end
     
-    assert(ishandle(ax), 'Input an axes handle');
-    set(ax, 'XColor', ax.Color, 'YColor', ax.Color, 'ZColor', ax.Color);
+    if ax.Color == ax.XColor
+        set(ax, 'XColor', 'k', 'YColor', 'k', 'ZColor', 'k');
+    else
+        set(ax, 'XColor', ax.Color, 'YColor', ax.Color, 'ZColor', ax.Color);
+    end

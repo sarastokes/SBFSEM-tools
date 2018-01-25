@@ -11,12 +11,11 @@ function FV = curveToMesh2(curve, radius, nCorners)
 %
 %
 % See also: 
-%	curve2mesh, gencyl, plot3t
+%	curveToMesh, gencyl, plot3t
 %
 % History:
-%	1Jan2018 - SSP - modifed from geom3d toolbox's curveToMesh.m
+%	1Jan2018 - SSP - modifed from geom3d toolbox's curveToMesh function:
 %				     added variable radius, no loop, output options
-%
 % -------------------------------------------------------------------------
 	if nargin < 3
 		nCorners = 16;
