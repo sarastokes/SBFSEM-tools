@@ -13,11 +13,19 @@ classdef ClosedCurve < sbfsem.render.RenderView
     properties (SetAccess = private)
         binaryMatrix
         scaleFactor
+        smoothVol
     end
 
     methods
-        function obj = ClosedCurve(neuron, scaleFactor)
+        function obj = ClosedCurve(neuron, scaleFactor, smoothVol)
 			obj@sbfsem.render.RenderView(neuron);
+
+            if nargin < 3
+                obj.smoothVol = true;
+            else
+                assert(islogical(smoothVol), 'smoothVol is logical');
+                obj.smoothVol = smoothVol;
+            end
 
 			if nargin < 2
 				obj.scaleFactor = 1;
@@ -27,11 +35,10 @@ classdef ClosedCurve < sbfsem.render.RenderView
                 obj.scaleFactor = scaleFactor;
 			end
 
-			if isempty(neuron.geometries)
-				neuron.getGeometries();
-			end
-
             % Get geometries and sort by section
+            if isempty(neuron.geometries)
+                neuron.getGeometries();
+            end
             T = neuron.geometries;
             T = sortrows(T, 'Z');
 
@@ -43,8 +50,15 @@ classdef ClosedCurve < sbfsem.render.RenderView
                     sbfsem.core.ClosedCurve(T(i,:)));
             end
 
+            % Create the render
 			obj.doRender();
 		end
+
+        function setSmoothVol(obj, smoothVol)
+            % SETSMOOTHVOL  Set whether to use smooth3 on volume
+            assert(islogical(smoothVol), 'smoothVol is t/f variable');
+            obj.smoothVol = smoothVol;
+        end
 	end
 
 	methods (Access = private)
@@ -91,7 +105,7 @@ classdef ClosedCurve < sbfsem.render.RenderView
             		M = cat(3, M, renderImage{i});
             	end
             end
-            obj.createScene(M);
+            obj.createScene(M, smoothVol);
             obj.binaryMatrix = M;
         end
 	end

@@ -41,7 +41,6 @@ classdef RenderApp < handle
         azel = [-37.5, 30];
         zoomFac = 0.9;
         panFac = 0.02;
-        shiftXY = false;
     end
     
     properties (Constant = true, Hidden = true)
@@ -50,7 +49,7 @@ classdef RenderApp < handle
     end
     
     methods
-        function obj = RenderApp(source, shiftXY)
+        function obj = RenderApp(source)
             % RENDERAPP
             %
             % Description:
@@ -58,7 +57,6 @@ classdef RenderApp < handle
             %
             % Optional inputs:
             %   source          Volume name or abbreviation (char)
-            %   shiftXY         Apply inferior monkey shift (default=false)
             %
             % Note:
             %   If no volume name is provided, a listbox of available
@@ -80,21 +78,12 @@ classdef RenderApp < handle
                     return;
                 end
             end
-            
-            if nargin == 2
-                obj.shiftXY = shiftXY;
-            end
-            
+
             obj.neurons = containers.Map();
             obj.createUI();
             
             obj.volumeScale = getODataScale(obj.source);
             obj.isInverted = false;
-        end
-        
-        function setShiftXY(obj, shiftXY)
-            assert(islogical(shiftXY), 'ShiftXY is t/f');
-            obj.shiftXY = shiftXY;
         end
     end
     
@@ -463,7 +452,7 @@ classdef RenderApp < handle
         function addNeuron(obj, newID)
             % ADDNEURON  Add a new neuron and render
             
-            neuron = Neuron(newID, obj.source, obj.SYNAPSES, obj.shiftXY);
+            neuron = Neuron(newID, obj.source, obj.SYNAPSES);
             % Build the 3D model
             obj.statusUpdate(sprintf('Rendering c%u', newID));
             neuron.build();

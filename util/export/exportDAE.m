@@ -61,7 +61,7 @@ function exportDAE(filename, varargin)
         matrixNode = node.appendChild(...
             DOM.createElement('matrix'));
         matrixNode.appendChild(...
-            DOM.createTextNode(sprintf('%d', eye(4))));
+            DOM.createTextNode(sprintf('%d ', eye(4))));
         
         instanceNode = node.appendChild(...
             DOM.createElement('instance_node'));
@@ -102,7 +102,7 @@ function exportDAE(filename, varargin)
         floatArray.setAttribute(...
             'count', num2str(numel(V)));
         floatArray.appendChild(...
-            DOM.createTextNode(sprintf('%g', V')));
+            DOM.createTextNode(sprintf('%g ', V')));
         
         techniqueCommon = source.appendChild(...
             DOM.createElement('technique_common'));
@@ -120,7 +120,7 @@ function exportDAE(filename, varargin)
             param = accessor.appendChild(...
                 DOM.createElement('param'));
             param.setAttribute('name', name);
-            param.setAttribute('source', id('#', 7, i));
+            param.setAttribute('type', 'float');
         end
         
         vertices = mesh.appendChild(...
@@ -129,8 +129,7 @@ function exportDAE(filename, varargin)
         
         input = vertices.appendChild(...
             DOM.createElement('input'));
-        input.setAttribute('offset', '0');
-        input.setAttribute('semantic', 'VERTEX');
+        input.setAttribute('semantic', 'POSITION');
         input.setAttribute('source', id('#', 6, i));
         triangles = mesh.appendChild(...
             DOM.createElement('triangles'));
@@ -138,11 +137,11 @@ function exportDAE(filename, varargin)
         
         input = triangles.appendChild(DOM.createElement('input'));
         input.setAttribute('offset', '0');
-        input.setAttribute('semantic', 'POSITION');
+        input.setAttribute('semantic', 'VERTEX');
         input.setAttribute('source', id('#', 8, i));
         
         p = triangles.appendChild(DOM.createElement('p'));
-        p.appendChild(DOM.createTextNode(sprintf('%d', (F-1)')));    
+        p.appendChild(DOM.createTextNode(sprintf('%d ', (F-1)')));    
     end
     
     scene = rootNode.appendChild(...

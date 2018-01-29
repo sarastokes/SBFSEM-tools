@@ -12,16 +12,14 @@ function FV = clipMesh(FV, Z, over)
     %
     % Outputs:
     %   FV      New struct with 'faces' and 'vertices'
-    %           if FV is a patch handle and no output, will apply to patch
+    %           If FV is a patch handle and no output, will apply to patch
     %
     % Note:
-    %   This is a hack because rather than re-mapping the faces to a
-    %   reduced number of vertices, the vertices remain the same. 
-    %   TODO: clean mesh function to remove unused vertices
     %   For sbfsem-tools, over=true means keeping the sclerad faces.
     %
     % History:
-    %   9Jan2017 - SSP
+    %   9Jan2018 - SSP
+    %   28Jan2018 - SSP - Added trimMesh to remove clipped vertices
     % ---------------------------------------------------------------------
     
     renderNow = false;
@@ -63,7 +61,9 @@ function FV = clipMesh(FV, Z, over)
 
     % Remove the faces with vertices over/under the cutoff point
     FV.faces(cutFaceRows,:) = [];
+    % Trim out the unused vertices
+    [FV.vertices, FV.faces] = trimMesh(FV.vertices, FV.faces);
     
     if renderNow
-        set(p, 'Faces', FV.faces);
+        set(p, 'Faces', FV.faces, 'Vertices', FV.vertices);
     end
