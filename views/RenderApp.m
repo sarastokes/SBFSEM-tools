@@ -238,13 +238,12 @@ classdef RenderApp < handle
             end
         end
         
-        function onToggleAxes(obj, src, ~)
+        function onToggleAxes(obj, ~, ~)
             % ONTOGGLEAXES  Show/hide axes
-            newColor = 'k';
-            if obj.isInverted && isempty(strfind(src.Label,'on'))
-                newColor = 'w';
-            elseif ~obj.isInverted && isempty(strfind(src.Label, 'off'))
-                newColor = 'w';
+            if obj.ax.XColor == [1 1 1]
+                newColor = [0 0 0];
+            else
+                newColor = [1 1 1];
             end
             set(obj.ax, 'XColor', newColor,...
                 'YColor', newColor, 'ZColor', newColor);
@@ -289,6 +288,7 @@ classdef RenderApp < handle
             
             % Export figure to new window without uicontrols
             newAxes = obj.exportFigure();
+            set(newAxes.Parent, 'InvertHardcopy', 'off');
             
             % Open a save dialog to get path, name and extension
             [fName, fPath] = uiputfile(...
