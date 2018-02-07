@@ -134,7 +134,13 @@ classdef (Abstract) BoundaryMarker < handle
                 data = readOData([obj.baseURL,...
                     'Structures(', num2str(markerIDs(i)), ')',...
                     '/Locations?$select=X,Y,Z']);
-                xyz = cat(1, xyz, struct2array(data.value));
+                if numel(data.value) == 1
+                    xyz = cat(1, xyz, struct2array(data.value));
+                else
+                    for i = 1:numel(data.value)
+                        xyz = cat(1, xyz, struct2array(data.value(i)));
+                    end
+                end
             end
             obj.markerLocations = xyz;
 			obj.queryDate = datestr(now);

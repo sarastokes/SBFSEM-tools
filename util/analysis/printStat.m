@@ -5,7 +5,7 @@ function varargout = printStat(vec, showN)
     %   Print basic stats to cmd line in format: MEAN +- SEM (N)
 	%
 	% Input:
-	%	vec 		Data (vector)
+	%	vec 		Data (vector, or matrix with rows = separate data)
     % Optional input:
 	%	showN		Include N (default = true)
     %
@@ -19,13 +19,15 @@ function varargout = printStat(vec, showN)
 
 	if nargin < 2
 		showN = true;
-	end
-
-	str = sprintf('%.3f +- %.3f', mean(vec), sem(vec));
-	if showN
-		str = [str, sprintf(' (n=%u)', numel(vec))];
-	end
-	fprintf([str '\n']);
+    end
+    
+    for i = 1:size(vec, 1)
+        str = sprintf('%.3f +- %.3f', mean(vec(i,:)), sem(vec(i,:)));
+        if showN
+            str = [str, sprintf(' (n=%u)', numel(vec(i,:)))];
+        end
+        fprintf([str '\n']);
+    end
     
     if nargout > 0
         varargout(1) = {str};

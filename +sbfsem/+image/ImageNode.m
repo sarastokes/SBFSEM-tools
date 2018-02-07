@@ -1,8 +1,16 @@
 classdef ImageNode < handle
 % IMAGENODE  Single image in an image stack
-% Meant to be called from ImageStack, not used alone
 %
-% 29Sept2017 - SSP
+% Description:
+%   Meant to be called from ImageStack, not used alone
+%
+% See also:
+%   SBFSEM.IMAGE.IMAGESTACK, IMAGESTACKAPP
+%
+% History:
+%   29Sept2017 - SSP
+%   4Feb2018 - SSP - node2matrix function
+% -------------------------------------------------------------------------
 
 	properties (Access = public)
 		savePath					% New save path
@@ -77,7 +85,12 @@ classdef ImageNode < handle
 					warning('Overwrite privileges must be true');
 				end
 			end
-		end
+        end
+        
+        function mat = node2matrix(obj)
+            % NODE2MATRIX  
+            mat = obj.imData;
+        end
 
 		function fh = show(obj, ax)
 			% SHOW  Display image

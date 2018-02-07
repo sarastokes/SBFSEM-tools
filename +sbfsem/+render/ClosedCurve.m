@@ -1,13 +1,26 @@
 classdef ClosedCurve < sbfsem.render.RenderView
-    % CLOSEDCURVERENDER  Create a render figure and object
+    % CLOSEDCURVERENDER  
     %
+    % Description:
+    %   Create a render figure and object
+    %
+    % Constructor:
+    %   obj = sbfsem.render.ClosedCurve(neuron, 'scaleFactor', 1,...
+    %                                   'smoothVol', true);
     % Inputs:
     %	neuron 		Neuron object
     % Optional inputs:
     %	scaleFactor 	[1]		used with imresize()
+    %   smoothVol       [true]  apply smooth3 before isosurface generation
     %
-    %
-    % 10Nov2017 - SSP
+    % Methods:
+    %   obj.setSmoothVol(true)      Set whether to smooth the volume
+    %   obj.dae(fname, fpath);      Export to COLLADA .dae
+    % 
+    % History:
+    %   10Nov2017 - SSP
+    %   31Jan2018 - SSP - smoothVol input, misc updates and debugging
+    %   1Feb2018 - SSP - added exportDAE method
     % ---------------------------------------------------------------------
     
     properties (SetAccess = private)
@@ -18,6 +31,7 @@ classdef ClosedCurve < sbfsem.render.RenderView
 
     methods
         function obj = ClosedCurve(neuron, scaleFactor, smoothVol)
+            % CLOSEDCURVE  Constructor
 			obj@sbfsem.render.RenderView(neuron);
 
             if nargin < 3
@@ -58,6 +72,32 @@ classdef ClosedCurve < sbfsem.render.RenderView
             % SETSMOOTHVOL  Set whether to use smooth3 on volume
             assert(islogical(smoothVol), 'smoothVol is t/f variable');
             obj.smoothVol = smoothVol;
+        end
+        
+        function dae(obj, fname, fpath)
+            % DAE  Export as COLLADA .dae file for Blender
+            % 
+            % Inputs:
+            %   fname       File name
+            %   fpath       File path (default = current directory)
+            % -------------------------------------------------------------
+            
+            if isempty(strfind(fname, '.dae'))
+                fname = [fname, '.dae'];
+            end
+            
+            if nargin < 3
+                fpath = cd;
+            end
+            
+            [vertices, faces] = concatenateMeshes(...
+                obj.renderObj.Vertices, obj.renderObj.Faces,...
+                obj.capObj.Vertices, obj.capObj.Faces);
+            
+            savePath = [fpath, filesep, fname];
+            
+            exportDAE(savePath, vertices, faces);
+            disp(['Exported mesh as ', savePath]);
         end
 	end
 
@@ -105,7 +145,7 @@ classdef ClosedCurve < sbfsem.render.RenderView
             		M = cat(3, M, renderImage{i});
             	end
             end
-            obj.createScene(M, smoothVol);
+            obj.createScene(M, obj.smoothVol);
             obj.binaryMatrix = M;
         end
 	end

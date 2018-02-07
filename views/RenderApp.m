@@ -29,18 +29,24 @@ classdef RenderApp < handle
         mosaic              % Cone mosaic (empty until loaded)
     end
     
-    properties (Access = private, Hidden = true)        
+    properties (Access = private, Hidden = true, Transient = true) 
+        % UI handles
         figureHandle        % Parent figure handle
         ui                  % UI panel handles
         ax                  % Render axis
         neuronTree          % Checkbox tree
         lights              % Light handles
+        
+        % UI properties
         isInverted          % Is axis color inverted
 
         % UI controls
         azel = [-37.5, 30];
         zoomFac = 0.9;
         panFac = 0.02;
+        
+        % UI data
+        xyOffset = [];      % Loaded on first use
     end
     
     properties (Constant = true, Hidden = true)
@@ -84,6 +90,7 @@ classdef RenderApp < handle
             
             obj.volumeScale = getODataScale(obj.source);
             obj.isInverted = false;
+            obj.xyOffset = [];
         end
     end
     
@@ -121,6 +128,26 @@ classdef RenderApp < handle
                 % Update the plot after each neuron imports
                 drawnow;
             end
+            
+            function hasOffset = checkOffset(obj)
+                % CHECKOFFSET  Determine whether to load xyoffset data
+                
+                hasOffset = false;
+                
+                if isempty(obj.xyOffset)
+                    if strcmp(obj.source, 'NeitzInferiorMonkey')
+                        dataDir = fileparts(mfilename('fullpath'));
+                        offsetPath = [dataDir, filesep,'XY_OFFSET_',... 
+                            upper(obj.source), '.txt'];
+                        obj.xyOffset = dlmread(offsetPath);
+                        hasOffset = true;
+                    end
+                else % Determine whether xyOffset is valid
+                    if ~isnan(obj.xyOffset)
+                        hasOffset = true;
+                    end
+                end
+            end                
         end
         
         function onKeyPress(obj, ~, eventdata)
@@ -177,12 +204,20 @@ classdef RenderApp < handle
                     % Don't copy position if no neurons are plotted
                     if isempty(obj.neurons)
                         return;
-                    end
+                    end                  
+                    
                     % Convert microns to Viking pixel coordinates
                     posMicrons = mean(get(obj.ax, 'CurrentPoint')); %um
                     um2pix = obj.volumeScale/1e3; % nm/pix -> um/pix
                     posViking = posMicrons./um2pix; % pix
                     
+                    % Reverse the xyOffset applied on Neuron creation
+                    hasOffset = obj.checkOffset();                    
+                    if hasOffset
+                        posViking(1:2) = obj.xyOffset(posViking(3), 1:2);
+                    end
+                    
+                    % Format to copy into Viking
                     locationStr = obj.formatCoordinates(posViking);
                     clipboard('copy', locationStr);
                     fprintf('Copied to clipboard:\n %s\n', locationStr);
@@ -258,7 +293,7 @@ classdef RenderApp < handle
             % Open a save dialog to get path, name and extension
             [fName, fPath] = uiputfile(...
                 {'*.jpeg'; '*.png'; '*.tiff'},...
-                'Save image as');
+                'Save image as a JPEG, PNG or TIFF');
             
             % Catch when user cancels out of save dialog
             if isempty(fName) || isempty(fPath)
@@ -446,6 +481,22 @@ classdef RenderApp < handle
                     'FaceAlpha', newAlpha);
             end
         end
+
+        function onImportList(~, ~, ~)
+            listDir = [fileparts(mfilename('fullpath')), filesep,... 
+                        'data', filesep, 'neuron_list', filesep];
+            fnames = ls(listDir);
+            [selection, value] = listdlg(...
+                        'PromptString','Select a list:',...
+                      'SelectionMode', 'single',...
+                      'ListString', fnames);
+            if value
+                data = dlmread([listDir, fnames{selection}])
+                assignin('base', 'data', data);
+            else
+                data = [];
+            end
+        end
     end
     
     methods (Access = private)
@@ -593,6 +644,8 @@ classdef RenderApp < handle
                 'Callback', @obj.onImportCones);
             uimenu(mh.cone, 'Label', 'S-cones',...
                 'Callback', @obj.onImportCones);
+            uimenu(mh.import, 'Label', 'From List',...
+                'Callback', @obj.onImportList);
             
             mh.export = uimenu(obj.figureHandle, 'Label', 'Export');
             uimenu(mh.export, 'Label', 'Open in new figure window',...

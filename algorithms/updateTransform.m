@@ -28,7 +28,3 @@ function updateTransform(S, source)
     data(1:sectionLimit, 3) = data(1:sectionLimit, 3) + yOffset(ind);
     
     dlmwrite('XY_OFFSET_NEITZINFERIORMONKEY.txt', data);
-    
-    
-    
-    

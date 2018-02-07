@@ -13,7 +13,9 @@ function [pts, newIM] = segmentColorROI(im, cellType, keepColor)
     %   pts             data points within threshold bounds
     %   newIM           new image with thresholding
     % 
-    % 28Oct2017 - SSP
+    % History:
+    %   28Oct2017 - SSP
+    % ---------------------------------------------------------------------
 
     if nargin < 3
         keepColor = false;
@@ -38,6 +40,15 @@ function [pts, newIM] = segmentColorROI(im, cellType, keepColor)
         case 'onmidget'
             chan2 = [-32.779, -19.012];
             chan3 = [-30.948, 18.899];
+        case 'rbc' % [0 1 0]
+            chan2 = [-44.273, -24.298];
+            chan3 = [-49.596, 38.728];
+        case 'h2hc'
+            chan2  = [8.857, 37.687];
+            chan3 = [-12.954, 38.728];
+        case 'sbc'
+            chan2 = [8.857, 37.687];
+            chan3 = [-49.596, -26.310];
     end
     
     % Pull only the points matching those thresholds

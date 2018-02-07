@@ -95,15 +95,23 @@ classdef (Abstract) RenderView < sbfsem.ui.FigureView
     end
     
     methods (Access = protected)
-        function createScene(obj, binaryMatrix)
+        function createScene(obj, binaryMatrix, smoothVol)
             % CREATESCENE  Setup figure for volume render of binary matrix
             % Inputs:
             %   binaryMatrix   X by Y by Z 3D logical matrix
             % -------------------------------------------------------------
+            if nargin < 3
+                smoothVol = true;
+            else
+                assert(islogical(smoothVol), 'smoothVol is t/f');
+            end
                        
             % Smooth binary images to increase cohesion
             % TODO: apply extra gauss conv to z-axis only?
-            smoothedImages = smooth3(binaryMatrix);
+            if smoothVol
+                disp('RENDERVIEW: Smoothing volume');
+                smoothedImages = smooth3(binaryMatrix);
+            end
             
             % Create the 3D structure
             obj.renderObj = patch(isosurface(smoothedImages),...

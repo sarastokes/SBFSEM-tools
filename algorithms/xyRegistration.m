@@ -1,5 +1,8 @@
 function [data, S] = xyRegistration(source, sections, visualize)
-% XYREGISTRATION  Generate X,Y scale factors per section
+% XYREGISTRATION
+% 
+% Description:
+%   Generate X,Y scale factors per section
 % 
 % Syntax:
 %   [data, S] = xyRegistration(source, sections, visualize);
@@ -12,15 +15,16 @@ function [data, S] = xyRegistration(source, sections, visualize)
 % Outputs:
 %   data                Nx3 matrix that is sent to updateRegistration
 %                       where cols = Z, r
-%   
-%   
+% 
 % OUTPUT:
 %	S 		structure w/ mean, median, sd, sem, n
 %   data    table of important information for final translation       
 % Notes:
 %	UNITS ARE ALL IN PIXELS
 %
-% 12Dec2017 - SSP
+% History:
+%   12Dec2017 - SSP
+% -------------------------------------------------------------------------
 	source = validateSource(source);
 	if nargin < 3
 		visualize = true;
@@ -109,6 +113,3 @@ function [data, S] = xyRegistration(source, sections, visualize)
     
     % The actual transformations to apply
     data = [S.sections, S.xMedian, S.yMedian];
-    % data = flipud(data);
-    % data(:,2) = cumsum(data(:,2));
-    % data(:,3) = cumsum(data(:,3));
