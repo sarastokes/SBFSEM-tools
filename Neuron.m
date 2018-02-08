@@ -95,6 +95,11 @@ classdef Neuron < handle
             
             % Fetch OData and parse
             obj.pull();
+            % If closed curves, remove from nodes and add to geometries
+            % if ismember(6, unique(obj.nodes.Geometry))
+            %     obj.nodes(obj.nodes.Geometry == 6, :) = [];
+            %     obj.getGeometries();
+            % end
 
             % Track when the Neuron object was created
             obj.lastModified = datestr(now);

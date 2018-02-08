@@ -29,7 +29,7 @@ classdef RenderApp < handle
         mosaic              % Cone mosaic (empty until loaded)
     end
     
-    properties (Access = private, Hidden = true, Transient = true) 
+    properties (Access = public, Hidden = true, Transient = true) 
         % UI handles
         figureHandle        % Parent figure handle
         ui                  % UI panel handles
@@ -212,7 +212,7 @@ classdef RenderApp < handle
                     posViking = posMicrons./um2pix; % pix
                     
                     % Reverse the xyOffset applied on Neuron creation
-                    hasOffset = obj.checkOffset();                    
+                    hasOffset = obj.checkOffset();                 
                     if hasOffset
                         posViking(1:2) = obj.xyOffset(posViking(3), 1:2);
                     end
@@ -491,10 +491,19 @@ classdef RenderApp < handle
                       'SelectionMode', 'single',...
                       'ListString', fnames);
             if value
-                data = dlmread([listDir, fnames{selection}])
+                data = dlmread([listDir, fnames{selection}]);
                 assignin('base', 'data', data);
             else
                 data = [];
+            end
+        end
+        
+        function onFlipZAxis(obj, ~, ~)
+            switch obj.ax.ZDir
+                case 'reverse'
+                    set(obj.ax, 'ZDir', 'normal');
+                case 'normal'
+                    set(obj.ax, 'ZDir', 'reverse');
             end
         end
     end
@@ -624,12 +633,14 @@ classdef RenderApp < handle
             mh.prefs = uimenu(obj.figureHandle, 'Label', 'Plot Modifiers');
             uimenu(mh.prefs, 'Label', 'Dark background',...
                 'Callback', @obj.onToggleInvert);
-            uimenu(mh.prefs, 'Label', 'Axes off',...
+            uimenu(mh.prefs, 'Label', 'Toggle axes',...
                 'Callback', @obj.onToggleAxes);
             uimenu(mh.prefs, 'Label', 'Grid off',...
                 'Callback', @obj.onToggleGrid);
             uimenu(mh.prefs, 'Label', 'Show as 2D',...
                 'Callback', @obj.onToggleLights);
+            uimenu(mh.prefs, 'Label', 'Flip (reverse z-axis)',...
+                'Callback', @obj.onFlipZAxis);
             mh.trans = uimenu(mh.prefs, 'Label', 'Set Transparency');
             for i = 0.1:0.1:1
                 uimenu(mh.trans, 'Label', num2str(i),...

@@ -1,10 +1,25 @@
 classdef (Abstract) BoundaryMarker < handle
     % BOUNDARYMARKER
     %
-    % Abstract class parent for IPL-GCL and INL-IPL boundary markers
+    % Description:
+    %   Abstract class parent for IPL-GCL and INL-IPL boundary markers
+    %
+    % Constructor:
+    %   obj = BoundaryMarker(source)
+    %
+    % Inputs:
+    %   source          volume name or abbreviation (char)
+    %
+    % Methods:
+    %   obj.update();
+    %   obj.doAnalysis();
+    %   obj.plot(addDataMarkers);
+    %   obj.addToScene(ax, varargin); 
+    %   obj.rmFromScene(ax);
     %
     % 11Nov2017 - SSP
-    % 4Jan2017 - SSP - standardized function names
+    % 4Jan2018 - SSP - standardized function names
+    % 7Feb2018 - SSP - better plotting, add and remove from scene methods
     % ---------------------------------------------------------------------
 	
 	properties (SetAccess = private, GetAccess = public)
@@ -41,10 +56,16 @@ classdef (Abstract) BoundaryMarker < handle
         end
    
         function update(obj)
+            % UPDATE  Pull boundary markers from OData 
             obj.pull();
         end
         
         function doAnalysis(obj, numPts)
+            % DOANALYSIS 
+            %
+            % Optional input:
+            %   numPts      number of x and y points for fitting grid (100)
+            % -------------------------------------------------------------
             if isempty(obj.markerLocations)
                 obj.update();
             end
@@ -54,7 +75,8 @@ classdef (Abstract) BoundaryMarker < handle
             end
             
             % Create a new grid of points to sample from
-            ptsRange = [floor(min(obj.markerLocations)); ceil(max(obj.markerLocations))];
+            ptsRange = [floor(min(obj.markerLocations));... 
+                        ceil(max(obj.markerLocations))];
             if strcmp(obj.units, 'microns')
                 ptsRange = viking2micron(ptsRange, obj.source);
             end
@@ -64,23 +86,63 @@ classdef (Abstract) BoundaryMarker < handle
 
             obj.interpolatedSurface = obj.getSurface();
         end
-
-        function fh = plot(obj, includeData)
-            if nargin < 2 
-                includeData = false;
+        
+        function Vq = xyEval(obj, x, y, units)
+            % XYEVAL
+            %
+            % Inputs:
+            %   x       X-axis location (vector)
+            %   y       Y-axis location (vector)
+            % Optional inputs:
+            %   units   'microns' or 'pixels' (default=microns)
+            % -------------------------------------------------------------
+            if nargin < 4
+                units = 'microns';
             else
-                assert(islogical(includeData),...
-                    't/f include raw data');
+                units = validatestring(unitName, {'microns', 'pixels'});
             end
-            fh = sbfsem.ui.FigureView(1);
+            
+            assert(size(x) == size(y), 'X, Y points must be the same size');
+            
+            % Evaluate surface at XY point
+            Vq = interp2(X, Y, obj.interpolatedSurface, x, y);            
+        end
+
+        function fh = plot(obj, varargin)
+            % PLOT  
+            % 
+            % Optional key/value inputs:
+            %   includeData     Show annotations (default=false)
+            %   h               Figure or axes handle (default=new)
+            % -------------------------------------------------------------
+            ip = inputParser();
+            addParameter(ip, 'showData', false, @islogical);
+            addParameter(ip, 'ax', [], @ishandle);
+            parse(ip, varargin{:});
+            
+            if isempty(ip.Results.ax)                
+                fh = sbfsem.ui.FigureView(1);
+            else
+                h = ip.Results.ax;
+                switch class(h)
+                    case 'matlab.graphics.axis.Axis'
+                        fh = sbfsem.ui.FigureView(h.Parent);
+                    case 'matlab.ui.Figure'
+                        fh = sbfsem.ui.FigureView(h);
+                    otherwise
+                        error('Unrecognized graphics object, pass axis or figure handle');
+                end
+            end
             hold(fh.ax, 'on');
             surf(fh.ax, obj.newXPts, obj.newYPts,...
                 obj.interpolatedSurface,...
-                'FaceAlpha', 0.8);
+                'FaceAlpha', 0.8,...
+                'BackFaceLighting', 'lit',...
+                'Tag', 'BoundarySurface');
             shading(fh.ax, 'interp')
             fh.labelXYZ();
             fh.title('IPL Boundary Surface');
-            if includeData
+            if ip.Results.showData
                 hold(fh.ax, 'on');
                 if strcmp(obj.units, 'microns')
                     xyz = viking2micron(obj.markerLocations, obj.source);
@@ -92,20 +154,34 @@ classdef (Abstract) BoundaryMarker < handle
             view(fh.ax, 3);
             grid(fh.ax, 'on');
             axis(fh.ax, 'equal');
+            set(fh.figureHandle, 'Renderer', 'painters');
         end
 
-        function addToScene(obj, ax, markerSize)
-            if nargin < 3
-                markerSize = 25;
-            end
-            assert(ishandle(ax), 'Input an axes handle to plot to');
+        function addToScene(obj, ax, varargin)
+            % ADDTOSCENE
+            %
+            % Description:
+            %   Plot the boundary markers to a scene
+            %
+            % -------------------------------------------------------------
+            assert(ishandle(ax), 'Must input an axes handle');
+            ip = inputParser();
+            ip.CaseSensitive = false;
+            addParameter(ip, 'Size', 15, @isnumeric);
+            addParameter(ip, 'Color', [0.5 0.5 0.5],...
+                @(x) isvector(x) || ischar(x));
+            addParameter(ip, 'Style', '.', @ischar);
+            parse(ip, varargin{:});
+
             if strcmp(obj.units, 'microns')
                 xyz = viking2micron(obj.markerLocations, obj.source);
             else
                 xyz = obj.markerLocations;
             end
             hold(ax, 'on');
-            scatter3(ax, xyz(:,1), xyz(:,2), xyz(:,3), 'ViewSize', markerSize);
+            scatter3(ax, xyz(:,1), xyz(:,2), xyz(:,3),... 
+                ip.Results.Size, ip.Results.Color, ip.Results.Style,...
+                'Tag', 'BoundaryMarker');
         end
     end
     
@@ -145,5 +221,19 @@ classdef (Abstract) BoundaryMarker < handle
             obj.markerLocations = xyz;
 			obj.queryDate = datestr(now);
         end   
-	end
+    end
+    
+    methods (Static)
+        function deleteFromScene(ax)
+            % DELETEFROMSCENE
+            % 
+            % Description:
+            %   Delete all objects with tag "BoundaryMarker" from axes
+            % Input:
+            %   ax      axes handle
+            % -------------------------------------------------------------
+            assert(ishandle(ax), 'Must input an axes handle');
+            delete(findall(ax, 'Tag', 'BoundaryMarker'));
+        end
+    end
 end

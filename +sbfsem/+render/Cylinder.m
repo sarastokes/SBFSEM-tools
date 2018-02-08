@@ -226,7 +226,15 @@ classdef Cylinder < handle
             if numel(obj.FV) == 1
                 FV = obj.FV{1};
             else
-                FV = concatenateMeshes(vertcat(obj.FV{:}));
+                validFV = cell(0,0);
+                for i = 1:numel(obj.FV)
+                    if nnz(isnan(obj.FV{i}.vertices))
+                        fprintf('Not including segment %u\n', i)
+                    else
+                        validFV = cat(1, validFV, obj.FV{i});
+                    end
+                end
+                FV = concatenateMeshes(vertcat(validFV{:}));
             end
         end
     end
