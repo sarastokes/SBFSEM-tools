@@ -5,20 +5,35 @@ classdef ConeMosaic < handle
     %   obj = sbfsem.ConeMosaic('source');
     %
     % Properties:
-    %   sCones
-    %   lmCones
+    %   sCones      S-cone traces
+    %   lmCones     LM-cone traces
+    %   uCones      Undefined cone traces
+    %   lmID        LM-cone IDs
+    %   sID         S-cone IDs
+    %   uID         Undefined cone IDs
+    %
     % Methods:
     %   x = obj.getCones(coneType);
+    %   obj.update(coneType);
     %   obj.plot(coneType, axHandle);
     %
+    % See also:
+    %   SBFSEM.IO.CONEODATA, SBFSEM.CORE.CLOSEDCURVE
+    %
     % History:
-    %   5Jan2017 - SSP - preliminary, messy version
+    %   5Jan2018 - SSP - preliminary, messy version
+    %   8Feb2018 - SSP - added option for undefined (U) cone type
     % ---------------------------------------------------------------------
+    
     properties (SetAccess = private)
+        % The ClosedCurve structures representing each cone
         sCones
         lmCones
+        uCones = [];
+        % Cone trace ID numbers
         lmID
         sID
+        uID = [];
     end
 
     properties (Transient = true, Hidden = true)
@@ -26,7 +41,7 @@ classdef ConeMosaic < handle
     end
     
     properties (Constant = true, Hidden = true)
-        CONES = {'LM', 'S'};
+        CONES = {'LM', 'S', 'U'};
         SOURCE = 'NeitzInferiorMonkey';
     end
     
@@ -65,10 +80,18 @@ classdef ConeMosaic < handle
                     end
                     obj.sID = cat(2, obj.sID, IDs);
                     x = obj.sCones;
+                case 'U'
+                    for i = 1:numel(IDs)
+                        obj.uCones = cat(1, obj.uCones,...
+                            obj.getOutline(IDs(i)));
+                    end
+                    obj.uID = cat(2, obj.uID, IDs);
+                    x = obj.uIDs;
             end
         end
         
         function update(obj, coneType)
+            % UPDATE
             coneType = validatestring(upper(coneType), obj.CONES);
             
             IDs = obj.ConeClient.getConeIDs(coneType);
@@ -91,12 +114,28 @@ classdef ConeMosaic < handle
                             obj.sID = cat(2, obj.sID, newIDs(i));
                         end
                     end
+                case 'U'
+                    newIDs = setdiff(IDs, obj.uID);
+                    if ~isempty(newIDs)
+                        for i = 1:numel(newIDs)
+                            obj.uCones = cat(1, obj.uCones,...
+                                obj.getOutline(newIDs(i)));
+                            obj.uID = cat(2, obj.uID, newIDs(i));
+                        end
+                    end
             end
             fprintf('Imported %u new IDs\n', numel(newIDs));
         end
         
         function plot(obj, coneType, ax, tag)
             % PLOT  Plot the mosaic
+            %
+            % Inputs:
+            %   coneType        either 'LM', 'S', 'U'
+            % Optional inputs:
+            %   ax              axes handle
+            %   tag             custom tag for patch obj
+            % -------------------------------------------------------------
             if nargin < 3
                 fh = figure('Name', 'Cone Outlines');
                 ax = axes('Parent', fh);
@@ -123,6 +162,14 @@ classdef ConeMosaic < handle
                         'FaceAlpha', 0.1,...,...
                         'Tag', tag,...
                         'EdgeColor', [0, 0.4, 1]), obj.sCones);
+                case 'U'
+                    if isempty(obj.uCones)
+                        obj.getCones('U');
+                    end
+                    arrayfun(@(x) x.trace('ax', ax,...
+                        'FaceColor', 'none',...
+                        'Tag', tag,...
+                        'EdgeColor', 'k'), obj.uCones);
             end
             
             axis(ax, 'equal');
@@ -133,10 +180,12 @@ classdef ConeMosaic < handle
     
     methods (Access = private)
         function x = getOutline(obj, ID)
+            % GETOUTLINE  Create a ClosedCurve obj from cone trace
             x = sbfsem.core.ClosedCurve(Neuron(ID, obj.SOURCE));
         end
         
         function [x, ID] = getDefaults(obj, coneType)
+            % GETDEFAULTS  Get default annotations
             switch coneType
                 case 'S'
                     ID = 4983;
@@ -149,7 +198,7 @@ classdef ConeMosaic < handle
                     ID = 2542;
                     c2542 = Neuron(ID, obj.SOURCE);
                     x = sbfsem.core.ClosedCurve(c2542.geometries(...
-                        c2542.geometries.Z == 1687,:));
+                        c2542.geometries.Z == 1686,:));
             end
         end
     end

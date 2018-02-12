@@ -264,7 +264,7 @@ classdef Cylinder < handle
                         if nnz(isnan(x)) > 0
                             % Very rarely, gencyl produces a few NaNs
                             % If this becomes more frequent I'll fix it
-                            fprintf('Found %u NaNs\n', nnz(isnan(x)));                            
+                            fprintf('Found %u NaNs\n', nnz(isnan(x)));     
                         else                                  
                             fv = [];
                             [fv.faces, fv.vertices] = surf2patch(...
@@ -278,9 +278,12 @@ classdef Cylinder < handle
                             x, y, z, 'triangles');
                     catch
                         fprintf('Small segments gencyl failed at %u\n', i);
+                        fv = [];
                     end
                 end
-                FV = cat(1, FV, fv);
+                if ~isempty(fv)
+                    FV = cat(1, FV, fv);
+                end
             end
         end
 

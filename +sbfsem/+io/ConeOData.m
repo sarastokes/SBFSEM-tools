@@ -11,10 +11,11 @@ classdef ConeOData < sbfsem.io.OData
 %   IDs = obj.getConeIDs(coneType);
 %
 % History
-%   5Jan2017 - SSP
+%   5Jan2018 - SSP
+%   8Feb2018 - SSP - added undefined (U) cone type
 % -------------------------------------------------------------------------
     properties (Constant = true, Hidden = true)
-        CONES = {'LM', 'S'};
+        CONES = {'LM', 'S', 'U'};
     end
     
 	methods

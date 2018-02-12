@@ -1,8 +1,40 @@
 # Changelog
 
-### 1Jan2018
-- Closed curves are now rendered with Catmull-Rom splines (rather than just the control points).
-- Improved the default lighting on render figures.
+### 12Feb2018
+- Option for cone outlines of unidentified cone type (label 'uTRACE')
+- Fixed bug in +sbfsem/+render/Cylinder.m
+
+### 7Feb2018
+- Improved boundary renderings - can now be added and removed to scenes
+- IPL depth estimates for individual cells (iplDepth.m). This is a first pass - it looks good but there's significant room for improvement.
+- Matlab figures can be converted to sbfsem.ui.FigureView thru constructor
+- Fixed issue where images exported from RenderApp all had white backgrounds.
+
+### 6Feb2018
+- Added a sbfsem.core.BoundaryMarker subclass for IPL-GCL markers (sbfsem.core.GCLMarker).
+- Semi-transparent overlays with standard RGB values (255/0/0, 0/255/0, 0/0/255) now have defaults in segmentColorROI.m
+
+### 28Jan2018
+- More efficient version of clipMesh.m - deletes unused vertices now
+- Fixed some bugs with the Collada export function used outside RenderApp (exportDAE.m)
+
+### 25Jan2018
+- New alignment function: branchRegistration. See data/NeitzInferiorMonkeyRegistration.m for more details
+- Fixed issue with closed curve render XYZ scaling
+
+### 19Jan2018
+- Huge update to RenderApp
+- Preliminary working version of GraphApp (Tulip replacement)
+- Fixed an issue with NeuronOData where update() wasn't actually updating nodes/edges
+
+### 11Jan2018
+- Dev version of RenderApp 2.0 (working additions: update, remove, cone mosaic. not working: synapses, Z registration, legends)
+- Function for limiting render to dendrites (clipMesh.m)
+- Synapses are in the docs now, the everything else post-5Jan2018 is not
+
+### 5Jan2018
+- Fixed bugs, added dependencies
+- Preliminary methods for rendering synapses (synapseSphere.m) and cone outlines (ConeMosaic.m)
 
 ### 3Jan2018
 - RenderApp
@@ -30,20 +62,7 @@ c2542.build('closed curve');
 '''
 - I moved Neuron out of the sbfsem folder so no more sbfsem.Neuron or importing sbfsem. Just use Neuron.
 
-### 5Jan2018
-- Fixed bugs, added dependencies
-- Preliminary methods for rendering synapses (synapseSphere.m) and cone outlines (ConeMosaic.m)
 
-### 11Jan2018
-- Dev version of RenderApp 2.0 (working additions: update, remove, cone mosaic. not working: synapses, Z registration, legends)
-- Function for limiting render to dendrites (clipMesh.m)
-- Synapses are in the docs now, the everything else post-5Jan2018 is not
-
-### 19Jan2018
-- Huge update to RenderApp
-- Preliminary working version of GraphApp (Tulip replacement)
-- Fixed an issue with NeuronOData where update() wasn't actually updating nodes/edges
-
-### 25Jan2018
-- New alignment function: branchRegistration. See data/NeitzInferiorMonkeyRegistration.m for more details
-- Fixed issue with closed curve render XYZ scaling
+### 1Jan2018
+- Closed curves are now rendered with Catmull-Rom splines (rather than just the control points).
+- Improved the default lighting on render figures.
