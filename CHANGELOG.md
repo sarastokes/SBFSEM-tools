@@ -3,6 +3,9 @@
 ### 12Feb2018
 - Option for cone outlines of unidentified cone type (label 'uTRACE')
 - Fixed bug in +sbfsem/+render/Cylinder.m
+- Added ScaleBar3 class for 3D scale bars
+- ScaleBar and Add Lighting option for RenderApp
+- Expanded RenderApp help menus
 
 ### 7Feb2018
 - Improved boundary renderings - can now be added and removed to scenes

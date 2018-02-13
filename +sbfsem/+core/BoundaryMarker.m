@@ -113,9 +113,10 @@ classdef (Abstract) BoundaryMarker < handle
             % 
             % Optional key/value inputs:
             %   includeData     Show annotations (default=false)
-            %   h               Figure or axes handle (default=new)
+            %   ax              Figure or axes handle (default=new)
             % -------------------------------------------------------------
             ip = inputParser();
+            ip.CaseSensitive = false;
             addParameter(ip, 'showData', false, @islogical);
             addParameter(ip, 'ax', [], @ishandle);
             parse(ip, varargin{:});
@@ -125,7 +126,7 @@ classdef (Abstract) BoundaryMarker < handle
             else
                 h = ip.Results.ax;
                 switch class(h)
-                    case 'matlab.graphics.axis.Axis'
+                    case 'matlab.graphics.axis.Axes'
                         fh = sbfsem.ui.FigureView(h.Parent);
                     case 'matlab.ui.Figure'
                         fh = sbfsem.ui.FigureView(h);
@@ -140,8 +141,8 @@ classdef (Abstract) BoundaryMarker < handle
                 'BackFaceLighting', 'lit',...
                 'Tag', 'BoundarySurface');
             shading(fh.ax, 'interp')
-            fh.labelXYZ();
-            fh.title('IPL Boundary Surface');
+            %fh.labelXYZ();
+            %fh.title('IPL Boundary Surface');
             if ip.Results.showData
                 hold(fh.ax, 'on');
                 if strcmp(obj.units, 'microns')
@@ -152,9 +153,11 @@ classdef (Abstract) BoundaryMarker < handle
                 scatter3(fh.ax, xyz(:, 1), xyz(:, 2), xyz(:,3), 'fill');
             end
             view(fh.ax, 3);
-            grid(fh.ax, 'on');
+            %grid(fh.ax, 'on');
             axis(fh.ax, 'equal');
-            set(fh.figureHandle, 'Renderer', 'painters');
+            if isa(fh.figureHandle, 'matlab.ui.Figure')
+                set(fh.figureHandle, 'Renderer', 'painters');
+            end
         end
 
         function addToScene(obj, ax, varargin)

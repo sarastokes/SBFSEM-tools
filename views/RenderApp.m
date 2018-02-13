@@ -16,9 +16,13 @@ classdef RenderApp < handle
     %   - Legend colors
     %   - Add neuron input validation
     %
+    % See also:
+    %   GRAPHAPP, IMAGESTACKAPP
+    %
     % History:
     %   5Jan2018 - SSP
     %   19Jan2018 - SSP - menubar, replaced table with checkbox tree
+    %   12Feb2018 - SSP - IPL boundaries and scale bars
     % ---------------------------------------------------------------------
     
     properties (SetAccess = private)
@@ -27,6 +31,7 @@ classdef RenderApp < handle
         source              % Volume name
         volumeScale         % Volume dimensions (nm/pix)
         mosaic              % Cone mosaic (empty until loaded)
+        iplBound            % IPL Boundary structure (empty until loaded)
     end
     
     properties (Access = public, Hidden = true, Transient = true) 
@@ -36,6 +41,7 @@ classdef RenderApp < handle
         ax                  % Render axis
         neuronTree          % Checkbox tree
         lights              % Light handles
+        scaleBar            % Scale bar (empty until loaded)
         
         % UI properties
         isInverted          % Is axis color inverted
@@ -86,6 +92,9 @@ classdef RenderApp < handle
             end
 
             obj.neurons = containers.Map();
+            obj.iplBound = struct();
+            obj.iplBound.gcl = [];
+            obj.iplBound.inl = [];
             obj.createUI();
             
             obj.volumeScale = getODataScale(obj.source);
@@ -156,7 +165,7 @@ classdef RenderApp < handle
             % See also: AXDRAG
             switch eventdata.Character
                 case 'h' % help menu
-                    obj.openHelpDlg();
+                    obj.openHelpDlg('navigation');
                 case 28 % Rotate (azimuth -)
                     obj.azel(1) = obj.azel(1) - 5;
                 case 30 % Rotate (elevation -)
@@ -240,7 +249,7 @@ classdef RenderApp < handle
         
         function onToggleAxes(obj, ~, ~)
             % ONTOGGLEAXES  Show/hide axes
-            if obj.ax.XColor == [1 1 1]
+            if sum(obj.ax.XColor) == 3
                 newColor = [0 0 0];
             else
                 newColor = [1 1 1];
@@ -251,6 +260,7 @@ classdef RenderApp < handle
         
         function onToggleLights(obj, src, ~)
             % ONTOGGLELIGHTS  Turn lighting on/off
+            
             if isempty(strfind(src.Label, '2D'))
                 set(findall(obj.ax, 'Type', 'patch'),...
                     'FaceLighting', 'gouraud');
@@ -321,6 +331,7 @@ classdef RenderApp < handle
         
         function onExportCollada(obj, ~, ~)
             % ONEXPORTCOLLADA  Export the scene as a .dae file
+            % See also: EXPORTSCENEDAE
             
             % Prompt user for file name and path
             [fName, fPath] = uiputfile('*.dae', 'Save as');
@@ -333,6 +344,7 @@ classdef RenderApp < handle
         
         function onExportNeuron(obj, ~, ~)
             % ONEXPORTNEURON  Export Neuron objects to base workspace
+            
             tags = obj.neurons.keys;
             for i = 1:numel(tags)
                 assignin('base', sprintf('c%u', num2str(tags{i})),...
@@ -345,13 +357,44 @@ classdef RenderApp < handle
             obj.exportFigure();
         end
         
-        function openHelpDlg(obj, ~, ~)
+        function openHelpDlg(obj, src, ~)
             % OPENHELPDLG  Opens instructions dialog
-            helpdlg(obj.getInstructions, 'RenderApp Instructions');
+            
+            switch src.Tag
+                case 'navigation'
+                    helpdlg(obj.getInstructions, 'Navigation Instructions');
+                case 'import'
+                    str = sprintf(['NEURONS:\n',...
+                        'Import neurons by typing in the cell ID(s)\n',...
+                        'Input multiple neurons by separating their ',...
+                        'IDs by commas\n',...
+                        '\nCONE MOSAIC:\n',...
+                        '\nIPL BOUNDARIES:\n',...
+                        'Add INL-IPL and IPL-GCL Boundaries to the',...
+                        'current render. Note: for now these cannot be',...
+                        'updated once in place\n']);
+                    helpdlg(str, 'Import Instructions');
+                case 'scalebar'
+                    str = sprintf([...
+                        'Add a ScaleBar through the Render Objects menu',...
+                        '\nOpening dialog will ask for the XYZ ',...
+                        'coordinates of the origin, the scale bar ',...
+                        ' length and the units (optional)\n',...
+                        '\nOnce in the figure, right click on the ',...
+                        'scalebar to change properties:\n',...
+                        '- ''Modify ScaleBar'' reopens the origin, bar',... 
+                        'size and units dialog box.\n',...
+                        '- ''Text Properties'' and ''Line Properties''',...
+                        ' opens the graphic object property menu where ',...
+                        'you can change font size, color, width, etc\n']);
+                    helpdlg(str, 'ScaleBar Instructions');
+            end
         end
         
         function onSetNextColor(obj, src, ~)
             % ONSETNEXTCOLOR  Open UI to choose color, reflect change
+            % See also: SELECTCOLOR
+            
             newColor = selectcolor('hCaller', obj.figureHandle);
             if numel(newColor) == 3
                 set(src, 'BackgroundColor', newColor);
@@ -360,6 +403,7 @@ classdef RenderApp < handle
         
         function onChangeColor(obj, ~, evt)
             % ONCHANGECOLOR  Change a render's color
+            % See also: SELECTCOLOR
             newColor = selectcolor('hCaller', obj.figureHandle);
             if isempty(newColor)
                 return;
@@ -372,6 +416,9 @@ classdef RenderApp < handle
         
         function onOpenView(obj, src, evt)
             % ONOPENVIEW  Open a single neuron analysis view
+            % See also:
+            %   STRATIFICATIONVIEW, SOMADISTANCEVIEW, NODEVIEW
+            
             neuron = obj.neurons(num2str(obj.tag2id(evt.Source.Tag)));
             obj.statusUpdate('Opening view');
             
@@ -387,6 +434,7 @@ classdef RenderApp < handle
         
         function onImportCones(obj, src, ~)
             % ONIMPORTCONES
+            % See also: SBFSEM.CONEMOSAIC, SBFSEM.CORE.CLOSEDCURVE
             if isempty(obj.mosaic)
                 obj.mosaic = sbfsem.ConeMosaic('i');
             end
@@ -483,6 +531,7 @@ classdef RenderApp < handle
         end
 
         function onImportList(~, ~, ~)
+            % ONIMPORTLIST  Not fully implemented!!
             listDir = [fileparts(mfilename('fullpath')), filesep,... 
                         'data', filesep, 'neuron_list', filesep];
             fnames = ls(listDir);
@@ -494,16 +543,67 @@ classdef RenderApp < handle
                 data = dlmread([listDir, fnames{selection}]);
                 assignin('base', 'data', data);
             else
-                data = [];
+                data = []; %#ok
             end
         end
-        
-        function onFlipZAxis(obj, ~, ~)
-            switch obj.ax.ZDir
-                case 'reverse'
-                    set(obj.ax, 'ZDir', 'normal');
-                case 'normal'
-                    set(obj.ax, 'ZDir', 'reverse');
+
+        function onScaleBar(obj, src, ~)
+            % ONSCALEBAR
+            % See also: SBFSEM.UI.SCALEBAR3
+
+            switch src.Label
+                case 'Add ScaleBar'
+                    obj.scaleBar = sbfsem.ui.ScaleBar3(obj.ax);
+                    src.Label = 'Remove ScaleBar';
+                case 'Remove ScaleBar'
+                    obj.scaleBar.delete();
+                    obj.scaleBar = [];
+                    src.Label = 'Add ScaleBar';
+            end
+        end
+
+        function onImportBoundary(obj, varargin)
+            % ONIMPORTBOUNDARY  
+            % See also: SBFSEM.CORE.BOUNDARYMARKER, SBFSEM.CORE.GCLBOUNDARY,
+            %   SBFSEM.CORE.INLBOUNDARY
+
+            if ~isempty(strfind(varargin{1}, 'gcl'))
+                if isempty(obj.iplBound.gcl)
+                    obj.statusUpdate('Importing IPL-GCL');
+                    obj.iplBound.gcl = sbfsem.core.GCLBoundary(obj.source);
+                end
+                obj.statusUpdate('Creating surface');
+                obj.iplBound.gcl.doAnalysis();
+                obj.iplBound.gcl.plot('ax', obj.ax);
+            end
+
+            if ~isempty(strfind(varargin{1}, 'inl'))
+                if isempty(obj.iplBound.inl)
+                    obj.statusUpdate('Importing IPL-INL');
+                    obj.iplBound.inl = sbfsem.core.INLBoundary(obj.source);
+                end
+                obj.statusUpdate('Creating surface');
+                obj.iplBound.inl.doAnalysis();
+                obj.iplBound.inl.plot('ax', obj.ax);
+            end
+            obj.statusUpdate('');            
+        end
+
+        function onAddLighting(obj, ~, ~)
+            % ONADDLIGHTING  Add light in camera view
+            % See also: CAMLIGHT
+            
+            choice = questdlg(...
+                ['This adds a light pointed in the direction of the',...
+                'current axes rotation. In future updates, this will ',...
+                'be more flexible. For now, it is irreversible (at '...
+                'least within the RenderApp user interface)'],...
+                'Add New Camera Lighting');
+            switch choice
+                case 'Yes'
+                    camlight(obj.ax);
+                otherwise % No new lighting
+                    return;
             end
         end
     end
@@ -511,6 +611,7 @@ classdef RenderApp < handle
     methods (Access = private)
         function addNeuron(obj, newID)
             % ADDNEURON  Add a new neuron and render
+            % See also: NEURON
             
             neuron = Neuron(newID, obj.source, obj.SYNAPSES);
             % Build the 3D model
@@ -554,8 +655,10 @@ classdef RenderApp < handle
         
         function newAxes = exportFigure(obj)
             % EXPORTFIGURE  Open figure in a new window
+            
             newAxes = exportFigure(obj.ax);
             axis(newAxes, 'tight');
+            hold(newAxes, 'on');
             
             % Keep only the visible components
             delete(findall(newAxes, 'Type', 'patch', 'Visible', 'off'));
@@ -566,6 +669,7 @@ classdef RenderApp < handle
         
         function newNode = addNeuronNode(obj, ID, ~, hasSynapses)
             % ADDNEURONNODE  Add new neuron node to checkbox tree
+            
             if nargin < 4
                 hasSynapses = false;
             end
@@ -630,6 +734,12 @@ classdef RenderApp < handle
                 'Toolbar', 'none',...
                 'KeyPressFcn', @obj.onKeyPress);
             
+            mh.markup = uimenu(obj.figureHandle, 'Label', 'Render Objects');
+            uimenu(mh.markup, 'Label', 'Add ScaleBar',...
+                'Callback', @obj.onScaleBar);
+            uimenu(mh.markup, 'Label', 'Add Lighting',...
+                'Callback', @obj.onAddLighting);
+
             mh.prefs = uimenu(obj.figureHandle, 'Label', 'Plot Modifiers');
             uimenu(mh.prefs, 'Label', 'Dark background',...
                 'Callback', @obj.onToggleInvert);
@@ -639,8 +749,6 @@ classdef RenderApp < handle
                 'Callback', @obj.onToggleGrid);
             uimenu(mh.prefs, 'Label', 'Show as 2D',...
                 'Callback', @obj.onToggleLights);
-            uimenu(mh.prefs, 'Label', 'Flip (reverse z-axis)',...
-                'Callback', @obj.onFlipZAxis);
             mh.trans = uimenu(mh.prefs, 'Label', 'Set Transparency');
             for i = 0.1:0.1:1
                 uimenu(mh.trans, 'Label', num2str(i),...
@@ -655,6 +763,13 @@ classdef RenderApp < handle
                 'Callback', @obj.onImportCones);
             uimenu(mh.cone, 'Label', 'S-cones',...
                 'Callback', @obj.onImportCones);
+            uimenu(mh.cone, 'Label', 'Unidentified cones',...
+                'Callback', @obj.onImportCones);
+            mh.ipl = uimenu(mh.import, 'Label', 'Boundary');
+            uimenu(mh.ipl, 'Label', 'INL Boundary',...
+                'Callback', @(o,e)obj.onImportBoundary('inl'));
+            uimenu(mh.ipl, 'Label', 'GCL Boundary',...
+                'Callback', @(o,e)obj.onImportBoundary('gcl'));
             uimenu(mh.import, 'Label', 'From List',...
                 'Callback', @obj.onImportList);
             
@@ -671,6 +786,13 @@ classdef RenderApp < handle
                 'Callback', @obj.onExportNeuron);
             mh.help = uimenu(obj.figureHandle, 'Label', 'Help');
             uimenu(mh.help, 'Label', 'Keyboard controls',...
+                'Tag', 'navigation',...
+                'Callback', @obj.openHelpDlg);
+            uimenu(mh.help, 'Label', 'Annotation import',...
+                'Tag', 'import',...
+                'Callback', @obj.openHelpDlg);
+            uimenu(mh.help, 'Label', 'Scalebar',...
+                'Tag', 'scalebar',...
                 'Callback', @obj.openHelpDlg);
             
             % Main layout with 2 panels (UI, axes)
