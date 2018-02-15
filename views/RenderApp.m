@@ -257,6 +257,22 @@ classdef RenderApp < handle
             set(obj.ax, 'XColor', newColor,...
                 'YColor', newColor, 'ZColor', newColor);
         end
+
+        function onSetRotation(obj, src, ~)
+            % ONSETROTATION
+            switch src.Tag
+                case 'XY1'
+                    view(obj.ax, 2);
+                case 'XY2'
+                    view(0,-90);
+                case 'YZ'
+                    view(90,0);
+                case 'XZ'
+                    view(obj.ax, 0, 0);
+                case '3D'
+                    view(3);
+            end
+        end
         
         function onToggleLights(obj, src, ~)
             % ONTOGGLELIGHTS  Turn lighting on/off
@@ -588,23 +604,32 @@ classdef RenderApp < handle
             end
             obj.statusUpdate('');            
         end
+        
+        function onLightBackFaces(obj, ~, ~)
+            p = findall(obj.ax, 'Type', 'Patch');
+            set(p, 'BackFaceLighting', 'lit');
+            drawnow;
+        end
 
         function onAddLighting(obj, ~, ~)
             % ONADDLIGHTING  Add light in camera view
             % See also: CAMLIGHT
             
-            choice = questdlg(...
-                ['This adds a light pointed in the direction of the',...
-                'current axes rotation. In future updates, this will ',...
-                'be more flexible. For now, it is irreversible (at '...
-                'least within the RenderApp user interface)'],...
-                'Add New Camera Lighting');
-            switch choice
-                case 'Yes'
-                    camlight(obj.ax);
-                otherwise % No new lighting
-                    return;
-            end
+            set(obj.lights(3), 'Visible', 'on');
+            drawnow;
+            
+%             choice = questdlg(...
+%                 ['This adds a light pointed in the direction of the',...
+%                 'current axes rotation. In future updates, this will ',...
+%                 'be more flexible. For now, it is irreversible (at '...
+%                 'least within the RenderApp user interface)'],...
+%                 'Add New Camera Lighting');
+%             switch choice
+%                 case 'Yes'
+%                     camlight(obj.ax);
+%                 otherwise % No new lighting
+%                     return;
+%             end
         end
     end
     
@@ -754,6 +779,23 @@ classdef RenderApp < handle
                 uimenu(mh.trans, 'Label', num2str(i),...
                     'Callback', @obj.onSetTransparency);
             end
+            mh.ax = uimenu(mh.prefs, 'Label', 'Set Axis Rotation');
+            uimenu(mh.ax, 'Label', 'XY1',...
+                'Tag', 'XY1',...
+                'Callback', @obj.onSetRotation);
+            uimenu(mh.ax, 'Label', 'XY2',...
+                'Tag', 'XY2',...
+                'Callback', @obj.onSetRotation);
+            uimenu(mh.ax, 'Label', 'XZ',...
+                'Tag', 'XZ',...
+                'Callback', @obj.onSetRotation);
+            uimenu(mh.ax, 'Label', 'YZ',...
+                'Tag', 'YZ',...
+                'Callback', @obj.onSetRotation);
+            uimenu(mh.ax, 'Label', '3D',...
+                'Tag', '3D',...
+                'Callback', @obj.onSetRotation);
+            
             
             mh.import = uimenu(obj.figureHandle, 'Label', 'Import');
             mh.cone = uimenu(mh.import, 'Label', 'Cone Mosaic');
