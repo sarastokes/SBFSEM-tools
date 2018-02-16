@@ -4,6 +4,15 @@ classdef Neuron < handle
 % Description:
 %   A Matlab representation of a neuron ('Structure') in Viking
 %
+% Constructor:
+%   obj = Neuron(cellID, source, includeSynapses);
+% 
+% Inputs:
+%   cellID      Viking Structure ID (double)
+%   source      Volume name or abbreviation (char)
+% Optional input:
+%   includeSynapses     Load synapses (logical, default = false)
+%
 % Methods:
 %   For a complete list, see the docs or type 'methods('Neuron')'
 %
@@ -14,6 +23,7 @@ classdef Neuron < handle
 %   2Oct2017 - SSP - ready for odata-based import
 %   12Nov2017 - SSP - in sync with odata changes
 %   4Jan2018 - SSP - divided odata, added render method calls
+%   16Feb2018 - SSP - Added the omittedIDs property, applied in obj.graph()
 % -------------------------------------------------------------------------
     
     properties (SetAccess = private, GetAccess = public)
@@ -39,9 +49,11 @@ classdef Neuron < handle
         analysis = containers.Map();
         % Render of neuron
         model = [];
+        % Omitted location IDs
+        omittedIDs = [];
     end
     
-    properties (Transient = true)
+    properties (Transient = true, Hidden = true)
         ODataClient
         GeometryClient
         SynapseClient
@@ -52,7 +64,7 @@ classdef Neuron < handle
         somaRow % largest "cell" node's row
     end
     
-    properties (Constant = true, Transient = true)
+    properties (Constant = true, Transient = true, Hidden = true)
         USETRANSFORM = true;
     end
 
@@ -95,11 +107,9 @@ classdef Neuron < handle
             
             % Fetch OData and parse
             obj.pull();
-            % If closed curves, remove from nodes and add to geometries
-            % if ismember(6, unique(obj.nodes.Geometry))
-            %     obj.nodes(obj.nodes.Geometry == 6, :) = [];
-            %     obj.getGeometries();
-            % end
+
+            % Search for omitted location IDs
+            obj.omittedIDs = omitLocations(obj.ID, obj.source);
 
             % Track when the Neuron object was created
             obj.lastModified = datestr(now);
@@ -177,6 +187,12 @@ classdef Neuron < handle
 
         function dae(obj, fName)
             % DAE  Export model as COLLADA file
+            %
+            % Inputs:
+            %   fName       filename (char)
+            %
+            % See also: 
+            %   EXPORTSCENEDAE
             % -------------------------------------------------------------
             if isempty(obj.model)
                 warning('No model - use BUILD function first');
@@ -195,7 +211,12 @@ classdef Neuron < handle
 
         function render(obj, varargin)
             % RENDER
-            %   
+            %
+            % Inputs:
+            %   varargin        See render function inputs
+            % 
+            % See also:
+            %   RENDERCLOSEDCURVE, SBFSEM.RENDER.CYLINDER
             % -------------------------------------------------------------
             
             if ~isempty(obj.model)
@@ -220,10 +241,19 @@ classdef Neuron < handle
 
         function synapseNames = synapseNames(obj, toChar)
             % SYNAPSENAMES  Returns a list of synapse types
-            obj.checkSynapses();
+            %
+            % Input:
+            %   toChar          Convert to char (default = false)
+            %
+            % Output: 
+            %   synapseNames    Array of sbfsem.core.StructureTypes
+            
             if nargin < 2
                 toChar = false;
             end
+            
+            obj.checkSynapses();
+            
             synapseNames = unique(vertcat(obj.synapses.LocalName{:}));
             if toChar
                 synapseNames = vertcat(arrayfun(@(x) char(x),...
@@ -233,6 +263,7 @@ classdef Neuron < handle
 
         function boundingBox = getBoundingBox(obj, useMicrons)
             % GETBOUNDINGBOX  Calculates extent in xy-plane 
+            %
             % INPUTS:
             %   useMicrons  [true]      microns or pixels     
             % OUTPUTS:
@@ -291,6 +322,9 @@ classdef Neuron < handle
         
         function T = synapseIDs(obj, whichSyn)
             % SYNAPSEIDS  Return location IDs for synapses
+            %
+            % Input:
+            %   whichSyn        synapse name
             obj.checkSynapses();
             row = strcmp(obj.synapses.LocalName, whichSyn)... 
                 & obj.synapses.Unique == 1;
@@ -300,6 +334,7 @@ classdef Neuron < handle
 
         function xyz = getCellXYZ(obj, useMicrons)
             % GETCELLXYZ  Returns cell body coordinates
+            %
             %   Inputs:     useMicrons  [t]  units = microns or volume
             
             if nargin < 2
@@ -336,14 +371,17 @@ classdef Neuron < handle
         
         function xyz = getSynapseXYZ(obj, syn, useMicrons)
             % GETSYNAPSEXYZ  Get xyz of synapse type
-            % INPUTS:   syn             synapse name
-            %           useMicrons      true/false
+            %
+            % Inputs:   
+            %   syn             synapse name
+            %   useMicrons      true/false (default = true)
             % -------------------------------------------------------------
 
-            obj.checkSynapses();
-            if nargin < 3 % default unit is microns
+            if nargin < 3
                 useMicrons = true;
             end
+
+            obj.checkSynapses();
             
             % Find the synapse structures matching synapse name
             if ischar(syn)
@@ -365,6 +403,9 @@ classdef Neuron < handle
         
         function id = getSomaID(obj, toClipboard)
             % GETSOMAID  Get location ID for current "soma" node
+            % 
+            % Optional input:
+            %   toClipboard     Copy to clipboard (default = false)
             
             if nargin < 2
                 toClipboard = false;
@@ -380,6 +421,10 @@ classdef Neuron < handle
 
         function xyz = getSomaXYZ(obj, useMicrons)
             % GETSOMAXYZ  Coordinates of soma
+            %
+            % Optional input:
+            %   useMicrons      logical, default = true
+
             if nargin < 2 % default unit is microns
                 useMicrons = true;
             end
@@ -412,13 +457,15 @@ classdef Neuron < handle
 
         function [G, nodeIDs] = graph(obj, varargin)
             % NEURON2GRAPH  Create a graph representation
-            %   Inputs:
-            %       directed        [f]     directed or undirected
-            %       synapses        [f]     include child structures
-            %       visualize       [f]     plot the graph?
-            %   Outputs:
-            %       G               graph or digraph
-            %       nodesIDs        array (ith entry is loc ID of node i)
+            %
+            % Optional key/value inputs:
+            %   directed        [f]     directed or undirected
+            %   synapses        [f]     include child structures
+            %   visualize       [f]     plot the graph?
+            %
+            % Outputs:
+            %   G               graph or digraph
+            %   nodesIDs        array (ith entry is loc ID of node i)
             % -------------------------------------------------------------
             
             ip = inputParser();
@@ -446,10 +493,20 @@ classdef Neuron < handle
                 plot(G);
             end
             
-            if nargout == 2
-                % Lookup table for locationIDs of nodes where ith entry is
-                % the location ID of node i.
-                nodeIDs = str2double(G.Nodes{:,:});
+            % Lookup table for locationIDs of nodes where ith entry is
+            % the location ID of node i.
+            nodeIDs = str2double(G.Nodes{:,:});
+
+            % Remove any omitted nodes from the graph
+            if ~isempty(obj.omittedIDs)
+                fprintf('c%u has %u nodes, %u edges\n',... 
+                    obj.ID, G.numnodes, G.numedges);
+                for i = 1:numel(obj.omittedIDs)
+                    G = G.rmnode(find(nodeIDs == (obj.omittedIDs(i))'));
+                    nodeIDs = str2double(G.Nodes{:,:});
+                end
+                fprintf('c%u has %u nodes, %u edges\n',... 
+                    obj.ID, G.numnodes, G.numedges);
             end
         end
 
@@ -572,9 +629,6 @@ classdef Neuron < handle
                 (obj.volumeScale./1e3));
             % Create a column for radius in microns
             nodes.Rum = nodes.Radius * obj.volumeScale(1)./1000; 
-        end
-        
-        function applyTransforms(obj)
         end
         
         function setupSynapses(obj)

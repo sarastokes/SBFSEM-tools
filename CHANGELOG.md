@@ -1,5 +1,13 @@
 # Changelog
 
+### 16Feb2018 
+- Ability to omit nodes from renders by adding them to OMITTED_NODES_VOLNAME.txt in the data folder. The first entry is the cell ID, the second is the location ID. The nodes are omitted when a graph/digraph is made of the neuron's annotations and connections.
+- Added updateAll() and getAll() methods to sbfsem.ConeMosaic
+
+### 15Feb2018
+- Option to fix axes at XY, YZ and XZ in RenderApp (Plot Modifers -> Set Axis Rotation)
+- Updates to the scale bar, now right click on scalebar to limit axes.
+
 ### 12Feb2018
 - Option for cone outlines of unidentified cone type (label 'uTRACE')
 - Fixed bug in +sbfsem/+render/Cylinder.m

@@ -14,7 +14,9 @@ classdef ConeMosaic < handle
     %
     % Methods:
     %   x = obj.getCones(coneType);
+    %   obj.getAll();
     %   obj.update(coneType);
+    %   obj.updateAll();
     %   obj.plot(coneType, axHandle);
     %
     % See also:
@@ -23,17 +25,18 @@ classdef ConeMosaic < handle
     % History:
     %   5Jan2018 - SSP - preliminary, messy version
     %   8Feb2018 - SSP - added option for undefined (U) cone type
+    %   16Feb2018 - SSP - update() now checks for defaults, uID bug fix
     % ---------------------------------------------------------------------
     
     properties (SetAccess = private)
         % The ClosedCurve structures representing each cone
         sCones
         lmCones
-        uCones = [];
+        uCones
         % Cone trace ID numbers
         lmID
         sID
-        uID = [];
+        uID
     end
 
     properties (Transient = true, Hidden = true)
@@ -47,6 +50,10 @@ classdef ConeMosaic < handle
     
     methods
         function obj = ConeMosaic(source)
+            % CONEMOSAIC  Constructor
+            % Input:
+            %   source      volume name or abbreviation (char)
+            
             source = validateSource(source);
             if ~strcmp(source, obj.SOURCE)
                 warning('Only for NeitzInferiorMonkey');
@@ -56,7 +63,18 @@ classdef ConeMosaic < handle
             obj.ConeClient = sbfsem.io.ConeOData(source);
         end
         
+        function getAll(obj)
+            % GETALL  Loads all cone traces
+            
+            for i = 1:numel(obj.CONES)
+                obj.getCones(obj.CONES{i});
+            end
+        end
+        
         function x = getCones(obj, coneType)
+            % GETCONES  Load cones of a specific type
+            % Input:
+            %   coneType        which cone type ('LM', 'S', 'U');
             coneType = validatestring(upper(coneType), obj.CONES);
             
             IDs = obj.ConeClient.getConeIDs(coneType);
@@ -81,17 +99,27 @@ classdef ConeMosaic < handle
                     obj.sID = cat(2, obj.sID, IDs);
                     x = obj.sCones;
                 case 'U'
+                    [obj.uCones, obj.uID] = obj.getDefaults('U');
                     for i = 1:numel(IDs)
                         obj.uCones = cat(1, obj.uCones,...
                             obj.getOutline(IDs(i)));
                     end
                     obj.uID = cat(2, obj.uID, IDs);
-                    x = obj.uIDs;
+                    x = obj.uID;
+            end
+        end
+        
+        function updateAll(obj)
+            % UPDATEALL
+            
+            for i = 1:numel(obj.CONES)
+                obj.update(obj.CONES{i});
             end
         end
         
         function update(obj, coneType)
             % UPDATE
+            
             coneType = validatestring(upper(coneType), obj.CONES);
             
             IDs = obj.ConeClient.getConeIDs(coneType);
@@ -199,6 +227,10 @@ classdef ConeMosaic < handle
                     c2542 = Neuron(ID, obj.SOURCE);
                     x = sbfsem.core.ClosedCurve(c2542.geometries(...
                         c2542.geometries.Z == 1686,:));
+                case 'U'
+                    x = []; ID = [];
+                otherwise
+                    warning('CONEMOSAIC: Unknown coneType - %s', coneType);
             end
         end
     end

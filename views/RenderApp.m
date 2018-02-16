@@ -615,21 +615,18 @@ classdef RenderApp < handle
             % ONADDLIGHTING  Add light in camera view
             % See also: CAMLIGHT
             
-            set(obj.lights(3), 'Visible', 'on');
-            drawnow;
-            
-%             choice = questdlg(...
-%                 ['This adds a light pointed in the direction of the',...
-%                 'current axes rotation. In future updates, this will ',...
-%                 'be more flexible. For now, it is irreversible (at '...
-%                 'least within the RenderApp user interface)'],...
-%                 'Add New Camera Lighting');
-%             switch choice
-%                 case 'Yes'
-%                     camlight(obj.ax);
-%                 otherwise % No new lighting
-%                     return;
-%             end
+            choice = questdlg(...
+                ['This adds a light pointed in the direction of the',...
+                'current axes rotation. In future updates, this will ',...
+                'be more flexible. For now, it is irreversible (at '...
+                'least within the RenderApp user interface)'],...
+                'Add New Camera Lighting');
+            switch choice
+                case 'Yes'
+                    camlight(obj.ax);
+                otherwise % No new lighting
+                    return;
+            end
         end
     end
     
