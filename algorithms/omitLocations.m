@@ -28,7 +28,11 @@ function locIDs = omitLocations(cellID, source)
 
 	dataDir = [fileparts(fileparts(mfilename('fullpath'))), '\data\'];
 
-	data = dlmread([dataDir, 'OMITTED_IDS_', upper(source), '.txt']);
+    try
+    	data = dlmread([dataDir, 'OMITTED_IDS_', upper(source), '.txt']);
+    catch
+        data = [];
+    end
 	if isempty(data)
 		locIDs = [];
 	else
