@@ -586,7 +586,7 @@ classdef RenderApp < handle
             if ~isempty(strfind(varargin{1}, 'gcl'))
                 if isempty(obj.iplBound.gcl)
                     obj.statusUpdate('Importing IPL-GCL');
-                    obj.iplBound.gcl = sbfsem.core.GCLBoundary(obj.source);
+                    obj.iplBound.gcl = sbfsem.builtin.GCLBoundary(obj.source);
                 end
                 obj.statusUpdate('Creating surface');
                 obj.iplBound.gcl.doAnalysis();
@@ -596,7 +596,7 @@ classdef RenderApp < handle
             if ~isempty(strfind(varargin{1}, 'inl'))
                 if isempty(obj.iplBound.inl)
                     obj.statusUpdate('Importing IPL-INL');
-                    obj.iplBound.inl = sbfsem.core.INLBoundary(obj.source);
+                    obj.iplBound.inl = sbfsem.builtin.INLBoundary(obj.source);
                 end
                 obj.statusUpdate('Creating surface');
                 obj.iplBound.inl.doAnalysis();

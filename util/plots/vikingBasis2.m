@@ -4,7 +4,7 @@ function mat = vikingBasis2(im, blueXY, mag)
 	blue = getImageRGB(im, [1 0 0], true);
 	blue = median(blue,2);
 	
-    mat(1,:) = bs
+    mat(1,:) = bs;
 	mat = mag * mat;
 	blue = mag * blue;
 	

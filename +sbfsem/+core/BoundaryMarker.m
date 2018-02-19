@@ -87,21 +87,14 @@ classdef (Abstract) BoundaryMarker < handle
             obj.interpolatedSurface = obj.getSurface();
         end
         
-        function Vq = xyEval(obj, x, y, units)
+        function Vq = xyEval(obj, x, y)
             % XYEVAL
             %
             % Inputs:
             %   x       X-axis location (vector)
             %   y       Y-axis location (vector)
-            % Optional inputs:
-            %   units   'microns' or 'pixels' (default=microns)
             % -------------------------------------------------------------
-            if nargin < 4
-                units = 'microns';
-            else
-                units = validatestring(unitName, {'microns', 'pixels'});
-            end
-            
+
             assert(size(x) == size(y), 'X, Y points must be the same size');
             
             % Evaluate surface at XY point
@@ -216,8 +209,8 @@ classdef (Abstract) BoundaryMarker < handle
                 if numel(data.value) == 1
                     xyz = cat(1, xyz, struct2array(data.value));
                 else
-                    for i = 1:numel(data.value)
-                        xyz = cat(1, xyz, struct2array(data.value(i)));
+                    for j = 1:numel(data.value)
+                        xyz = cat(1, xyz, struct2array(data.value(j)));
                     end
                 end
             end

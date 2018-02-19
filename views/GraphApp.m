@@ -12,7 +12,11 @@ classdef GraphApp < handle
     %   - Table view panel
     %   - Integration with ChecklistView
     %
-    % Work in progress!
+    % Notes:
+    %   Work in progress!
+    %
+    % See also:
+    %   RENDERAPP
     % ---------------------------------------------------------------------
     
     properties
@@ -63,8 +67,14 @@ classdef GraphApp < handle
     
     methods (Access = private)       
         function onClickMode(obj, ~, ~)
-            % ONCLICKMODE  Enable data tips
-            set(obj.dataCursor, 'Enable', 'on');
+            % ONCLICKMODE  Enable or disable data tips
+            
+            switch obj.dataCursor.Enable
+                case 'on'
+                    set(obj.dataCursor, 'Enable', 'off');
+                case 'off'
+                    set(obj.dataCursor, 'Enable', 'on');
+            end
             % c = getCursorInfo(obj.dataCursor);
         end
         
@@ -110,6 +120,7 @@ classdef GraphApp < handle
         end
 
         function onCheckOffEdges(obj, src, ~)
+            % ONCHECKOFFEDGES
             if src.Value == 1
                 if isempty(obj.offedges)
                     row = obj.neuron.nodes.OffEdge == 1;
@@ -126,6 +137,7 @@ classdef GraphApp < handle
 
         function onSelectedMarkerType(obj, src, ~)
             % ONSELECTEDMARKERTYPE  Change node markers
+            
             switch src.Value
                 case 1 % Normal
                     set(findall(obj.ax, 'Color', 'k'),...
@@ -139,7 +151,8 @@ classdef GraphApp < handle
         end
 
         function onChangeColormap(obj, src, ~)
-            % ONCHANGECOLORMAP
+            % ONCHANGECOLORMAP  Change colormap
+            
             obj.colorMap = src.String{src.Value};
         end
 
@@ -273,7 +286,7 @@ classdef GraphApp < handle
                 'String', obj.source);
             obj.ui.dcm = uicontrol(obj.ui.root,...
                 'Style', 'push',...
-                'String', 'Data Cursor Mode',...
+                'String', 'Use Data Cursor',...
                 'Callback', @obj.onClickMode);
             obj.ui.markerType = uicontrol(obj.ui.root,...
                 'Style', 'popup',...

@@ -128,7 +128,7 @@ classdef StructureTypes
                     obj = StructureTypes.PlaqueLikePost;
 				case VikingStructureTypes.CisternPre
 					obj = StructureTypes.CisternPre;
-				case VikingStructureTypes.CisternPost;
+				case VikingStructureTypes.CisternPost
 					obj = StructureTypes.Unknown;
 				case VikingStructureTypes.Endocytosis
 					obj = StructureTypes.Endocytosis;

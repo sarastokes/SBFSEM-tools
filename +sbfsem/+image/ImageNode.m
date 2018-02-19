@@ -1,23 +1,33 @@
-classdef ImageNode < handle
+classdef ImageNode < sbfsem.core.Node
 % IMAGENODE  Single image in an image stack
 %
 % Description:
 %   Meant to be called from ImageStack, not used alone
 %
+% Constructor:
+%	obj = sbfsem.image.ImageNode(filePath, varargin);
+%
+% Properties:
+%	savePath
+%	name
+% Inherited properties:
+%	next 		Next node in list
+%	previous 	Previous node in list
+% Inherited methods:
+%	Set/Get for next and previous
+%
 % See also:
-%   SBFSEM.IMAGE.IMAGESTACK, IMAGESTACKAPP
+%   SBFSEM.IMAGE.IMAGESTACK, IMAGESTACKAPP, SBFSEM.CORE.NODE
 %
 % History:
 %   29Sept2017 - SSP
 %   4Feb2018 - SSP - node2matrix function
+% 	14Feb2018 - SSP - created Node parent class
 % -------------------------------------------------------------------------
 
 	properties (Access = public)
 		savePath					% New save path
 		name 						% Readable name	
-
-		next 
-		previous
 	end
 
 	properties (SetAccess = private, GetAccess = public)
@@ -27,6 +37,8 @@ classdef ImageNode < handle
 
 	methods
 		function obj = ImageNode(filePath, varargin)
+			% IMAGENODE  Constructor
+			obj = obj@sbfsem.core.Node();
 
 			% where the imported image is saved
 			obj.filePath = filePath;
@@ -59,6 +71,7 @@ classdef ImageNode < handle
 		end
 
 		function setName(obj, newName)
+			% SETNAME
 			if ischar(newName)
 				obj.name = newName;
 			elseif isnumeric(newName)
@@ -113,7 +126,6 @@ classdef ImageNode < handle
 				check = false;
 			end
 
-			oldImage = obj.imData;
 			newImage = imread(obj.filePath);
 			if check
 				obj.imcompare(newImage);
@@ -124,23 +136,6 @@ classdef ImageNode < handle
 		function imcompare(obj, newImage)
 			% IMCOMPARE  Compare existing image to new one
 			imshowpair(obj.imData, newImage, 'montage');
-		end
-
-		% Set/get functions
-		function set.next(obj, next)
-			obj.next = next;
-		end
-
-		function next = get.next(obj)
-			next = obj.next;
-		end
-
-		function set.previous(obj, previous)
-			obj.previous = previous;
-		end
-
-		function previous = get.previous(obj)
-			previous = obj.previous;
 		end
 	end
 end

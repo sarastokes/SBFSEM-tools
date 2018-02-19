@@ -1,4 +1,4 @@
-function value =  validateNeuronAttribute(key, guess)
+function value =  validateNeuronAttributes(key, guess)
 
 	switch key
 	case 'celltype'

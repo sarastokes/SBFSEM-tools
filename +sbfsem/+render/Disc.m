@@ -45,7 +45,7 @@ classdef Disc < sbfsem.render.RenderView
 			for i = 1:numel(sections)
 				sectionRows = nodes.Z == sections(i);
 				obj.imNodes = cat(1, obj.imNodes,...
-					sbfsem.core.Disc(nodes(sectionRows,:)));
+					sbfsem.builtin.Disc(nodes(sectionRows,:)));
 			end
 
 			% Find XY limits to use as bounding box

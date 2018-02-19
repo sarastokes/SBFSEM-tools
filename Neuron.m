@@ -175,7 +175,7 @@ classdef Neuron < handle
                 case {'closedcurve', 'cc', 'curve'}
                     model = renderClosedCurve(obj, varargin{:});
                 case {'outline'}
-                    model = sbfsem.core.ClosedCurve(obj);
+                    model = sbfsem.builtin.ClosedCurve(obj);
                 case 'disc'
                     model = sbfsem.render.Disc(obj, varargin{:});
                 otherwise
@@ -197,7 +197,7 @@ classdef Neuron < handle
             if isempty(obj.model)
                 warning('No model - use BUILD function first');
                 return;
-            elseif isnumeric(obj.model) || isa(obj.model, 'sbfsem.core.ClosedCurve')
+            elseif isnumeric(obj.model) || isa(obj.model, 'sbfsem.builtin.ClosedCurve')
                 warning('Model must be a Cylinder render, use exportSceneDAE');
                 return;
             end
@@ -220,7 +220,7 @@ classdef Neuron < handle
             % -------------------------------------------------------------
             
             if ~isempty(obj.model)
-                if isa(obj.model, 'sbfsem.core.ClosedCurve')
+                if isa(obj.model, 'sbfsem.builtin.ClosedCurve')
                     obj.model.trace(varargin{:});
                 elseif isnumeric(obj.model) % Closed curve volume
                     volumeRender(obj.model,...

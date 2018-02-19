@@ -22,7 +22,7 @@ function fh = vissoma(xyr, varargin)
 	ip.parse(varargin{:});
 	ax = ip.Results.ax;
 
-	if strcmp(class(xyr), 'Neuron')
+	if isa(xyr, 'Neuron')
 		row = neuron.getSomaRow();
 		xyr = [row.XYZum(1:2), row.Rum];
 	end

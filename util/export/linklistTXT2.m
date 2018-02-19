@@ -12,7 +12,8 @@ function linklistTXT2(neuron, varargin)
 	% 25Jul2017 - SSP - added LocalName, used for simulation #2
 
 	% 25Jul simulation:
-	synOmit = {'adherens', 'desmosome', 'unknown', 'touch', 'gaba fwd', 'neuroglial adherens'};
+	synOmit = {'adherens', 'desmosome', 'unknown', 'touch',... 
+        'gaba fwd', 'neuroglial adherens'};
 
 	nT = neuron.conData.nodeTable;
 	eT = neuron.conData.edgeTable;

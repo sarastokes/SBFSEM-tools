@@ -198,20 +198,6 @@ classdef NeuronGroup < handle
             %set(fh.ax, 'YTickLabel', lbl, 'Box', 'off');
         end
 
-        function arborArea(obj, somaIndex)
-            % Not ready yet
-            if nargin < 2
-                somaIndex = 'both';
-            else
-                somaIndex = validatestring(somaIndex,...
-                    {'both', 'above', 'below'});
-            end
-            % Get the Z sections
-            xyz = cell2mat(arrayfun(@(x) x.getSomaXYZ, obj.neurons,...
-                'UniformOutput', false));
-            xyz = xyz(:,3);     
-        end
-
         function doAnalysis(obj, DisplayName)
             obj.createAnalysisTable(DisplayName);
         end

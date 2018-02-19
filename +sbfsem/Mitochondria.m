@@ -73,9 +73,9 @@ classdef Mitochondria < sbfsem.core.Ultrastructure
                 importeddata = readOData([obj.baseURL,...
                     'Structures(', num2str(annotationIDs(i)), ')',...
                     '/Locations?$select=ID,ParentID,X,Y,Z']);
-                data = cat(1, data, struct2array(importeddata.value))
+                data = cat(1, data, struct2array(importeddata.value));
             end
-            fprintf('Found %u mitochondria\n');
+            fprintf('Found %u mitochondria\n', numel(data));
             
             obj.mito = data;
             

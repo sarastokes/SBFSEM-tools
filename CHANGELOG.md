@@ -1,5 +1,8 @@
 # Changelog
 
+### 19Feb2018
+- Reorganized folders, cleaned out old code and unused libraries.
+
 ### 16Feb2018 
 - Ability to omit nodes from renders by adding them to OMITTED_NODES_VOLNAME.txt in the data folder. The first entry is the cell ID, the second is the location ID. The nodes are omitted when a graph/digraph is made of the neuron's annotations and connections.
 - Added updateAll() and getAll() methods to sbfsem.ConeMosaic

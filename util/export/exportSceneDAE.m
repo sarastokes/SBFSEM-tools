@@ -1,10 +1,22 @@
 function exportSceneDAE(axHandle, fName, reduceFac)
 % EXPORTSCENEDAE
 %
+% Syntax:
+%   exportSceneDAE(axHandle, fName, reduceFac);
+%
 % Inputs:
-%	axHandle 		axis containing patches
-%	fName 			filename
-%   reduceFac       Percent of faces to keep
+%	axHandle 		axis containing the renders to be exported
+%	fName 			filename (and filepath, optionally)
+% Optional inputs:
+%   reduceFac       Percent of faces to keep (0-1)
+%
+% Examples:
+%   % Use folder selection dialog box:
+%   exportSceneDAE(gca, 'demo');
+%   % Specify a folder:
+%   exportSceneDAE(gca, 'C:\Users\..\demo');
+%   % Reduce the patch (85% of faces is generally safe)
+%   exportSceneDAE(gca, 'demo', 0.85):
 %
 % Note:
 %   Will open a dialog box to get target file path. The '.dae' extension
@@ -16,7 +28,7 @@ function exportSceneDAE(axHandle, fName, reduceFac)
 % -------------------------------------------------------------------------
 
 % If there are no fileseps, it's just a filename
-if isempty(strfind(fName, filesep))
+if ~contains(fName, filesep)
     fPath = uigetdir();
     if isempty(fPath)
         % Leave if user presses 'Cancel'

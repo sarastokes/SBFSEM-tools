@@ -1,6 +1,6 @@
 classdef ConeMosaic < handle
     % CONEMOSAIC
-    % 
+    %
     % Constructor:
     %   obj = sbfsem.ConeMosaic('source');
     %
@@ -18,6 +18,7 @@ classdef ConeMosaic < handle
     %   obj.update(coneType);
     %   obj.updateAll();
     %   obj.plot(coneType, axHandle);
+    %   obj.plotAll();
     %
     % See also:
     %   SBFSEM.IO.CONEODATA, SBFSEM.CORE.CLOSEDCURVE
@@ -38,7 +39,7 @@ classdef ConeMosaic < handle
         sID
         uID
     end
-
+    
     properties (Transient = true, Hidden = true)
         ConeClient
     end
@@ -82,7 +83,7 @@ classdef ConeMosaic < handle
             switch coneType
                 case 'LM'
                     % Hard coded cones
-                    [obj.lmCones, obj.lmID] = obj.getDefaults('LM');  
+                    [obj.lmCones, obj.lmID] = obj.getDefaults('LM');
                     % Add the filter returned codes
                     for i = 1:numel(IDs)
                         obj.lmCones = cat(1, obj.lmCones,...
@@ -109,13 +110,6 @@ classdef ConeMosaic < handle
             end
         end
         
-        function updateAll(obj)
-            % UPDATEALL
-            
-            for i = 1:numel(obj.CONES)
-                obj.update(obj.CONES{i});
-            end
-        end
         
         function update(obj, coneType)
             % UPDATE
@@ -153,6 +147,14 @@ classdef ConeMosaic < handle
                     end
             end
             fprintf('Imported %u new IDs\n', numel(newIDs));
+        end
+        
+        function updateAll(obj)
+            % UPDATEALL
+            
+            for i = 1:numel(obj.CONES)
+                obj.update(obj.CONES{i});
+            end
         end
         
         function plot(obj, coneType, ax, tag)
@@ -204,12 +206,27 @@ classdef ConeMosaic < handle
             axis(ax, 'tight');
         end
         
+        function plotAll(obj, ax, tag)
+            if nargin < 2
+                fh = figure('Name', 'Cone Outlines');
+                ax = axes('Parent', fh);
+            end
+            
+            if nargin < 3
+                tag = '';
+            end
+            
+            for i = 1:numel(obj.CONES)
+                obj.plot(obj.CONES{i}, ax, tag);
+            end
+        end
+        
     end
     
     methods (Access = private)
         function x = getOutline(obj, ID)
             % GETOUTLINE  Create a ClosedCurve obj from cone trace
-            x = sbfsem.core.ClosedCurve(Neuron(ID, obj.SOURCE));
+            x = sbfsem.builtin.ClosedCurve(Neuron(ID, obj.SOURCE));
         end
         
         function [x, ID] = getDefaults(obj, coneType)
@@ -220,12 +237,12 @@ classdef ConeMosaic < handle
                     % Later make a for loop or automate if the number of
                     % multiple annotation cones continues to increase.
                     c4983 = Neuron(ID, obj.SOURCE);
-                    x = sbfsem.core.ClosedCurve(c4983.geometries(...
+                    x = sbfsem.builtin.ClosedCurve(c4983.geometries(...
                         c4983.geometries.Z == 1701,:));
                 case 'LM'
                     ID = 2542;
                     c2542 = Neuron(ID, obj.SOURCE);
-                    x = sbfsem.core.ClosedCurve(c2542.geometries(...
+                    x = sbfsem.builtin.ClosedCurve(c2542.geometries(...
                         c2542.geometries.Z == 1686,:));
                 case 'U'
                     x = []; ID = [];

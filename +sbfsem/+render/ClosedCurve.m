@@ -61,7 +61,7 @@ classdef ClosedCurve < sbfsem.render.RenderView
             disp('Converting to closed curve');
             for i = 1:height(T)
                 obj.imNodes = cat(1, obj.imNodes,...
-                    sbfsem.core.ClosedCurve(T(i,:)));
+                    sbfsem.builtin.ClosedCurve(T(i,:)));
             end
 
             % Create the render
@@ -82,7 +82,7 @@ classdef ClosedCurve < sbfsem.render.RenderView
             %   fpath       File path (default = current directory)
             % -------------------------------------------------------------
             
-            if isempty(strfind(fname, '.dae'))
+            if ~contains(fname, '.dae')
                 fname = [fname, '.dae'];
             end
             

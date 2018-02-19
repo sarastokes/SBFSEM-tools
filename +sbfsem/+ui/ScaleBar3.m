@@ -26,6 +26,7 @@ classdef ScaleBar3 < handle
     %
     % History:
     %   12Feb2018 - SSP
+    %	15Feb2018 - Added 1-2D options, todo: fix textbox
     % -------------------------------------------------------------------------
     
     properties (SetAccess = private)
@@ -45,6 +46,7 @@ classdef ScaleBar3 < handle
     methods
         function obj = ScaleBar3(ax, xyz0, barSize)
             % SCALEBAR3  Constructor
+            %
             % Inputs:
             %	ax 			Parent axes handle
             % 	xyz0 		XYZ coordinates of origin
@@ -80,21 +82,22 @@ classdef ScaleBar3 < handle
                 obj.Color = 'k';
             end
             
-            obj.createUi();
+            % Create the scale bar and label
+            hold(obj.hParent, 'on');
+            obj.createLine();
+            obj.createLabel();
         end
     end
     
     % Private line/text methods
     methods (Access = private)
-        function createUi(obj)
-            % CREATEUI  Create the line and text objects
-            
-            obj.createLine();
-            obj.createLabel();
-        end
         
         function createLine(obj, whichAxes)
             % CREATELINE  Get the data points and create scalebar line
+            %
+            % Optional inputs:
+            %	whichAxes 		'x', 'y', 'z' or 'all' (default = all)
+            % ----------------------------------------------------------
             
             if nargin < 2
                 whichAxes = 'all';
@@ -147,15 +150,27 @@ classdef ScaleBar3 < handle
             c = uicontextmenu();
             uimenu(c, 'Label', 'Modify ScaleBar',...
                 'Callback', @obj.onSelectedModify);
-            uimenu(c, 'Label', 'X-axis only',...
-                'Tag', 'X',...
-                'Callback', @obj.onSelectedLimitAxes);
+            axList = 'XYZ';
+            for i = 1:3
+                uimenu(c, 'Label', sprintf('%s-axis only', axList(i)),...
+                    'Tag', axList(i),...
+                    'Callback', @obj.onSelectedLimitAxes);
+            end
             uimenu(c, 'Label', 'Y-axis only',...
                 'Tag', 'Y',...
                 'Callback', @obj.onSelectedLimitAxes);
             uimenu(c, 'Label', 'Z-axis only',...
                 'Tag', 'Z',...
                 'Callback', @obj.onSelectedLimitAxes);
+            uimenu(c, 'Label', 'Omit X',...
+            	'Tag', 'YZ',...
+            	'Callback', @obj.onSelectedLimitAxes);
+            uimenu(c, 'Label', 'Omit Y',...
+            	'Tag', 'XZ',...
+            	'Callback', @obj.onSelectedLimitAxes);
+            uimenu(c, 'Label', 'Omit Z',...
+            	'Tag', 'XY',...
+            	'Callback', @obj.onSelectedLimitAxes);
             uimenu(c, 'Label', 'Text Properties',...
                 'Callback', @obj.onSelectedTextProperties);
             uimenu(c, 'Label', 'Line Properties',...
@@ -167,6 +182,7 @@ classdef ScaleBar3 < handle
     methods (Access = private)
         function onSelectedModify(obj, ~, ~)
             % ONSELECTEDMODIFY  Open dialog and apply changes
+
             obj.settingsDialog();
             obj.createLine();
             obj.createLabel();
@@ -174,16 +190,19 @@ classdef ScaleBar3 < handle
         
         function onSelectedLimitAxes(obj, src, ~)
             % ONSELECTEDLIMITAXES
+
             obj.createLine(src.Tag);
         end
         
         function onSelectedTextProperties(obj, ~, ~)
             % ONSELECTEDTEXTPROPERTIES
+
             inspect(obj.hText);
         end
         
         function onSelectedLineProperties(obj, ~, ~)
             % ONSELECTEDLINEPROPERTIES
+            
             inspect(obj.hLine);
         end
         
@@ -196,11 +215,10 @@ classdef ScaleBar3 < handle
                 {num2str(obj.xyz0(1)), num2str(obj.xyz0(2)),...
                 num2str(obj.xyz0(3)), num2str(obj.barSize), obj.units});
             if isempty(ret)
-                return;
+                obj.xyz0 = [str2double(ret{1}), str2double(ret{2}), str2double(ret{3})];
+            	obj.barSize = str2double(ret{4});
+            	obj.units = ret{5};
             end
-            obj.xyz0 = [str2double(ret{1}), str2double(ret{2}), str2double(ret{3})];
-            obj.barSize = str2double(ret{4});
-            obj.units = ret{5};
         end
     end
     
@@ -230,6 +248,12 @@ classdef ScaleBar3 < handle
                         pts = 4:5;
                     case 'z'
                         pts = 7:8;
+                    case 'xy'
+                    	pts = 1:5;
+                    case 'yz'
+                    	pts = 4:8;
+                    case 'xz'
+                    	pts = [1:3, 7:8];
                     otherwise
                         return;
                 end

@@ -13,7 +13,7 @@ classdef (Abstract) RenderView < sbfsem.ui.FigureView
     %   renderObj       Render object (patch)
     %   capObj          Isocaps object
     %   boundingBox     XY limits around render
-    %   imNodes         Annotations (sbfsem.core.ClosedCurve/Disc)
+    %   imNodes         Annotations (sbfsem.builtin.ClosedCurve/Disc)
     %
     % Constant properties:
     %   Patch defaults, cam angle, bounding margin (0)
@@ -89,7 +89,7 @@ classdef (Abstract) RenderView < sbfsem.ui.FigureView
                 set(obj.renderObj, propName, propValue);
                 set(obj.capObj, propName, propValue);
             catch
-                warning('RENDERVIEW', [' Unknown property: ', propName]);
+                warning(' Unknown property: %s', propName);
             end
         end
     end

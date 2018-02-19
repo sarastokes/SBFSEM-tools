@@ -177,7 +177,7 @@ c121.render('reduce', true);
 %% IPL Boundary surface
 % -------------------------------------------------------------------------
 % Create a surface from INL-IPL or INL-GCL boundary markers
-inl = sbfsem.core.INLBoundary('i');
+inl = sbfsem.builtin.INLBoundary('i');
 
 % To update the boundary marker locations from OData
 inl.update();
@@ -268,6 +268,8 @@ a = DendriticFieldHull(c28, xy);
 % ImageStack represents the images as a doubly linked list
 % Creating ImageStack imports all .png files in that folder, 
 % relying on the numbering system created by Viking's export frames
+folderPath = 'C:\...';
+
 imStack = sbfsem.image.ImageStack(folderPath);
 % Open in image stack app
 ImageStackApp(imStack);
