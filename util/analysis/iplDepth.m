@@ -1,14 +1,31 @@
-function [iplPercent, stats] = iplDepth(Neuron, INL, GCL)
+function [iplPercent, stats] = iplDepth(Neuron, INL, GCL, numBins)
 	% IPLDEPTH
     %
     % Description:
+    %   Calculates IPL depth based on stratification of single neuron
     %   
+    % Syntax:
+    %   [iplPercent, stats] = iplDepth(Neuron, INL, GCL);
+    %
+    % Inputs:
+    %   Neuron      Neuron object
+    %   INL         INL-IPL Boundary object
+    %   GCL         GCL-IPL Boundary object
+    % Optional inputs:
+    %   numBins     Number of bins for histograms (default = 20)
+    % Outputs:
+    %   iplPercent  Percent IPL depth for each annotation
+    %   stats       Structure containing mean, median, SEM, SD, N
 	% 
 	% History
 	%	7Feb2018 - SSP
-	% ------------------------------------------------
+    %   19Feb2018 - SSP - Added numBins input
+	% ---------------------------------------------------------------------
 
 	assert(isa(Neuron, 'Neuron'), 'Input a Neuron object');
+    if nargin < 4
+        numBins = 20;
+    end
 
 	nodes = Neuron.getCellNodes;
 	% Soma is anything within 20% of the soma radius
@@ -37,14 +54,14 @@ function [iplPercent, stats] = iplDepth(Neuron, INL, GCL)
 	fprintf('Median IPL Depth = %.3g\n', stats.median);
 
 	figure();
-	hist(iplPercent, 20);
+	hist(iplPercent, numBins);
 	xlim([0 1]);
     title(sprintf('IPL depth estimates for c%u', Neuron.ID));
 	ylabel('Number of annotations');
 	xlabel('Percent IPL Depth');
 
 	figure();
-	hist(vINL-vGCL, 20); hold on;
+	hist(vINL-vGCL, numBins); hold on;
 	title(sprintf('Variability in total IPL depth for c%u', Neuron.ID));
 	xlabel('IPL depth (microns)');
 	ylabel('Number of annotations');

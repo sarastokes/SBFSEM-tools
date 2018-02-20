@@ -137,26 +137,7 @@ classdef RenderApp < handle
                 % Update the plot after each neuron imports
                 drawnow;
             end
-            
-            function hasOffset = checkOffset(obj)
-                % CHECKOFFSET  Determine whether to load xyoffset data
-                
-                hasOffset = false;
-                
-                if isempty(obj.xyOffset)
-                    if strcmp(obj.source, 'NeitzInferiorMonkey')
-                        dataDir = fileparts(mfilename('fullpath'));
-                        offsetPath = [dataDir, filesep,'XY_OFFSET_',... 
-                            upper(obj.source), '.txt'];
-                        obj.xyOffset = dlmread(offsetPath);
-                        hasOffset = true;
-                    end
-                else % Determine whether xyOffset is valid
-                    if ~isnan(obj.xyOffset)
-                        hasOffset = true;
-                    end
-                end
-            end                
+              
         end
         
         function onKeyPress(obj, ~, eventdata)
@@ -221,7 +202,7 @@ classdef RenderApp < handle
                     posViking = posMicrons./um2pix; % pix
                     
                     % Reverse the xyOffset applied on Neuron creation
-                    hasOffset = obj.checkOffset();                 
+                    hasOffset = obj.checkOffset;                 
                     if hasOffset
                         posViking(1:2) = obj.xyOffset(posViking(3), 1:2);
                     end
@@ -246,6 +227,26 @@ classdef RenderApp < handle
                 src.Label = 'Grid on';
             end
         end
+                    
+        function hasOffset = checkOffset(obj)
+            % CHECKOFFSET  Determine whether to load xyoffset data
+
+            hasOffset = false;
+
+            if isempty(obj.xyOffset)
+                if strcmp(obj.source, 'NeitzInferiorMonkey')
+                    dataDir = fileparts(mfilename('fullpath'));
+                    offsetPath = [dataDir, filesep,'XY_OFFSET_',... 
+                        upper(obj.source), '.txt'];
+                    obj.xyOffset = dlmread(offsetPath);
+                    hasOffset = true;
+                end
+            else % Determine whether xyOffset is valid
+                if ~isnan(obj.xyOffset)
+                    hasOffset = true;
+                end
+            end
+        end  
         
         function onToggleAxes(obj, ~, ~)
             % ONTOGGLEAXES  Show/hide axes
