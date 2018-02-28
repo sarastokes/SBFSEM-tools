@@ -228,6 +228,7 @@ classdef Neuron < handle
                         varargin{:});
                 else
                     obj.model.render(varargin{:});
+                    view(3);
                 end
             else
                 warning('No model - use BUILD function first');
@@ -254,7 +255,7 @@ classdef Neuron < handle
             
             obj.checkSynapses();
             
-            synapseNames = unique(vertcat(obj.synapses.LocalName{:}));
+            synapseNames = unique(obj.synapses.LocalName);
             if toChar
                 synapseNames = vertcat(arrayfun(@(x) char(x),...
                     synapseNames, 'UniformOutput', false));
@@ -320,23 +321,31 @@ classdef Neuron < handle
             cellNodes = obj.nodes(row, :);
         end
         
-        function T = synapseIDs(obj, whichSyn)
-            % SYNAPSEIDS  Return location IDs for synapses
+        function IDs = synapseIDs(obj, whichSyn)
+            % SYNAPSEIDS  Return parent IDs for synapses
             %
             % Input:
-            %   whichSyn        synapse name
+            %   whichSyn        synapse name (default = all)
+            % -------------------------------------------------------------
+            
             obj.checkSynapses();
-            row = strcmp(obj.synapses.LocalName, whichSyn)... 
-                & obj.synapses.Unique == 1;
-            T = obj.synapses(row,:);
-            disp(T);
+            
+            if nargin < 2
+                IDs = obj.synapses.ID;
+            else % Return a single synapse type
+                if ischar(whichSyn)
+                    whichSyn = sbfsem.core.StructureTypes(whichSyn);
+                end
+                row = obj.synapses.LocalName == whichSyn;
+                IDs = obj.synapses(row,:).ID;
+            end
         end
 
         function xyz = getCellXYZ(obj, useMicrons)
             % GETCELLXYZ  Returns cell body coordinates
             %
             %   Inputs:     useMicrons  [t]  units = microns or volume
-            
+            % ----------------------------------------------------------
             if nargin < 2
                 useMicrons = true;
             end
@@ -351,6 +360,10 @@ classdef Neuron < handle
 
         function um = getSomaSize(obj, useDiameter)
             % GETSOMASIZE  Returns soma radius in microns
+            %
+            % Optional inputs:
+            %   useDiameter   Return diameter not radius (false)
+            % ----------------------------------------------------------
             if nargin < 2
                 useDiameter = false;
                 disp('Returning radius');
@@ -388,7 +401,7 @@ classdef Neuron < handle
                 syn = sbfsem.core.StructureTypes(syn);
             end
             
-            row = vertcat(obj.synapses.LocalName{:}) == syn;                           
+            row = obj.synapses.LocalName == syn;                           
             IDs = obj.synapses.ID(row,:);
             % Find the unique instances of each synapse ID
             row = ismember(obj.nodes.ParentID, IDs) & obj.nodes.Unique;
@@ -424,6 +437,7 @@ classdef Neuron < handle
             %
             % Optional input:
             %   useMicrons      logical, default = true
+            % ----------------------------------------------------------
 
             if nargin < 2 % default unit is microns
                 useMicrons = true;
@@ -445,7 +459,7 @@ classdef Neuron < handle
             % GETDASPECT  Scales a plot by x,y,z dimensions
             % Optional inputs:
             %   ax      axesHandle to apply daspect
-            %
+            % ----------------------------------------------------------
             
             xyz = obj.volumeScale/max(abs(obj.volumeScale));           
             if nargin == 2
@@ -512,6 +526,8 @@ classdef Neuron < handle
 
         function addAnalysis(obj, analysis, overwrite)
             % ADDANALYSIS  Append or update an analysis
+            % ----------------------------------------------------------
+
             if nargin < 3 
                 overwrite = false;
             end
@@ -542,6 +558,7 @@ classdef Neuron < handle
 
         function save(obj)
             % SAVE  Save changes to neuron
+            % ----------------------------------------------------------
             uisave(obj, sprintf('c%u', obj.ID));
             fprintf('Saved!\n');
         end
@@ -581,9 +598,7 @@ classdef Neuron < handle
                 [obj.synapses, childNodes, childEdges] = obj.SynapseClient.pull();
                 obj.nodes = [obj.nodes; childNodes];
                 obj.edges = [obj.edges; childEdges];
-                % Setup synapse columns
                 obj.setupSynapses();
-
             end
 
             % XY transform and then convert data to microns
@@ -632,6 +647,9 @@ classdef Neuron < handle
         end
         
         function setupSynapses(obj)
+            % SETUPSYNAPSES  
+            % TODO: This should be done elsewhere
+
             import sbfsem.core.StructureTypes;
             % Create a new column for "unique" synapses 
             % The purpose of this is having 1 marker per synapse structure
@@ -663,7 +681,7 @@ classdef Neuron < handle
                     localNames{i,:} = sbfsem.core.StructureTypes.fromViking(...
                         structures(i), obj.synapses.Tags{i,:});   
                 end
-                obj.synapses.LocalName = localNames;
+                obj.synapses.LocalName = vertcat(localNames{:});
                 % Make sure synapses match the new naming conventions
                 makeConsistent(obj);
             end                         

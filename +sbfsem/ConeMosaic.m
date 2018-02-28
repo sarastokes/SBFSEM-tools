@@ -13,12 +13,22 @@ classdef ConeMosaic < handle
     %   uID         Undefined cone IDs
     %
     % Methods:
-    %   x = obj.getCones(coneType);
+    %   obj.getCones(coneType);
     %   obj.getAll();
     %   obj.update(coneType);
     %   obj.updateAll();
     %   obj.plot(coneType, axHandle);
     %   obj.plotAll();
+    %   obj.info();
+    %
+    % Notes:
+    %   Only available for NeitzInferiorMonkey currently. This function
+    %   extracts closed curve traces of cones by querying for structures
+    %   with the labels 'lmTRACE', 'sTRACE', 'uTRACE' for LM-cones, S-cones
+    %   and unidentified cones, respectively. These structures may have
+    %   other disc annotations but must only have one closed curve. For
+    %   now, structures with multiple closed curves must be hard-coded into
+    %   the getDefaults() function
     %
     % See also:
     %   SBFSEM.IO.CONEODATA, SBFSEM.CORE.CLOSEDCURVE
@@ -62,6 +72,27 @@ classdef ConeMosaic < handle
             end
             
             obj.ConeClient = sbfsem.io.ConeOData(source);
+        end
+        
+        function info(obj)
+            % INFO  Print information about the cone mosaic to cmd line
+            
+            totalCones = numel(obj.lmID) + numel(obj.sID) + numel(obj.uID);
+            
+            if totalCones == 0
+                disp('Empty cone mosaic');
+            else
+                fprintf('Cone Mosaic with %u cones\n', totalCones);
+                if ~isempty(obj.lmID)
+                    fprintf('\t%u LM-cones\n', numel(obj.lmID));
+                end
+                if ~isempty(obj.sID)
+                    fprintf('\t%u S-cones\n', numel(obj.sID));
+                end
+                if ~isempty(obj.uID)
+                    fprintf('\t%u unidentified cones\n', numel(obj.uID));
+                end
+            end
         end
         
         function getAll(obj)

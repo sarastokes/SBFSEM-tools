@@ -105,7 +105,7 @@ classdef (Abstract) BoundaryMarker < handle
             % PLOT  
             % 
             % Optional key/value inputs:
-            %   includeData     Show annotations (default=false)
+            %   showData        Show annotations (default=false)
             %   ax              Figure or axes handle (default=new)
             % -------------------------------------------------------------
             ip = inputParser();

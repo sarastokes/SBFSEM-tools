@@ -34,7 +34,7 @@ classdef RenderApp < handle
         iplBound            % IPL Boundary structure (empty until loaded)
     end
     
-    properties (Access = public, Hidden = true, Transient = true) 
+    properties (Access = private, Hidden = true, Transient = true) 
         % UI handles
         figureHandle        % Parent figure handle
         ui                  % UI panel handles
@@ -137,7 +137,26 @@ classdef RenderApp < handle
                 % Update the plot after each neuron imports
                 drawnow;
             end
-              
+            
+            function hasOffset = checkOffset(obj)
+                % CHECKOFFSET  Determine whether to load xyoffset data
+                
+                hasOffset = false;
+                
+                if isempty(obj.xyOffset)
+                    if strcmp(obj.source, 'NeitzInferiorMonkey')
+                        dataDir = fileparts(mfilename('fullpath'));
+                        offsetPath = [dataDir, filesep,'XY_OFFSET_',... 
+                            upper(obj.source), '.txt'];
+                        obj.xyOffset = dlmread(offsetPath);
+                        hasOffset = true;
+                    end
+                else % Determine whether xyOffset is valid
+                    if ~isnan(obj.xyOffset)
+                        hasOffset = true;
+                    end
+                end
+            end                
         end
         
         function onKeyPress(obj, ~, eventdata)
@@ -202,7 +221,7 @@ classdef RenderApp < handle
                     posViking = posMicrons./um2pix; % pix
                     
                     % Reverse the xyOffset applied on Neuron creation
-                    hasOffset = obj.checkOffset;                 
+                    hasOffset = obj.checkOffset();                 
                     if hasOffset
                         posViking(1:2) = obj.xyOffset(posViking(3), 1:2);
                     end
@@ -227,26 +246,6 @@ classdef RenderApp < handle
                 src.Label = 'Grid on';
             end
         end
-                    
-        function hasOffset = checkOffset(obj)
-            % CHECKOFFSET  Determine whether to load xyoffset data
-
-            hasOffset = false;
-
-            if isempty(obj.xyOffset)
-                if strcmp(obj.source, 'NeitzInferiorMonkey')
-                    dataDir = fileparts(mfilename('fullpath'));
-                    offsetPath = [dataDir, filesep,'XY_OFFSET_',... 
-                        upper(obj.source), '.txt'];
-                    obj.xyOffset = dlmread(offsetPath);
-                    hasOffset = true;
-                end
-            else % Determine whether xyOffset is valid
-                if ~isnan(obj.xyOffset)
-                    hasOffset = true;
-                end
-            end
-        end  
         
         function onToggleAxes(obj, ~, ~)
             % ONTOGGLEAXES  Show/hide axes
@@ -452,6 +451,7 @@ classdef RenderApp < handle
         function onImportCones(obj, src, ~)
             % ONIMPORTCONES
             % See also: SBFSEM.CONEMOSAIC, SBFSEM.CORE.CLOSEDCURVE
+            obj.statusUpdate('Adding mosaic');
             if isempty(obj.mosaic)
                 obj.mosaic = sbfsem.ConeMosaic('i');
             end
@@ -587,7 +587,7 @@ classdef RenderApp < handle
             if ~isempty(strfind(varargin{1}, 'gcl'))
                 if isempty(obj.iplBound.gcl)
                     obj.statusUpdate('Importing IPL-GCL');
-                    obj.iplBound.gcl = sbfsem.builtin.GCLBoundary(obj.source);
+                    obj.iplBound.gcl = sbfsem.core.GCLBoundary(obj.source);
                 end
                 obj.statusUpdate('Creating surface');
                 obj.iplBound.gcl.doAnalysis();
@@ -597,7 +597,7 @@ classdef RenderApp < handle
             if ~isempty(strfind(varargin{1}, 'inl'))
                 if isempty(obj.iplBound.inl)
                     obj.statusUpdate('Importing IPL-INL');
-                    obj.iplBound.inl = sbfsem.builtin.INLBoundary(obj.source);
+                    obj.iplBound.inl = sbfsem.core.INLBoundary(obj.source);
                 end
                 obj.statusUpdate('Creating surface');
                 obj.iplBound.inl.doAnalysis();

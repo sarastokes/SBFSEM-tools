@@ -1,12 +1,15 @@
-function synapseSphere(neuron, synapseName, varargin)
+function synapseSphere(neuron, synapse, varargin)
     % SYNAPSESPHERE
     %
     % Description:
     %   Render a neuron's synapses as 3D spheres
     %
+    % Syntax:
+    %   synapseSphere(neuron, synapse, varargin);
+    %
     % Inputs:
     %   neuron              Neuron object
-    %   synapseName         Synapse name or XYZ coordinates
+    %   synapse             Synapse name or XYZ coordinates
     % Optional key/value inputs:
     %   ax                  Axes handle (default = new figure)
     %   sf                  Synapse size (default = 0.5)
@@ -16,23 +19,35 @@ function synapseSphere(neuron, synapseName, varargin)
     %   tag                 Char to identify renders in scene
     %
     % Notes:
-    %   A unit (1 micron) sphere is created and moved to the synapse XYZ l
+    %   A unit (1 micron) sphere is created and moved to the synapse XYZ
     %   location. The sphere is scaled by the synapse size factor.
     %
+    % Examples:
+    %   % Import neuron with synapses
+    %   c6800 = Neuron(6800, 't', true);
+    %   % Render (or export existing render from RenderApp)
+    %   c6800.build(); c6800.render('FaceColor', [0, 0.3, 0.8]);
+    %   % For a reminder of synapse names (use the "Detailed names"):
+    %   c6800.printSyn();
+    %   % Add synapses
+    %   synapseSphere(c6800, 'ConvPre', 'ax', gca);
+    %   synapseSphere(c6800, 'Unknown', 'ax', gca,...
+    %       'FaceColor', [0.5 0.5 0.5], 'FaceAlpha', 0.5);
     % History:
-    %   5Jan2017 - SSP
+    %   5Jan2018 - SSP
+    %   28Feb2018 - SSP - Added synapse name to tag
     % ---------------------------------------------------------------------
     
     assert(isa(neuron, 'Neuron'), 'First argument must be neuron object');
     
-    if isnumeric(synapseName)
-        xyz = synapseName;
+    if isnumeric(synapse)
+        xyz = synapse;
     else
-        xyz = neuron.getSynapseXYZ(synapseName);
+        xyz = neuron.getSynapseXYZ(synapse);
     end
     
     ip = inputParser();
-    ip.CaseSensitive = true;
+    ip.CaseSensitive = false;
     addParameter(ip, 'ax', [], @ishandle);
     addParameter(ip, 'sf', 0.5, @isnumeric);
     addParameter(ip, 'EdgeColor', 'none',...
@@ -44,10 +59,10 @@ function synapseSphere(neuron, synapseName, varargin)
     addParameter(ip, 'Tag', [], @ischar);
     parse(ip, varargin{:});
 
-    if isempty(ip.Results.Tag) && ~isnumeric(synapseName)
+    if isempty(ip.Results.Tag) && ~isnumeric(synapse)
         Tag = ['c', num2str(neuron.ID)];
-        if isnumeric(synapseName)
-            Tag = [Tag, char(synapseName)];
+        if ~isnumeric(synapse)
+            Tag = [Tag, char(synapse)];
         end
     else
         Tag = ip.Results.Tag;

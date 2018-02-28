@@ -1,5 +1,18 @@
 # Changelog
 
+### 28Feb2018
+- Updates to synapseSphere.m and a tutorial on how to add synapses to renders (in new tutorial folder).
+
+### 25Feb2018
+- Beginnings of a Network OData class.. currently just a function for 1 degree networks (getStructureLinks.m)
+- Added 3 true/false functions to sbfsem.core.StructureTypes: isPre, isPost and isSynapse
+- Fixed issue where synapse LocalName was inside a cell. No more `vertcat(obj.synapses.LocalName{:}` !
+- Updated Neuron/synapseIDs method to return synapse IDs (parent ID not location IDs).
+
+### 20Feb2018
+- New 'numBins' input parameter to decide histogram bins for IPLDepth.m
+- Added missing helper function (sem.m)
+
 ### 19Feb2018
 - Reorganized folders, cleaned out old code and unused libraries.
 
@@ -74,7 +87,7 @@ c121.render(); % RENDER shows the model
 c2542 = Neuron(2542, 'i');
 c2542.build('closed curve');
 '''
-- I moved Neuron out of the sbfsem folder so no more sbfsem.Neuron or importing sbfsem. Just use Neuron.
+- I moved Neuron out of the sbfsem folder so no more sbfsem.Neuron or import.sbfsem. Just use Neuron.
 
 
 ### 1Jan2018

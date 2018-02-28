@@ -69,6 +69,63 @@ classdef StructureTypes
 					rgb = [0, 0, 0];
 			end
 		end
+
+		function ret = isPre(obj)
+			import sbfsem.core.StructureTypes;
+
+			if ismember(obj,...
+				[StructureTypes.GABAPre,...
+				StructureTypes.RibbonPre,...
+				StructureTypes.BipConvPre,...
+				StructureTypes.ConvPre])
+				ret = true;
+			else
+				ret = false;
+			end
+		end
+
+		function tf = isPost(obj)
+			import sbfsem.core.StructureTypes;
+
+			if ismember(obj,...
+				[StructureTypes.GABAPost,...
+				StructureTypes.RibbonPost,...
+				StructureTypes.BipConvPost,...
+				StructureTypes.ConvPost,...
+				StructureTypes.BasalTA,...
+				StructureTypes.BasalNTA,...
+				StructureTypes.BasalMNTA])
+				tf = true;
+			else
+				tf = false;
+			end
+		end
+
+		function tf = isUndirected(obj)
+			import sbfsem.core.StructureTypes;
+
+			if ismember(obj,...
+				[StructureTypes.Unknown,...
+				StructureTypes.GapJunction,...
+				StructureTypes.Desmosome,...
+				StructureTypes.Touch])
+				tf = true;
+		    else
+		    	tf = false;
+			end 
+		end
+
+		function tf = isSynapse(obj)
+			if ismember(obj,...
+				[StructureTypes.Cell,...
+				StructureTypes.Endocytosis,...
+				StructureTypes.INLIPLBoundary,...
+				StructureTypes.IPLGCLBoundary]);
+				tf = false;
+			else
+				tf = true;
+			end
+		end
 	end
 
 	methods (Static)
