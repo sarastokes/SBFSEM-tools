@@ -22,8 +22,29 @@ classdef StructureTypes
         PlaqueLikePost
 		INLIPLBoundary
 		IPLGCLBoundary
-		Endocytosis
 		Unknown
+		AnnularGapJunction
+		Axon
+		Caveola
+		CHBoundary
+		Cilium
+		Endocytosis
+		GolgiPlaque
+		GolgiNormal
+		Loop
+		Lysosome
+		Mitochondria
+		MultivesicularBody
+		NuclearFilament
+		Nucleolus
+		NeuroglialAdherens
+		OrganizedSER
+		Plaque
+		Polysomes
+		RibbonCluster
+		RibosomePatch
+		Rootlet
+		VesselAdjacency
 	end
 
 	methods
@@ -120,12 +141,28 @@ classdef StructureTypes
 				[StructureTypes.Cell,...
 				StructureTypes.Endocytosis,...
 				StructureTypes.INLIPLBoundary,...
-				StructureTypes.IPLGCLBoundary]);
+				StructureTypes.IPLGCLBoundary,...
+                StructureTypes.CHBoundary,...
+				StructureTypes.Cilium,...
+				StructureTypes.Plaque,...
+                StructureTypes.MultivesicularBody,...
+                StructureTypes.RibosomePatch])
 				tf = false;
 			else
 				tf = true;
 			end
-		end
+        end
+        
+        function tf = isBoundaryMarker(obj)
+            if ismember(obj,...
+                [StructureTypes.CHBoundary,...
+                StructureTypes.INLIPLBoundary,...
+                StructureTypes.GCLIPLBoundary])
+                tf = true;
+            else
+                tf = false;
+            end
+        end
 	end
 
 	methods (Static)
@@ -186,11 +223,53 @@ classdef StructureTypes
 				case VikingStructureTypes.CisternPre
 					obj = StructureTypes.CisternPre;
 				case VikingStructureTypes.CisternPost
-					obj = StructureTypes.Unknown;
-				case VikingStructureTypes.Endocytosis
+					obj = StructureTypes.CisternPost;
+                case VikingStructureTypes.AnnularGapJunction
+                    obj = StructureTypes.AnnularGapJunction;
+                case VikingStructureTypes.Axon
+                    obj = StructureTypes.Axon;
+                case VikingStructureTypes.Caveola
+                    obj = StructureTypes.Caveola;
+                case VikingStructureTypes.CHBoundary
+                    obj = StructureTypes.CHBoundary;
+				case VikingStructureTypes.Cilium
+					obj = StructureTypes.Cilium;
+                case VikingStructureTypes.Endocytosis
 					obj = StructureTypes.Endocytosis;
+                case VikingStructureTypes.GolgiPlaque
+                    obj = StructureTypes.GolgiPlaque;
+                case VikingStructureTypes.GolgiNormal
+                    obj = StructureTypes.GolgiNormal;
+                case VikingStructureTypes.Loop
+                    obj = StructureTypes.Loop;
+                case VikingStructureTypes.Lysosome
+                    obj = StructureTypes.Lysosome;
+                case VikingStructureTypes.Mitochondria
+                    obj = StructureTypes.Mitochondria;
+                case VikingStructureTypes.MultivesicularBody
+                    obj = StructureTypes.MultivesicularBody;
+                case VikingStructureTypes.NuclearFilament
+                    obj = StructureTypes.NuclearFilament;
+                case VikingStructureTypes.Nucleolus
+                    obj = StructureTypes.Nucleoulus;
+                case VikingStructureTypes.NeuroglialAdherens
+                    obj = StructureTypes.NeuroglialAdherens;
+                case VikingStructureTypes.OrganizedSER
+                    obj = StructureTypes.OrangizedSER;
+				case VikingStructureTypes.Plaque
+					obj = StructureTypes.Plaque;
+                case VikingStructureTypes.Polysomes
+                    obj = StructureTypes.Polysomes;
+                case VikingStructureTypes.RibbonCluster
+                    obj = StructureTypes.RibbonCluster;
+                case VikingStructureTypes.RibosomePatch
+                    obj = StructureTypes.RibosomePatch;
+                case VikingStructureTypes.Rootlet
+                    obj = StructureTypes.Rootlet;
 				case VikingStructureTypes.Unknown
 					obj = StructureTypes.Unknown;
+                case VikingStructureTypes.VesselAdjacency
+                    obj = StructureTypes.VesselAdjacency;
 			end
 		end
 	end

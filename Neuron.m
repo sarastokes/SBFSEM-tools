@@ -683,7 +683,9 @@ classdef Neuron < handle
                 end
                 obj.synapses.LocalName = vertcat(localNames{:});
                 % Make sure synapses match the new naming conventions
-                makeConsistent(obj);
+                if ~strcmp(obj.source, 'RC1')
+                    makeConsistent(obj);
+                end
             end                         
         end
     end

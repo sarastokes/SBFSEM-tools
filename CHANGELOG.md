@@ -1,7 +1,11 @@
 # Changelog
 
+### 1Mar2018
+- Added Viking synapse markers used in RC1 to +sbfsem/+core/StructureTypes.m
+
 ### 28Feb2018
 - Updates to synapseSphere.m and a tutorial on how to add synapses to renders (in new tutorial folder).
+- Fixed Matlab version compatibility issues with segmentColorROI.m
 
 ### 25Feb2018
 - Beginnings of a Network OData class.. currently just a function for 1 degree networks (getStructureLinks.m)
