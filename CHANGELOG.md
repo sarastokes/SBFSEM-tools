@@ -1,5 +1,9 @@
 # Changelog
 
+### 4Mar2018
+- UI improvements: interactive mouse mode for 3d pan/zoom, back to Matlab's default color picker menu, which has really improved in the latest version.
+- Moved some infrequently used functions out of Neuron.m and into utility folder: util/analysis/addAnalysis.m , util/renders/getBoundingBox.m
+
 ### 1Mar2018
 - Added Viking synapse markers used in RC1 to +sbfsem/+core/StructureTypes.m
 

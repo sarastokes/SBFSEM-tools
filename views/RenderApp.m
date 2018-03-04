@@ -407,11 +407,10 @@ classdef RenderApp < handle
             end
         end
         
-        function onSetNextColor(obj, src, ~)
+        function onSetNextColor(~, src, ~)
             % ONSETNEXTCOLOR  Open UI to choose color, reflect change
-            % See also: SELECTCOLOR
             
-            newColor = selectcolor('hCaller', obj.figureHandle);
+            newColor = uisetcolor('Pick a color');
             if numel(newColor) == 3
                 set(src, 'BackgroundColor', newColor);
             end
@@ -419,15 +418,12 @@ classdef RenderApp < handle
         
         function onChangeColor(obj, ~, evt)
             % ONCHANGECOLOR  Change a render's color
-            % See also: SELECTCOLOR
-            newColor = selectcolor('hCaller', obj.figureHandle);
-            if isempty(newColor)
-                return;
+            
+            newColor = uisetcolor('Pick a color');
+            if numel(newColor) == 3
+                set(findall(obj.ax, 'Tag', evt.Source.Tag),...
+                    'FaceColor', newColor);
             end
-            % Get the target ID and neuron
-            set(findall(obj.ax, 'Tag', evt.Source.Tag),...
-                'FaceColor', newColor);
-            % TODO: set icon
         end
         
         function onOpenView(obj, src, evt)
@@ -544,6 +540,19 @@ classdef RenderApp < handle
                 % Apply to a single neuron
                 set(findall(obj.ax, 'Tag', evt.Source.Tag),...
                     'FaceAlpha', newAlpha);
+            end
+        end
+        
+        function onInteractMode(obj, src, ~)
+            % ONINTERACTMODE  Toggle mouse interactive mode
+            switch src.Label
+                case 'Turn interact mode on'
+                    set(src, 'Label', 'Turn interact mode off');
+                    interactivemouse(obj.figureHandle, 'on');
+                    
+                case 'Turn interact mode off'
+                    set(src, 'Label', 'Turn interact mode on');
+                    interactivemouse(obj.figureHandle, 'off');
             end
         end
 
@@ -824,6 +833,10 @@ classdef RenderApp < handle
                 'Callback', @obj.onExportCollada);
             uimenu(mh.export, 'Label', 'Send neurons to workspace',...
                 'Callback', @obj.onExportNeuron);
+            mh.interact = uimenu(obj.figureHandle,...
+                'Label', 'Turn interact mode on',...
+                'Tag', 'InteractMode',...
+                'Callback', @obj.onInteractMode);
             mh.help = uimenu(obj.figureHandle, 'Label', 'Help');
             uimenu(mh.help, 'Label', 'Keyboard controls',...
                 'Tag', 'navigation',...

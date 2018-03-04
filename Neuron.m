@@ -16,6 +16,11 @@ classdef Neuron < handle
 % Methods:
 %   For a complete list, see the docs or type 'methods('Neuron')'
 %
+% Methods moved to external functions:
+%   util/analysis/addAnalysis.m
+%   util/renders/getBoundingBox.m
+%   util/analysis/getIE.m
+%
 % History:
 %   14Jun2017 - SSP - created
 %   01Aug2017 - SSP - switched createUi to separate NeuronApp class
@@ -62,6 +67,7 @@ classdef Neuron < handle
     
     properties (Dependent = true, Transient = true, Hidden = true)
         somaRow % largest "cell" node's row
+        offEdges
     end
     
     properties (Constant = true, Transient = true, Hidden = true)
@@ -239,6 +245,11 @@ classdef Neuron < handle
             % This is the row associated with the largest annotation
             somaRow = find(obj.nodes.Radius == max(obj.nodes.Radius));
         end
+        
+        function offEdges = get.offEdges(obj)
+            rows = obj.nodes.OffEdge == 1;
+            offEdges = obj.nodes(rows,:).ID;
+        end
 
         function synapseNames = synapseNames(obj, toChar)
             % SYNAPSENAMES  Returns a list of synapse types
@@ -259,36 +270,6 @@ classdef Neuron < handle
             if toChar
                 synapseNames = vertcat(arrayfun(@(x) char(x),...
                     synapseNames, 'UniformOutput', false));
-            end
-        end
-
-        function boundingBox = getBoundingBox(obj, useMicrons)
-            % GETBOUNDINGBOX  Calculates extent in xy-plane 
-            %
-            % INPUTS:
-            %   useMicrons  [true]      microns or pixels     
-            % OUTPUTS:
-            %   boundingBox     [xmin ymin xmax ymax]
-            % -------------------------------------------------------------
-
-            if nargin < 2
-                useMicrons = true;
-                disp('Set units to microns');
-                xyz = obj.nodes.XYZum;
-                r = obj.nodes.Rum;
-            else
-                assert(islogical(useMicrons), 'useMicrons is t/f');
-                xyz = [obj.nodes.VolumeX, obj.nodes.VolumeY];
-                r = obj.nodes.Radius;
-            end
-            boundingBox = [min(xyz(:,1) - r), max(xyz(:,1) + r),...
-                min(xyz(:,2) - r), max(xyz(:,2) + r)];  
-
-            % Now check for closed curves
-            obj.getGeometries();
-            if ~isempty(obj.geometries)
-                disp('Including closed curves');
-                % TODO add close curve geometries
             end
         end
 
@@ -389,11 +370,9 @@ classdef Neuron < handle
             %   syn             synapse name
             %   useMicrons      true/false (default = true)
             % -------------------------------------------------------------
-
             if nargin < 3
                 useMicrons = true;
             end
-
             obj.checkSynapses();
             
             % Find the synapse structures matching synapse name
@@ -456,11 +435,11 @@ classdef Neuron < handle
         end
         
         function xyz = getDAspect(obj, ax)
-            % GETDASPECT  Scales a plot by x,y,z dimensions
+            % GETDASPECT  
+            %   Scales a plot by x,y,z dimensions
             % Optional inputs:
             %   ax      axesHandle to apply daspect
-            % ----------------------------------------------------------
-            
+            % ----------------------------------------------------------            
             xyz = obj.volumeScale/max(abs(obj.volumeScale));           
             if nargin == 2
                 assert(isa(ax, 'matlab.graphics.axis.Axes'),...
@@ -522,38 +501,6 @@ classdef Neuron < handle
                 fprintf('c%u has %u nodes, %u edges\n',... 
                     obj.ID, G.numnodes, G.numedges);
             end
-        end
-
-        function addAnalysis(obj, analysis, overwrite)
-            % ADDANALYSIS  Append or update an analysis
-            % ----------------------------------------------------------
-
-            if nargin < 3 
-                overwrite = false;
-            end
-
-            assert(isa(analysis, 'sbfsem.analysis.NeuronAnalysis'),...
-                'Input must be of class NeuronAnalysis');
-
-            % Analysis holds a reference to target neuron
-            if isprop(analysis, 'target') && ~isempty(analysis.target)
-                analysis.target = [];
-            end
-
-            if isKey(obj.analysis, analysis.DisplayName)
-                if overwrite
-                    obj.analysis(analysis.DisplayName) = analysis;
-                else
-                    fprintf('Existing %s, call fcn w/ overwrite enabled\n',... 
-                        analysis.DisplayName);
-                    return;
-                end
-                % dialog to overwrite existing
-            else
-                obj.analysis(analysis.DisplayName) = analysis;
-            end
-
-            fprintf('Added %s analysis\n', analysis.DisplayName);
         end
 
         function save(obj)

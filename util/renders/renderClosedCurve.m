@@ -126,35 +126,3 @@ function [binaryMatrix, hiso, boundingBox] = renderClosedCurve(neuron, varargin)
     hiso = volumeRender(binaryMatrix,...
         'FaceColor', faceColor,...
         'FaceAlpha', faceAlpha);
-    
-    % % Smooth the binary images to increase cohesion
-    % smoothedImages = smooth3(binaryMatrix);
-
-    % % Create the 3D structure
-    % fh = sbfsem.ui.FigureView(1);
-    % set([fh.figureHandle, fh.ax], 'Color', 'k');
-    
-    % hiso = patch(isosurface(smoothedImages),...
-    % 	'Parent', fh.ax,...
-    %     'FaceColor', faceColor,...
-    %     'EdgeColor', 'none',...
-    %     'FaceAlpha', faceAlpha,...
-    %     'Tag', sprintf('c%u', neuron.ID));
-    % isonormals(smoothedImages, hiso);
-
-    % % Set up the lighting
-    % lightangle(45,30);
-    % lightangle(225,30);
-    % lighting phong;
-    % view(3);
-
-    % set(hiso,...
-    %     'FaceLighting', 'gouraud',...
-    %     'SpecularExponent', 50,...
-    %     'SpecularColorReflectance', 0);
-
-    % % Scale axis to match volume dimensions
-    % % daspect(neuron.getDAspect);
-    % axis equal; axis tight;
-    % fh.labelXYZ();
-    % set(fh.ax, 'XColor', 'w', 'YColor', 'w', 'ZColor', 'w');
