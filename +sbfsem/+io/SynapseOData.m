@@ -1,6 +1,12 @@
 classdef SynapseOData < sbfsem.io.OData
     % SYNAPSEODATA
     %
+    % Description:
+    %   Handles OData queries for synapses (Viking's child structures)
+    %
+    % Constructor:
+    %   obj = sbfsem.io.SynapseOData(parentID, source);
+    %
     % Inputs:
     %   ID      Viking parent ID number
     %   Source  Volume name
@@ -9,7 +15,8 @@ classdef SynapseOData < sbfsem.io.OData
     %   SBFSEM.IO.ODATA, SBFSEM.IO.NEURONODATA, SBFSEM.IO.GEOMETRYODATA
     %
     % History:
-    %   3Jan2017 - SSP - moved from NeuronOData
+    %   3Jan2018 - SSP - Moved from NeuronOData
+    %   5Mar2018 - SSP - Updated for new JSON decoder
     % ---------------------------------------------------------------------
     
     properties (SetAccess = private, GetAccess = public)
@@ -101,12 +108,14 @@ classdef SynapseOData < sbfsem.io.OData
             obj.numChildren = numel(importedData.value);
             fprintf('c%u has %u child structures\n',... 
                 obj.parentID, obj.numChildren);
-            
+
             if ~isempty(importedData.value)
                 if obj.numChildren == 1
                     importedData.value.Label = {'-'};
+                    value = importedData.value;
                 end
-                data = struct2table(importedData.value);
+                value = cat(1, importedData.value{:});
+                data = struct2table(value);
                 data.Tags = obj.parseTags(data.Tags);
                 
                 if expandChild
@@ -134,8 +143,10 @@ classdef SynapseOData < sbfsem.io.OData
             
             locationURL = getODataURL(ID, obj.source, 'location');
             importedData = readOData(locationURL);
+            
             if ~isempty(importedData.value)
-                Locs = obj.processLocationData(importedData.value);
+                value = cat(1, importedData.value{:});
+                Locs = obj.processLocationData(value);
             else
                 Locs = NaN;
                 % This is important to track bc throws errors in VikingPlot

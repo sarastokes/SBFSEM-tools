@@ -45,6 +45,7 @@ classdef RenderApp < handle
         
         % UI properties
         isInverted          % Is axis color inverted
+        isInteractive       % Is the interactive mouse enabled
 
         % UI controls
         azel = [-37.5, 30];
@@ -99,6 +100,7 @@ classdef RenderApp < handle
             
             obj.volumeScale = getODataScale(obj.source);
             obj.isInverted = false;
+            obj.isInteractive = true;
             obj.xyOffset = [];
         end
     end
@@ -407,11 +409,12 @@ classdef RenderApp < handle
             end
         end
         
-        function onSetNextColor(~, src, ~)
+        function onSetNextColor(obj, src, ~)
             % ONSETNEXTCOLOR  Open UI to choose color, reflect change
+
+            newColor = selectcolor('hCaller', obj.figureHandle);
             
-            newColor = uisetcolor('Pick a color');
-            if numel(newColor) == 3
+            if ~isempty(newColor) && numel(newColor) == 3
                 set(src, 'BackgroundColor', newColor);
             end
         end
@@ -419,8 +422,9 @@ classdef RenderApp < handle
         function onChangeColor(obj, ~, evt)
             % ONCHANGECOLOR  Change a render's color
             
-            newColor = uisetcolor('Pick a color');
-            if numel(newColor) == 3
+            newColor = selectcolor('hCaller', obj.figureHandle);
+
+            if ~isempty(newColor) && numel(newColor) == 3
                 set(findall(obj.ax, 'Tag', evt.Source.Tag),...
                     'FaceColor', newColor);
             end
@@ -549,10 +553,11 @@ classdef RenderApp < handle
                 case 'Turn interact mode on'
                     set(src, 'Label', 'Turn interact mode off');
                     interactivemouse(obj.figureHandle, 'on');
-                    
+                    obj.isInteractive = true;
                 case 'Turn interact mode off'
                     set(src, 'Label', 'Turn interact mode on');
                     interactivemouse(obj.figureHandle, 'off');
+                    obj.isInteractive = false;
             end
         end
 

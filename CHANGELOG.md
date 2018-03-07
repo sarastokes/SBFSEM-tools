@@ -1,5 +1,12 @@
 # Changelog
 
+### 7Mar2018
+- New class to coordinate scale bar dimensions of exported Viking frames (+sbfsem/+image/VikingFrame.m)
+
+### 6Mar2018
+- Added a simple metric for estimating a neuron's IE ratio (util/analysis/ieRatio.m)
+- Switched JSON decoding to JSONLab, updated all OData classes
+
 ### 4Mar2018
 - UI improvements: interactive mouse mode for 3d pan/zoom, back to Matlab's default color picker menu, which has really improved in the latest version.
 - Moved some infrequently used functions out of Neuron.m and into utility folder: util/analysis/addAnalysis.m , util/renders/getBoundingBox.m

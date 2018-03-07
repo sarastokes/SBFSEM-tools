@@ -19,11 +19,13 @@ function [data, S] = xyRegistration(source, sections, visualize)
 % OUTPUT:
 %	S 		structure w/ mean, median, sd, sem, n
 %   data    table of important information for final translation
+%
 % Notes:
-%	UNITS ARE ALL IN PIXELS
+%	UNITS ARE IN PIXELS! Must be applied before the micron conversion.
 %
 % History:
 %   12Dec2017 - SSP
+%   5Mar2017 - SSP - Updated for new JSON decoder
 % -------------------------------------------------------------------------
     source = validateSource(source);
     if nargin < 3
@@ -34,7 +36,8 @@ function [data, S] = xyRegistration(source, sections, visualize)
         max(sections), min(sections));
 
     data = webread([getServiceRoot(source), str,...
-        '&$select=ID,ParentID,VolumeX,VolumeY,Z,Radius'], weboptions);
+        '&$select=ID,ParentID,VolumeX,VolumeY,Z,Radius'],...
+        getODataOptions());
 
     % Convert to a table
     T = struct2table(data.value);

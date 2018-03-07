@@ -1,11 +1,25 @@
 function volumeScale = getODataScale(source, verbose)
-	% GETODATASCALE  Get volume scaling 
-    %   Inputs:
-    %       source      volume name or abbreviation
-    %       verbose     true for full odata output
+	% GETODATASCALE
+    %
+    % Description:
+    %   Get volume scaling 
+    %
+    % Syntax:
+    %   volumeScale = getODataScale(source, verbose);
+    %
+    % Input:
+    %   source      Volume name or abbreviation
+    % Optional input:
+    %	verbose     True for full OData output (includes units)
+    %
+    % Output:
+    %   volumeScale     XYZ dimension scaling (nm/pix, nm/pix, nm/section)
 	%
-	% 1Oct2017 - SSP - modified from VikingPlot
-    % 3Nov2017 - SSP - added concise output option
+    % History:
+	%   1Oct2017 - SSP - Modified from VikingPlot
+    %   3Nov2017 - SSP - Added concise output option
+    %   5Mar2018 - SSP - New OData weboptions function
+    % ---------------------------------------------------------------------
     
     if nargin < 2
         verbose = false;
@@ -13,9 +27,7 @@ function volumeScale = getODataScale(source, verbose)
 
 	endpoint = getODataURL([], source, 'scale');
     
-	volumeScale = webread(endpoint,... 
-		'Timeout', 30,...
-		'ContentType', 'json');
+	volumeScale = webread(endpoint, getODataOptions());
     
     if ~verbose
         volumeScale = [volumeScale.X.Value,... 

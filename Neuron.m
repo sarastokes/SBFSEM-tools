@@ -6,6 +6,8 @@ classdef Neuron < handle
 %
 % Constructor:
 %   obj = Neuron(cellID, source, includeSynapses);
+%       or
+%   obj = Neuron({cellID, source, includeSynapses});
 % 
 % Inputs:
 %   cellID      Viking Structure ID (double)
@@ -22,13 +24,14 @@ classdef Neuron < handle
 %   util/analysis/getIE.m
 %
 % History:
-%   14Jun2017 - SSP - created
-%   01Aug2017 - SSP - switched createUi to separate NeuronApp class
-%   25Aug2017 - SSP - added analysis property & methods
-%   2Oct2017 - SSP - ready for odata-based import
-%   12Nov2017 - SSP - in sync with odata changes
-%   4Jan2018 - SSP - divided odata, added render method calls
+%   14Jun2017 - SSP - Created
+%   01Aug2017 - SSP - Switched createUi to separate NeuronApp class
+%   25Aug2017 - SSP - Added analysis property & methods
+%   2Oct2017  - SSP - Ready for OData-based import
+%   12Nov2017 - SSP - In sync with OData changes
+%   4Jan2018  - SSP - New OData classes, added render methods
 %   16Feb2018 - SSP - Added the omittedIDs property, applied in obj.graph()
+%   6Mar2018  - SSP - NeuronCache compatibility
 % -------------------------------------------------------------------------
     
     properties (SetAccess = private, GetAccess = public)
@@ -66,8 +69,8 @@ classdef Neuron < handle
     end
     
     properties (Dependent = true, Transient = true, Hidden = true)
-        somaRow % largest "cell" node's row
-        offEdges
+        somaRow     % Largest "cell" node's row
+        offEdges    % Unfinished branches
     end
     
     properties (Constant = true, Transient = true, Hidden = true)
@@ -88,21 +91,32 @@ classdef Neuron < handle
             %   c127 = Neuron(127, 'i');
             % -------------------------------------------------------------
 
-            % Check required inputs
+            % By default, synapses are not imported
+            obj.includeSynapses = false;
+            
+            % NeuronCache inputs a single cell, cmd line as 2-3 arguments
+            if nargin == 1 && iscell(ID)
+                source = ID{2};
+                if numel(ID) > 2
+                    validateattributes(ID{3}, {'logical'}, {});
+                    obj.includeSynapses = ID{3};
+                end
+                ID = ID{1};
+            elseif nargin == 3
+                validateattributes(includeSynapses, {'logical'}, {});
+                obj.includeSynapses = includeSynapses;
+            end
+            
             validateattributes(ID, {'numeric'}, {'numel', 1});
             source = validateSource(source);
             obj.ID = ID;
             obj.source = source;
+            fprintf('-----c%u-----\n', obj.ID);            
             
-            if nargin < 3
-                obj.includeSynapses = false;
-            else
-                obj.includeSynapses = includeSynapses;
-            end
-            
-            fprintf('-----c%u-----\n', obj.ID);
+            % XYZ volume dimensions in nm/pix, nm/pix, nm/sections
+            obj.volumeScale = getODataScale(obj.source);
 
-            obj.volumeScale = getODataScale(obj.source); %nm/pix
+            % Instantiate OData clients
             obj.ODataClient = sbfsem.io.NeuronOData(obj.ID, obj.source);
             if obj.includeSynapses
                 obj.SynapseClient = sbfsem.io.SynapseOData(obj.ID, obj.source);
@@ -111,7 +125,7 @@ classdef Neuron < handle
             end
             obj.GeometryClient = [];
             
-            % Fetch OData and parse
+            % Fetch neuron OData and parse
             obj.pull();
 
             % Search for omitted location IDs
@@ -132,7 +146,7 @@ classdef Neuron < handle
         end
 
         function getSynapses(obj)
-            % GETSYNAPSES
+            % GETSYNAPSES  Import child structures
             obj.includeSynapses = true;
 
             if isempty(obj.SynapseClient)
@@ -398,6 +412,7 @@ classdef Neuron < handle
             % 
             % Optional input:
             %   toClipboard     Copy to clipboard (default = false)
+            % ----------------------------------------------------------
             
             if nargin < 2
                 toClipboard = false;
@@ -533,6 +548,14 @@ classdef Neuron < handle
             end
             fprintf('\n-------------------\n');
         end
+        
+        function checkSynapses(obj)
+            % SYNAPSECHECK  If no synapses, import them
+            
+            if isempty(obj.synapses)
+                obj.getSynapses();
+            end
+        end
     end
 
     methods (Access = private)
@@ -556,15 +579,7 @@ classdef Neuron < handle
                 fprintf('     %u closed curve geometries\n',... 
                     height(obj.geometries));
             end
-        end
-        
-        function checkSynapses(obj)
-            % SYNAPSECHECK  If no synapses, import them
-            
-            if isempty(obj.synapses)
-                obj.getSynapses();
-            end
-        end
+        end        
         
         function nodes = setXYZum(obj, nodes)
             % SETXYZUM  Convert Viking pixels to microns

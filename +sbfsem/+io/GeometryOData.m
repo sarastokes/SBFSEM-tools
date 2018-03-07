@@ -1,10 +1,28 @@
 classdef GeometryOData < sbfsem.io.OData
-% GEOMETRYODATA  Responsible for importing Closed Curve geometry data
+% GEOMETRYODATA  
+% 
+% Description:
+%   Responsible for importing Closed Curve geometry data
 %
-% Methods:
+% Constructor:
+%   obj = GeometryOData(ID, source)
+%
+% Inputs:
+%   ID                  Neuron structure ID
+%   source              Volume name or abbreviation
+%
+% Properties:
+%   ID                  Neuron structure ID
+%   Query               OData query to get ClosedCurve data
+%   volumeScale         Volume dimensions in (nm/pix, nm/pix, nm/slice)
+%
+% Public methods:
 %   obj.pull()          Runs the query, parses the result
 %
-% 28Dec2017 - SSP
+% History:
+%   28Dec2017 - SSP
+%   5Mar2017 - SSP - Updated for new JSON decoder
+% -------------------------------------------------------------------------
     
     properties (SetAccess = private)
         ID
@@ -14,6 +32,7 @@ classdef GeometryOData < sbfsem.io.OData
     
     methods
         function obj = GeometryOData(ID, source)
+            % GEOMETRYODATA  Constructor
             obj@sbfsem.io.OData(source);
             assert(isnumeric(ID), 'ID must be numeric');
             obj.ID = ID;
@@ -28,27 +47,29 @@ classdef GeometryOData < sbfsem.io.OData
         end
         
         function geometryData = pull(obj)
+            % PULL  Run the OData query and parse results
             geometryData = obj.runQuery();
         end        
     end
     
     methods (Access = private)
         function geometries = runQuery(obj)
-            
+            % RUNQUERY  OData query for ClosedCurve data
             geometries = [];
             importedData = readOData(obj.Query);
+            value = cat(1, importedData.value{:});
             
-            for i = 1:numel(importedData.value)
+            for i = 1:numel(value)
                 % Parse OData text
                 closedCurves = obj.parseClosedCurve(...
-                    importedData.value(i).MosaicShape.Geometry.WellKnownText,...
+                    value(i).MosaicShape.Geometry.WellKnownText,...
                     obj.volumeScale);
                 % Add to geometry table
                 geometries = [geometries; table(...
-                    importedData.value(i).ID,...
-                    importedData.value(i).ParentID,...
-                    importedData.value(i).Z,...
-                    importedData.value(i).Z * obj.volumeScale(3),...
+                    value(i).ID,...
+                    value(i).ParentID,...
+                    value(i).Z,...
+                    value(i).Z * obj.volumeScale(3),...
                     {closedCurves})]; %#ok
             end
             
@@ -60,19 +81,19 @@ classdef GeometryOData < sbfsem.io.OData
     end
     
     methods (Static)
-        function [curveData, curveSpline] = parseClosedCurve(str, volumeScale)
+        function curveData = parseClosedCurve(str, volumeScale)
             % PARSECLOSEDCURVE  Convert Mosaic string to data points
             %
             %	Inputs:
             %		str             Closed curve string from OData
             %		volumeScale     XYZ scale or volume name
             %	Outputs:
-            %		curveData       Control points
-            %       curveSpline     Catmull-Rom splines
+            %		curveData       Closed curve control points
             %
             % 7Nov2017 - SSP
             % 26Dec2017 - SSP - added micron conversion
             % 28Dec2017 - SSP - moved to sbfsem.io.GeometryOData
+            % -------------------------------------------------------------
             
             if ischar(volumeScale)
                 volumeScale = validateSource(volumeScale);

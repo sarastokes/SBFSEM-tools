@@ -1,4 +1,7 @@
 function value =  validateNeuronAttributes(key, guess)
+	% VALIDATENEURONATTRIBUTES
+	%
+	% Not currently used. A collection of old validation functions
 
 	switch key
 	case 'celltype'

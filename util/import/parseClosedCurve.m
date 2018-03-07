@@ -1,10 +1,15 @@
 function curveData = parseClosedCurve(str)
-	% PARSECLOSEDCURVE  Convert Mosaic string to data points
+	% PARSECLOSEDCURVE  
+	%
+	% Description:
+	%	Convert Mosaic string to data points
 	% 
 	% Inputs: 
-	%	str 		imported odata mosaic geometry
+	%	str 		Imported odata mosaic geometry
 	%
-	% 7Nov2017 - SSP
+	% History:
+	% 	7Nov2017 - SSP
+	% ------------------------------------------------------------------
 
 	% Cut out the letter characters
 	str(isletter(str)) = [];

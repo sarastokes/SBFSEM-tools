@@ -1,5 +1,5 @@
 classdef ConeOData < sbfsem.io.OData
-%CONEODATA
+% CONEODATA
 % 
 % Description:
 %   Import cone outlines from OData
@@ -12,7 +12,8 @@ classdef ConeOData < sbfsem.io.OData
 %
 % History
 %   5Jan2018 - SSP
-%   8Feb2018 - SSP - added undefined (U) cone type
+%   8Feb2018 - SSP - Added undefined (U) cone type
+%   5Mar2018 - SSP - Updated to new JSON decoding
 % -------------------------------------------------------------------------
     properties (Constant = true, Hidden = true)
         CONES = {'LM', 'S', 'U'};
@@ -34,7 +35,8 @@ classdef ConeOData < sbfsem.io.OData
 			data = readOData([getServiceRoot(obj.source),...
 				'Structures?$filter=contains(Label, ''',...
 				coneStr, ''')&$select=ID']);
-			IDs = struct2array(data.value);
+            value = cat(1, data.value{:});
+			IDs = struct2array(value);
 		end
 	end
 end
