@@ -25,6 +25,7 @@ Work in progress: (1) A more intuitive representation of connectivity networks. 
 
 ![c6](https://github.com/sarastokes/SBFSEM-tools/blob/master/docs/c6_render.png?raw=true)
 ![renderapp](https://github.com/sarastokes/SBFSEM-tools/blob/master/docs/renderapp_hcs2.png?raw=true)
+<img src="https://github.com/sarastokes/SBFSEM-tools/blob/master/docs/renderapp_hcs2.png?raw=true" width="400">
 
    [neitz]: <http://www.neitzvision.com/>
    [viking]: <https://connectomes.utah.edu/>
