@@ -1,5 +1,17 @@
 # Changelog
 
+### 26Mar2018
+- Support for network queries, final Network structures are still under development.
+- Removed need for blank omitted id files for each volume. Now just create one if needed, using data/OMITTED_IDS_RC1.txt as an example.
+- Option to switch between SD and SEM in printStat.m
+- Fixed bug opening help menu in Render App
+
+### 20Mar2018
+- Added imagesc option to image stack family (ImageStackApp, ImageNode). Trigger this by specifying a minMax to ImageStackApp or ImageNode.show. The minMax sets the color limits (CLim) of the resulting imagesc plot.
+
+### 17Mar2018
+- Updating renders in RenderView no longer resets camera angle.
+
 ### 7Mar2018
 - New class to coordinate scale bar dimensions of exported Viking frames (+sbfsem/+image/VikingFrame.m)
 

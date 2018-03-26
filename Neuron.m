@@ -132,8 +132,7 @@ classdef Neuron < handle
             obj.omittedIDs = omitLocations(obj.ID, obj.source);
 
             % Track when the Neuron object was created
-            obj.lastModified = datestr(now);
-            
+            obj.lastModified = datestr(now);            
             fprintf('\n\n');
         end
         
@@ -376,13 +375,25 @@ classdef Neuron < handle
                 end
             end
         end
+
+        function n = getSynapseN(obj, synapseName)
+            % GETSYNAPSEN
+            % Input:
+            %   synapseName     Name of synapse to count
+            % ----------------------------------------------------------
+            obj.checkSynapses();
+            if ischar(synapseName)
+                synapseName = sbfsem.core.StructureTypes(synapseName);
+            end
+            n = nnz(obj.synapses.LocalName == synapseName);
+        end
         
         function xyz = getSynapseXYZ(obj, syn, useMicrons)
             % GETSYNAPSEXYZ  Get xyz of synapse type
             %
             % Inputs:   
-            %   syn             synapse name
-            %   useMicrons      true/false (default = true)
+            %   syn             Synapse name
+            %   useMicrons      Logical (default = true)
             % -------------------------------------------------------------
             if nargin < 3
                 useMicrons = true;
@@ -587,15 +598,12 @@ classdef Neuron < handle
             volX = nodes.VolumeX;
             volY = nodes.VolumeY;            
             % Apply transforms to NeitzInferiorMonkey            
-            if strcmp(obj.source, 'NeitzInferiorMonkey')                            
-                if obj.USETRANSFORM
-                    % disp('Applying XY transform...');
-                    xyDir = [fileparts(mfilename('fullpath')), '\data'];
-                    xydata = dlmread([xyDir,...
-                        '\XY_OFFSET_NEITZINFERIORMONKEY.txt']);
-                    volX = nodes.VolumeX + xydata(nodes.Z,2);
-                    volY = nodes.VolumeY + xydata(nodes.Z,3);
-                end                            
+            if strcmp(obj.source, 'NeitzInferiorMonkey') && obj.USETRANSFORM
+                xyDir = [fileparts(mfilename('fullpath')), '\data'];
+                xydata = dlmread([xyDir,...
+                    '\XY_OFFSET_NEITZINFERIORMONKEY.txt']);
+                volX = nodes.VolumeX + xydata(nodes.Z,2);
+                volY = nodes.VolumeY + xydata(nodes.Z,3);                           
             end
 
             % Create an XYZ in microns column

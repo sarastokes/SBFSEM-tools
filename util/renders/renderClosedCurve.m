@@ -25,12 +25,15 @@ function [binaryMatrix, hiso, boundingBox] = renderClosedCurve(neuron, varargin)
     %   binaryMatrix    the binary matrix used to generate the render
     %   h               handle to 3D Patch object
     %
-    % 9Nov2017 - SSP
+    % History:
+    %   9Nov2017 - SSP
+    % ---------------------------------------------------------------------
 
     assert(isa(neuron, 'Neuron'), 'Input Neuron object');
 
     % Parse additional inputs
     ip = inputParser();
+    ip.CaseSensitive = false;
     addParameter(ip, 'update', false, @islogical);
     addParameter(ip, 'color', [0.7, 0.7, 0.7],...
         @(x) isvector(x) || ischar(x));

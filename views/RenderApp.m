@@ -138,27 +138,7 @@ classdef RenderApp < handle
                 obj.statusUpdate();
                 % Update the plot after each neuron imports
                 drawnow;
-            end
-            
-            function hasOffset = checkOffset(obj)
-                % CHECKOFFSET  Determine whether to load xyoffset data
-                
-                hasOffset = false;
-                
-                if isempty(obj.xyOffset)
-                    if strcmp(obj.source, 'NeitzInferiorMonkey')
-                        dataDir = fileparts(mfilename('fullpath'));
-                        offsetPath = [dataDir, filesep,'XY_OFFSET_',... 
-                            upper(obj.source), '.txt'];
-                        obj.xyOffset = dlmread(offsetPath);
-                        hasOffset = true;
-                    end
-                else % Determine whether xyOffset is valid
-                    if ~isnan(obj.xyOffset)
-                        hasOffset = true;
-                    end
-                end
-            end                
+            end        
         end
         
         function onKeyPress(obj, ~, eventdata)
@@ -167,7 +147,7 @@ classdef RenderApp < handle
             % See also: AXDRAG
             switch eventdata.Character
                 case 'h' % help menu
-                    obj.openHelpDlg('navigation');
+                    helpdlg(obj.getInstructions, 'Navigation Instructions');
                 case 28 % Rotate (azimuth -)
                     obj.azel(1) = obj.azel(1) - 5;
                 case 30 % Rotate (elevation -)
@@ -223,16 +203,23 @@ classdef RenderApp < handle
                     posViking = posMicrons./um2pix; % pix
                     
                     % Reverse the xyOffset applied on Neuron creation
-                    hasOffset = obj.checkOffset();                 
-                    if hasOffset
-                        posViking(1:2) = obj.xyOffset(posViking(3), 1:2);
-                    end
+                    if strcmp(obj.source, 'NeitzInferiorMonkey')
+                        if isempty(obj.xyOffset)
+                            dataDir = fileparts(fileparts(mfilename('fullpath')));
+                            offsetPath = [dataDir,filesep,'data',filesep,...
+                                'XY_OFFSET_', upper(obj.source), '.txt'];
+                            obj.xyOffset = dlmread(offsetPath);
+                        end
+                        posViking(3) = round(posViking(3));
+                        appliedOffset = obj.xyOffset(posViking(3), 1:2);
+                        posViking(1:2) = posViking(1:2) - appliedOffset;
+                    end      
                     
                     % Format to copy into Viking
                     locationStr = obj.formatCoordinates(posViking);
                     clipboard('copy', locationStr);
                     fprintf('Copied to clipboard:\n %s\n', locationStr);
-                otherwise
+                otherwise % Unregistered key press
                     return;
             end
             view(obj.ax, obj.azel);
@@ -469,9 +456,13 @@ classdef RenderApp < handle
         function onUpdateNeuron(obj, ~, evt)
             % ONUPDATENEURON  Update the underlying OData and render
             
+            % Save the view azimuth and elevation
+            [az, el] = view(obj.ax);
+            
             % Get the target ID and neuron
             ID = obj.tag2id(evt.Source.Tag);
             neuron = obj.neurons(num2str(ID));
+            
             % Update the OData and the 3D model
             obj.statusUpdate('Updating OData');
             neuron.update();
@@ -483,6 +474,7 @@ classdef RenderApp < handle
             delete(patches);
             obj.statusUpdate('Updating render');
             neuron.render('ax', obj.ax, 'FaceColor', oldColor);
+            view(obj.ax, az, el);
             obj.statusUpdate();
         end
         

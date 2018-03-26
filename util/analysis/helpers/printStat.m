@@ -1,4 +1,4 @@
-function varargout = printStat(vec, showN)
+function varargout = printStat(vec, useSD, showN)
 	% PRINTSTAT  
     %
     % Description:
@@ -7,7 +7,8 @@ function varargout = printStat(vec, showN)
 	% Input:
 	%	vec 		Data (vector, or matrix with rows = separate data)
     % Optional input:
-	%	showN		Include N (default = true)
+	%	useSD		Use SD instead of SEM (default = false)
+    %   showN       Include the number of samples (default = true)
     %
     % Output:
     %   stats       Char printed to the cmd line
@@ -17,16 +18,28 @@ function varargout = printStat(vec, showN)
     %   18Jan2018 - SSP - changed default N, output options
     % ---------------------------------------------------------------------
 
-	if nargin < 2
-		showN = true;
+    if nargin < 2 || isempty(useSD)
+        useSD = false;
+    end
+    
+    if nargin < 3
+        showN = true;
     end
     
     for i = 1:size(vec, 1)
-        str = sprintf('%.3f +- %.3f', mean(vec(i,:)), sem(vec(i,:)));
-        if showN
-            str = [str, sprintf(' (n=%u)', numel(vec(i,:)))];
+        template = '%.3f +- %.3f';
+        
+        if useSD
+            str = sprintf(template, mean(vec(i,:)), std(vec(i,:)));
+        else
+            str = sprintf(template, mean(vec(i,:)), sem(vec(i,:)));
         end
-        fprintf([str '\n']);
+
+        if showN
+            fprintf([str, sprintf(' (n=%u)', numel(vec(i,:))), '\n']);
+        else
+            fprintf([str, '\n']);
+        end
     end
     
     if nargout > 0

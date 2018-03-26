@@ -25,7 +25,8 @@ function locIDs = omitLocations(cellID, source)
 	%
 	% History:
 	%	16Feb2018 - SSP
-	%-------------------------------------------------------------------
+    %   13Mar2018 - SSP - Added check for whether omitted IDs file exists
+	% ---------------------------------------------------------------------
 
 	assert(isnumeric(cellID), 'Cell ID must be a number');
 	source = validateSource(source);
@@ -33,16 +34,11 @@ function locIDs = omitLocations(cellID, source)
 	dataDir = [fileparts(fileparts(fileparts(mfilename('fullpath')))),...
         filesep, 'data', filesep];
 
-    try
+    if exist([dataDir, 'OMITTED_IDS_', upper(source), '.txt'], 'file')
     	data = dlmread([dataDir, 'OMITTED_IDS_', upper(source), '.txt']);
-    catch 
-        % No location IDs in the OMITTED_IDS file
-        data = [];
-    end
-    
-	if isempty(data)
-		locIDs = [];
-	else
-		cellMatches = data(:, 1) == cellID;
+        cellMatches = data(:, 1) == cellID;
 		locIDs = data(cellMatches, 2);
-	end
+    else
+        % Volume doesn't have omitted IDs file
+        locIDs = [];
+    end

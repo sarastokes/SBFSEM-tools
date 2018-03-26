@@ -10,9 +10,12 @@ function h = volumeRender(vol, varargin)
     %   FaceColor           Color of render
     %   FaceAlpha           Transparency (0-1)
     %   doSmooth            Whether to smooth volume
+    % Output:
+    %   h                   Patch handle
     %
     % History:
     %   4Jan2017 - SSP - Separated from closed curve render code
+    %   24Mar2018 - SSP - Added patch handle output
 	% ---------------------------------------------------------------------
 
 	ip = inputParser();

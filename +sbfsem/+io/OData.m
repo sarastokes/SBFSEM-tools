@@ -93,10 +93,29 @@ classdef OData < handle
             %   vitread     Direction (t/f), empty for both
             
             str = [getServiceRoot(obj.source),...
-                '/Locations(' num2str(ID) ')',...
+                'Locations(' num2str(ID) ')',...
                 '&$expand=LocationLinksA'];
             
             data = webread(str, obj.webOpt);
+        end
+
+        function data = getLastAnnotations(obj, ID, numAnnotations)
+            % GETLASTANNOTATIONS
+            % Input:
+            %   ID                  StructureID
+            % Optional input:
+            %   numAnnotations      Number to return (default = 1)
+
+            if nargin < 3
+                numAnnotations = 1;
+            end
+            
+            str = [getServiceRoot(obj.source),...
+                'Structures(' num2str(ID) ')/Locations',...
+                '?$orderby=LastModified desc ',...
+                '&$top=', num2str(numAnnotations)];
+            data = webread(str, obj.webOpt);
+            data = cat(1, data.value{:});
         end
 	end
 
