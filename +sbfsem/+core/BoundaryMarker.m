@@ -13,7 +13,7 @@ classdef (Abstract) BoundaryMarker < handle
     % Methods:
     %   obj.update();
     %   obj.doAnalysis();
-    %   obj.plot(addDataMarkers);
+    %   obj.plot(varargin);
     %   obj.addToScene(ax, varargin); 
     %   obj.rmFromScene(ax);
     %
@@ -116,40 +116,35 @@ classdef (Abstract) BoundaryMarker < handle
             
             if isempty(ip.Results.ax)                
                 fh = sbfsem.ui.FigureView(1);
+                ax = fh.ax;
             else
-                h = ip.Results.ax;
-                switch class(h)
-                    case 'matlab.graphics.axis.Axes'
-                        fh = sbfsem.ui.FigureView(h.Parent);
-                    case 'matlab.ui.Figure'
-                        fh = sbfsem.ui.FigureView(h);
-                    otherwise
-                        error('Unrecognized graphics object, pass axis or figure handle');
-                end
+                ax = ip.Results.ax;
+                fh = get(ax, 'Parent');
             end
-            hold(fh.ax, 'on');
-            surf(fh.ax, obj.newXPts, obj.newYPts,...
+            hold(ax, 'on');
+            surf(ax, obj.newXPts, obj.newYPts,...
                 obj.interpolatedSurface,...
+                'FaceColor', 'interp',...
                 'FaceAlpha', 0.8,...
+                'EdgeColor', 'none',...
                 'BackFaceLighting', 'lit',...
                 'Tag', 'BoundarySurface');
-            shading(fh.ax, 'interp')
             %fh.labelXYZ();
             %fh.title('IPL Boundary Surface');
             if ip.Results.showData
-                hold(fh.ax, 'on');
+                hold(ax, 'on');
                 if strcmp(obj.units, 'microns')
                     xyz = viking2micron(obj.markerLocations, obj.source);
                 else
                     xyz = obj.markerLocations;
                 end
-                scatter3(fh.ax, xyz(:, 1), xyz(:, 2), xyz(:,3), 'fill');
+                scatter3(ax, xyz(:, 1), xyz(:, 2), xyz(:,3), 'fill');
             end
-            view(fh.ax, 3);
+            view(ax, 3);
             %grid(fh.ax, 'on');
-            axis(fh.ax, 'equal');
-            if isa(fh.figureHandle, 'matlab.ui.Figure')
-                set(fh.figureHandle, 'Renderer', 'painters');
+            axis(ax, 'equal');
+            if isa(fh, 'matlab.ui.Figure')
+                set(fh, 'Renderer', 'painters');
             end
         end
 
@@ -197,24 +192,33 @@ classdef (Abstract) BoundaryMarker < handle
         end
         
 		function pull(obj)
+            disp('Querying OData...');
 			data = readOData([obj.baseURL,...
 				'Structures?$filter=TypeID eq ' num2str(obj.TYPEID),... 
 				'&$select=ID']);
-			markerIDs = struct2array(data.value);
+			% markerIDs = struct2array(data.value);
+            value = cat(1, data.value{:});
+            markerIDs = vertcat(value.ID);
             xyz = [];
+            
             for i = 1:numel(markerIDs)
                 data = readOData([obj.baseURL,...
                     'Structures(', num2str(markerIDs(i)), ')',...
                     '/Locations?$select=X,Y,Z']);
-                if numel(data.value) == 1
-                    xyz = cat(1, xyz, struct2array(data.value));
-                else
-                    for j = 1:numel(data.value)
-                        xyz = cat(1, xyz, struct2array(data.value(j)));
-                    end
-                end
+                xyz = cat(1, xyz, data.value{:});
+                %if numel(data.value) == 1
+                    %xyz = cat(1, xyz, struct2array(data.value));
+                    
+                %else
+                    %for j = 1:numel(data.value)
+                    %    xyz = cat(1, xyz, struct2array(data.value(j)));
+                    %end
+                %end
             end
-            obj.markerLocations = xyz;
+            obj.markerLocations = [...
+                vertcat(xyz.X),...
+                vertcat(xyz.Y),...
+                vertcat(xyz.Z)];
 			obj.queryDate = datestr(now);
         end   
     end
