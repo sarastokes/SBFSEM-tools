@@ -1,5 +1,12 @@
 # Changelog
 
+### 1Apr2018
+- Long overdue testing framework 
+- Fixed bug in Neuron/getSomaID
+
+### 29Mar2018
+- Fixed compatibility issues with BoundaryMarker classes
+
 ### 26Mar2018
 - Support for network queries, final Network structures are still under development.
 - Removed need for blank omitted id files for each volume. Now just create one if needed, using data/OMITTED_IDS_RC1.txt as an example.

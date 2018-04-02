@@ -429,8 +429,9 @@ classdef Neuron < handle
                 toClipboard = false;
             end
             
-            row = strcmp(obj.nodes.ID, obj.somaNode);
-            id = obj.dataTable.LocationID(row, :);
+            id = obj.nodes{obj.somaRow, 'ID'};
+            % In case more than one node has maximum size
+            id = id(1);
 
             if toClipboard
                 clipboard('copy', id);
