@@ -191,7 +191,7 @@ classdef StructureTypes
 					end
 				case VikingStructureTypes.Postsynapse % 35
 					switch tags
-						case 'GABA'
+						case {'Conventional;GABA', 'GABA'}
 							obj = StructureTypes.GABAPost;
 						case 'Bipolar;Ribbon;Glutamate'
 							obj = StructureTypes.RibbonPost;
@@ -201,7 +201,7 @@ classdef StructureTypes
 							obj = StructureTypes.BasalTA;
 						case 'Conventional;NTA'
 							obj = StructureTypes.BasalNTA;
-						case 'Conventional;MNTA'
+						case 'Conventional;mNTA'
 							obj = StructureTypes.BasalMNTA;
 						otherwise
 							obj = StructureTypes.ConvPost;

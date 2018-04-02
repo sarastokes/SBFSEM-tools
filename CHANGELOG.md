@@ -1,5 +1,10 @@
 # Changelog
 
+### 2Apr2018
+- BoundaryMarker test and small debugging
+- Added basic synapses to NeuronTest
+- Fixed GABAPost LocalName assignment error
+
 ### 1Apr2018
 - Long overdue testing framework 
 - Fixed bug in Neuron/getSomaID

@@ -93,15 +93,14 @@ classdef (Abstract) BoundaryMarker < handle
             % Inputs:
             %   x       X-axis location (vector)
             %   y       Y-axis location (vector)
-            % -------------------------------------------------------------
-
-            assert(size(x) == size(y), 'X, Y points must be the same size');
+            % ---------------------------------------------------------
             
             % Evaluate surface at XY point
-            Vq = interp2(X, Y, obj.interpolatedSurface, x, y);            
+            Vq = interp2(obj.newXPts, obj.newYPts,...
+                obj.interpolatedSurface, x, y);            
         end
 
-        function fh = plot(obj, varargin)
+        function [fh, p] = plot(obj, varargin)
             % PLOT  
             % 
             % Optional key/value inputs:
@@ -122,15 +121,13 @@ classdef (Abstract) BoundaryMarker < handle
                 fh = get(ax, 'Parent');
             end
             hold(ax, 'on');
-            surf(ax, obj.newXPts, obj.newYPts,...
+            p = surf(ax, obj.newXPts, obj.newYPts,...
                 obj.interpolatedSurface,...
                 'FaceColor', 'interp',...
                 'FaceAlpha', 0.8,...
                 'EdgeColor', 'none',...
                 'BackFaceLighting', 'lit',...
                 'Tag', 'BoundarySurface');
-            %fh.labelXYZ();
-            %fh.title('IPL Boundary Surface');
             if ip.Results.showData
                 hold(ax, 'on');
                 if strcmp(obj.units, 'microns')
@@ -138,7 +135,8 @@ classdef (Abstract) BoundaryMarker < handle
                 else
                     xyz = obj.markerLocations;
                 end
-                scatter3(ax, xyz(:, 1), xyz(:, 2), xyz(:,3), 'fill');
+                scatter3(ax, xyz(:, 1), xyz(:, 2), xyz(:,3), 'fill',...
+                    'Tag', 'BoundaryMarker');
             end
             view(ax, 3);
             %grid(fh.ax, 'on');
@@ -233,6 +231,7 @@ classdef (Abstract) BoundaryMarker < handle
             %   ax      axes handle
             % -------------------------------------------------------------
             assert(ishandle(ax), 'Must input an axes handle');
+            delete(findall(ax, 'Tag', 'BoundarySurface'));
             delete(findall(ax, 'Tag', 'BoundaryMarker'));
         end
     end
