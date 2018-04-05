@@ -15,14 +15,42 @@ classdef NeuronTest < matlab.unittest.TestCase
 	end
 
 	methods (TestClassSetup)
-		function createNeuron(tc)
-			tc.PR = Neuron(2542, 'i');
-			tc.T1 = Neuron(7161, 'i');
-			tc.T2 = Neuron(7162, 'i', true);
+		function createNeuron(testCase)
+			testCase.PR = Neuron(2542, 'i');
+			testCase.T1 = Neuron(7161, 'i');
+			testCase.T2 = Neuron(7162, 'i', true);
 		end
 	end
 
 	methods (Test)
+        function importTest(testCase)            
+            % Try to import structure ID corresponding to a synapse
+            x = @()Neuron(7233, 'i');
+            testCase.verifyError(...
+                x, 'SBFSEM:NeuronOData:invalidTypeID',...
+                'No error thrown for creating Neuron from synapse');  
+        end
+        
+        function geometryImportTest(testCase)
+            import matlab.unittest.constraints.HasSize;
+            
+            % A structure without closed curves shouldn't have geometries
+            testCase.verifyEmpty(...
+                testCase.T1.geometries,...
+                'Geometries was not empty for Disc structure');
+            % A cell with closed curves should have geometries
+            testCase.verifyNotEmpty(...
+                testCase.PR.geometries,...
+                'No geometries imported for ClosedCurve structure');
+            
+            % Ensure geometry update doesn't duplicate
+            x = size(testCase.PR.geometries);
+            testCase.PR.getGeometries();
+            testCase.verifyThat(...
+                testCase.PR.geometries, HasSize(x),...
+                'Update geometries changed geometry table size');
+        end
+        
 		function testSomaSize(testCase)
 			import matlab.unittest.constraints.HasElementCount;
 
@@ -96,6 +124,12 @@ classdef NeuronTest < matlab.unittest.TestCase
         end
         
         function testDAspect(testCase)
+            import matlab.unittest.constraints.HasSize
+            
+            testCase.verifyThat(...
+                testCase.T1.getDAspect(),...
+                HasSize([1 3]));
+            
             testCase.verifyEqual(...
                 testCase.T1.getDAspect(), [0.0833 0.0833 1],...
                 'AbsTol', 0.01,...
@@ -103,14 +137,27 @@ classdef NeuronTest < matlab.unittest.TestCase
         end
         
         function testSynapses(testCase)
-        	import matlab.unittest.constraints.HasElementCount;
-
         	% Parent IDs
         	testCase.verifyEqual(...
         		unique(testCase.T2.synapses.ParentID),...
         		testCase.T2.ID,...
         		'All parent IDs should be the same');
-
+            
+            % Check that local name is correct class
+            testCase.assertClass(...
+                testCase.T2.synapses.LocalName,...
+                'sbfsem.core.StructureTypes',...
+                'Incorrect class type for LocalName column');
+            
+        	% Check that multiple locations are registered
+        	x = testCase.T2.synapses(testCase.T2.synapses.ID == 7243,:);
+        	testCase.verifyEqual(...
+        		x.N, 2,...
+        		'Incorrect location count - 7243');
+        end
+        
+        function testSynapseLocalName(testCase)
+            
         	% Check that the correct local name exists
         	x = testCase.T2.synapses(testCase.T2.synapses.ID == 7233,:);
         	testCase.verifyEqual(...
@@ -176,12 +223,6 @@ classdef NeuronTest < matlab.unittest.TestCase
         	testCase.verifyEqual(...
         		char(x.LocalName), 'BipConvPost',...
         		'Local name does not match tag - BipConvPost');
-
-        	% Check that multiple locations are registered
-        	x = testCase.T2.synapses(testCase.T2.synapses.ID == 7243,:);
-        	testCase.verifyEqual(...
-        		x.N, 2,...
-        		'Incorrect location count - 7243');
         end
 	end
 end

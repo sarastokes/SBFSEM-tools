@@ -29,6 +29,10 @@ classdef OData < handle
 	methods
 		function obj = OData(source)
             % ODATA  Constructor
+            if nargin == 0
+                error('SBFSEM:OData:InsufficientInput',...
+                    'Must provide a volume name or abbreviation');
+            end
 			obj.source = validateSource(source);
 			obj.baseURL = [getServerName(), '/', 'OData/'];
             obj.webOpt = getODataOptions();
@@ -78,6 +82,8 @@ classdef OData < handle
             % Input:
             %   sections        range of Z sections (vector)
             % TODO: expand links t/f option
+            % ---------------------------------------------------------
+
 			str = ['/Locations?$filter=Z le ' num2str(max(sections)),...
 				' and Z ge ', num2str(min(sections)),...
 				' and TypeCode eq 1',...
@@ -91,12 +97,40 @@ classdef OData < handle
             % Inputs:
             %   ID          The location ID
             %   vitread     Direction (t/f), empty for both
-            
+            % ---------------------------------------------------------
+
             str = [getServiceRoot(obj.source),...
                 'Locations(' num2str(ID) ')',...
                 '&$expand=LocationLinksA'];
             
             data = webread(str, obj.webOpt);
+        end
+
+        function [dates, users] = getAnnotationInfo(obj, ID)
+            % GETANNOTATIONINFO  Return annotation user data
+            %
+            % Input:
+            %   ID          Structure ID(s)
+            % Output:
+            %   dates       Last modified dates (and times if 2 outputs)
+            %   users       Usernames
+            %
+            % Use:
+            %   [dates, users] = x.getAnnotationInfo(c1.synapses.ID)
+            %   dates = x.getAnnotationInfo(7322);
+            % -------------------------------------------------------------
+            
+            dates = [];
+            users = [];
+            disp('Querying OData for annotation info...');
+            for i = 1:numel(ID)
+                str = ['Structures(' num2str(ID(i)),...
+                ')?$select=Username,LastModified'];
+                data = readOData([getServiceRoot(obj.source), str]);
+                dt = parseDateTime(data.LastModified);
+                dates = cat(1, dates, dt);
+                users = cat(1, users, {deblank(data.Username)});
+            end
         end
 
         function data = getLastAnnotations(obj, ID, numAnnotations)
@@ -105,6 +139,7 @@ classdef OData < handle
             %   ID                  StructureID
             % Optional input:
             %   numAnnotations      Number to return (default = 1)
+            % -------------------------------------------------------------
 
             if nargin < 3
                 numAnnotations = 1;

@@ -110,11 +110,10 @@ classdef SynapseOData < sbfsem.io.OData
                 obj.parentID, obj.numChildren);
 
             if ~isempty(importedData.value)
-                if obj.numChildren == 1
-                    importedData.value.Label = {'-'};
-                    value = importedData.value;
-                end
                 value = cat(1, importedData.value{:});
+                if obj.numChildren == 1
+                    value.Label = {'-'};
+                end
                 data = struct2table(value);
                 data.Tags = obj.parseTags(data.Tags);
                 

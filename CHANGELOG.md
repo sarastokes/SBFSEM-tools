@@ -1,5 +1,11 @@
 # Changelog
 
+### 4Apr2018
+- Quick Network method to get number of contacts between a Neuron and other post-synaptic neurons.
+- More testing
+- Function to parse datetime offset from OData
+- gitignore for .asv files
+
 ### 2Apr2018
 - BoundaryMarker test and small debugging
 - Added basic synapses to NeuronTest

@@ -60,8 +60,8 @@ classdef NeuronOData < sbfsem.io.OData
             vikingData = readOData(getODataURL(ID, source, 'neuron'));            
             
             if vikingData.TypeID ~= 1
-                warning('OData class only accepts TypeID = Cell');
-                return;
+                error('SBFSEM:NeuronOData:invalidTypeID',...
+                    'Structure ID was not type Cell');
             else
                 obj.vikingData = vikingData;
                 obj.ID = ID;

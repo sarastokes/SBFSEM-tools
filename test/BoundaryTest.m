@@ -1,4 +1,12 @@
 classdef BoundaryTest < matlab.unittest.TestCase
+    % BOUNDARYTEST
+    %
+    % Description:
+    %   Tests for IPL boundary marker classes
+    %
+    % History:
+    %   2Apr2018 - SSP
+    % ---------------------------------------------------------------------
     properties
         fh
         ax
@@ -53,25 +61,24 @@ classdef BoundaryTest < matlab.unittest.TestCase
             import matlab.unittest.constraints.HasElementCount;
             
             % First without the data
-            testCase.INL.plot('ax', testCase.ax);
-            
+            testCase.INL.plot('ax', testCase.ax);           
             testCase.verifyThat(...
                 testCase.ax.Children, HasElementCount(1),...
                 'Plot surface created >1 graphics object');
             
-            % Static method to remove from plot
+            % Ensure boundary surface is removed
             sbfsem.core.BoundaryMarker.deleteFromScene(testCase.ax);
-            
             testCase.verifyThat(...
                 testCase.ax.Children, IsEmpty,...
                 'Graphics objects remaining after deleted surface');
             
-            testCase.INL.plot('ax', testCase.ax, 'showData', true);
-            
+            % Add the boundary surface and data
+            testCase.INL.plot('ax', testCase.ax, 'showData', true);            
             testCase.verifyThat(...
                 testCase.ax.Children, HasElementCount(2),...
                 'Incorrect graphics object count from plot with data');
             
+            % Ensure both boundary surface and data are removed
             sbfsem.core.BoundaryMarker.deleteFromScene(testCase.ax);
             testCase.verifyThat(...
                 testCase.ax.Children, IsEmpty,...

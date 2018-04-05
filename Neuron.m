@@ -561,6 +561,10 @@ classdef Neuron < handle
             fprintf('\n-------------------\n');
         end
         
+        function addAnnotationInfo(obj)
+            
+        end
+        
         function checkSynapses(obj)
             % SYNAPSECHECK  If no synapses, import them
             
