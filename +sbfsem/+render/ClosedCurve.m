@@ -82,7 +82,7 @@ classdef ClosedCurve < sbfsem.render.RenderView
             %   fpath       File path (default = current directory)
             % -------------------------------------------------------------
             
-            if ~contains(fname, '.dae')
+            if ~mycontains(fname, '.dae')
                 fname = [fname, '.dae'];
             end
             

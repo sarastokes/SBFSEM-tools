@@ -1,5 +1,15 @@
 # Changelog
 
+### 12Apr2018
+- Created COLLADA class to organize .dae export code for better testing and consistent ui.
+
+## 10Apr2018
+- New closed curve render function. Works standalone but hasn't been incorporated into closed curve objects yet.
+- Fixed error in Neuron\getDAspect()
+- Shadow function contains.m for older Matlab versions was causing problems, renamed to mycontains.m
+- Option to specify the number of spline points for catmullRomSpline.m as 100 points was excessive for ClosedCurve renders 
+- Option to resize volume before rendering (volumeRender.m)
+
 ### 4Apr2018
 - Quick Network method to get number of contacts between a Neuron and other post-synaptic neurons.
 - More testing

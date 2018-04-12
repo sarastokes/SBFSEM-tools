@@ -28,7 +28,7 @@ function exportSceneDAE(axHandle, fName, reduceFac)
 % -------------------------------------------------------------------------
 
 % If there are no fileseps, it's just a filename
-if ~contains(fName, filesep)
+if ~mycontains(fName, filesep)
     fPath = uigetdir();
     if isempty(fPath)
         % Leave if user presses 'Cancel'

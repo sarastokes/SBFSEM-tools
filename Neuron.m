@@ -467,7 +467,8 @@ classdef Neuron < handle
             % Optional inputs:
             %   ax      axesHandle to apply daspect
             % ----------------------------------------------------------            
-            xyz = obj.volumeScale/max(abs(obj.volumeScale));           
+            % xyz = obj.volumeScale/max(abs(obj.volumeScale));  
+            xyz = max(obj.volumeScale)./obj.volumeScale;
             if nargin == 2
                 assert(isa(ax, 'matlab.graphics.axis.Axes'),...
                     'Input an axes handle');

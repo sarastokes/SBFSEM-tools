@@ -1,5 +1,27 @@
-function [x, y] = catmullRomSpline(Px, Py)
-	T = 0; N = 100;
+function [x, y] = catmullRomSpline(Px, Py, N)
+	% CATMULLROMSPLINE
+	%
+	% Description:
+	% 	Fits control points with a Catmull Rom spline.
+	%
+	% Inputs:
+	%	Px 		X points (vector)
+	%	Py 		Y points (vector)
+	%	N 		Number of spline points (integer, default = 100)
+	% Outputs:
+	%	x 		X points
+	%	y 		Y pointss
+	%
+	% History:
+	%	15Nov2017 - SSP
+	% 	10Apr2018 - SSP - option to specify # of spline points
+	% ------------------------------------------------------------------
+	if nargin == 3
+		N = ceil(N);
+	else
+		N = 100;
+	end
+	T = 0;
 	x = []; y = [];
 
 	for i = 1:length(Px)-3

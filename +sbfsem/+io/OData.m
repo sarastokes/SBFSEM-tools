@@ -36,52 +36,59 @@ classdef OData < handle
 			obj.source = validateSource(source);
 			obj.baseURL = [getServerName(), '/', 'OData/'];
             obj.webOpt = getODataOptions();
-		end
-	end
-
-	methods (Access = protected)
-        function Locs = fetchLocationData(obj, ID)
-            % FETCHLOCATIONDATA  Returns locations for neuron
-            % Inputs:
-            %   ID          Structure ID number
-
-            locationURL = getODataURL(ID, obj.source, 'location');
-            importedData = readOData(locationURL);
-            value = cat(1, importedData.value{:});
-            if ~isempty(importedData.value)
-                Locs = obj.processLocationData(value);
+        end
+        
+        function str = getURL(obj)
+            % GETURL  Returns the base URL
+            str = obj.baseURL;
+        end
+    end
+    
+    % Misc query functions
+	methods
+        function [ids, labels] = idsByLabel(obj, label, exactMatch)
+            % IDSBYLABEL
+            %
+            % Input:
+            %   Label       String to match
+            % Optional:
+            %   exactMatch  Full or partial label (default: true)
+            %
+            % Output:
+            %   ids         Structure IDs
+            %   labels      
+            % -------------------------------------------------------------
+            
+            if nargin < 3
+                exactMatch = true;
+            end
+            if exactMatch
+                str = [getServiceRoot(obj.source),...
+                    'Structures?$filter=Label eq ''' label, '''&$select=ID'];
             else
-                Locs = [];
-                % This is important to track bc throws errors in VikingPlot
-                fprintf('No locations for s%u\n', obj.ID);
+                str = [getServiceRoot(obj.source),...
+                    'Structures?$filter=contains(Label,''' label...
+                    ''')&$select=ID,Label'];
+            end
+            
+            data = webread(str, obj.webOpt);
+            
+            value = cat(1, data.value{:});
+            ids = vertcat(value.ID);
+            if nargout == 2 && ~exactMatch
+                labels = vertcat(value.Label);
+            else
+                labels = label;
             end
         end
         
-        function LocLinks = fetchLinkData(obj, ID)
-            % FETCHLINKDATA  Returns edges for given ID 
-            % Inputs:
-            %   ID          Structure ID number
-            
-            linkURL = getODataURL(ID, obj.source, 'link');
-            importedData = readOData(linkURL);
-            value = cat(1, importedData.value{:});
-            if ~isempty(importedData.value)
-                LocLinks = zeros(size(value, 1), 3);
-                LocLinks(:, 1) = repmat(ID, [size(importedData, 1), 1]);
-                LocLinks(:, 2) = vertcat(value.A);
-                LocLinks(:, 3) = vertcat(value.B);
-            else
-                LocLinks = [];
-            end
-        end		
-	end
-
-	methods
 		function data = annotationsBySection(obj, sections)
             % ANNOTATIONSBYSECTION
+            %
             % Input:
-            %   sections        range of Z sections (vector)
-            % TODO: expand links t/f option
+            %   sections        Range of Z sections (vector)
+            % Output:
+            %   data            Query result struct, not parsed
             % ---------------------------------------------------------
 
 			str = ['/Locations?$filter=Z le ' num2str(max(sections)),...
@@ -94,9 +101,13 @@ classdef OData < handle
 
 		function data = getLinkedIDs(obj, ID)
             % GETLINKEDIDS  From ID, get other linked location IDs
+            %
             % Inputs:
             %   ID          The location ID
             %   vitread     Direction (t/f), empty for both
+            % 
+            % Output:
+            %   data        Query result struct, not parsed
             % ---------------------------------------------------------
 
             str = [getServiceRoot(obj.source),...
@@ -111,6 +122,7 @@ classdef OData < handle
             %
             % Input:
             %   ID          Structure ID(s)
+            %
             % Output:
             %   dates       Last modified dates (and times if 2 outputs)
             %   users       Usernames
@@ -135,8 +147,10 @@ classdef OData < handle
 
         function data = getLastAnnotations(obj, ID, numAnnotations)
             % GETLASTANNOTATIONS
+            %
             % Input:
             %   ID                  StructureID
+            %
             % Optional input:
             %   numAnnotations      Number to return (default = 1)
             % -------------------------------------------------------------
@@ -152,7 +166,46 @@ classdef OData < handle
             data = webread(str, obj.webOpt);
             data = cat(1, data.value{:});
         end
-	end
+    end
+
+    
+	methods (Access = protected)
+        function Locs = fetchLocationData(obj, ID)
+            % FETCHLOCATIONDATA  Returns locations for neuron
+            % Inputs:
+            %   ID          Structure ID number
+
+            locationURL = getODataURL(ID, obj.source, 'location');
+            importedData = readOData(locationURL);
+            value = cat(1, importedData.value{:});
+            if ~isempty(importedData.value)
+                Locs = obj.processLocationData(value);
+            else
+                Locs = [];
+                % This is important to track bc throws errors in VikingPlot
+                fprintf('No locations for s%u\n', obj.ID);
+            end
+        end
+        
+        function LocLinks = fetchLinkData(obj, ID)
+            % FETCHLINKDATA  Returns edges for given ID 
+            %
+            % Inputs:
+            %   ID          Structure ID number
+            
+            linkURL = getODataURL(ID, obj.source, 'link');
+            importedData = readOData(linkURL);
+            value = cat(1, importedData.value{:});
+            if ~isempty(importedData.value)
+                LocLinks = zeros(size(value, 1), 3);
+                LocLinks(:, 1) = repmat(ID, [size(importedData, 1), 1]);
+                LocLinks(:, 2) = vertcat(value.A);
+                LocLinks(:, 3) = vertcat(value.B);
+            else
+                LocLinks = [];
+            end
+        end		
+    end
 
 	methods (Static = true, Access = protected)
 		function N = getEdgeHeaders()

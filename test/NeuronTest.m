@@ -23,7 +23,7 @@ classdef NeuronTest < matlab.unittest.TestCase
 	end
 
 	methods (Test)
-        function importTest(testCase)            
+        function testImport_Neuron(testCase)            
             % Try to import structure ID corresponding to a synapse
             x = @()Neuron(7233, 'i');
             testCase.verifyError(...
@@ -31,7 +31,13 @@ classdef NeuronTest < matlab.unittest.TestCase
                 'No error thrown for creating Neuron from synapse');  
         end
         
-        function geometryImportTest(testCase)
+        function testImport_volumeScale(testCase)
+            testCase.verifyEqual(...
+                testCase.T1.volumeScale, [7.5, 7.5, 90],...
+                'Volume Scale was imported incorrectly');
+        end
+        
+        function testImport_Geometry(testCase)
             import matlab.unittest.constraints.HasSize;
             
             % A structure without closed curves shouldn't have geometries
@@ -131,8 +137,7 @@ classdef NeuronTest < matlab.unittest.TestCase
                 HasSize([1 3]));
             
             testCase.verifyEqual(...
-                testCase.T1.getDAspect(), [0.0833 0.0833 1],...
-                'AbsTol', 0.01,...
+                testCase.T1.getDAspect(), [12 12 1],...
                 'XYZ dimensions are incorrect');
         end
         

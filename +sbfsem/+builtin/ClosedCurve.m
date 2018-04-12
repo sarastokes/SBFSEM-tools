@@ -29,7 +29,7 @@ classdef ClosedCurve < sbfsem.core.Annotation
     %   30Dec2017 - SSP - catmull rom splines, trace method
     % ---------------------------------------------------------------------
     
-    properties (SetAccess = private, GetAccess = public)
+    properties % (SetAccess = private, GetAccess = public)
         outline
         cutouts = cell(0,1);    % Cell array of cutouts
     end

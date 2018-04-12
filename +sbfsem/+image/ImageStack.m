@@ -42,7 +42,7 @@ classdef ImageStack < handle
                 nodes = ls(imPath);
                 omits = [];
                 for i = 1:size(nodes,1)
-                    if ~contains(nodes(i,:), '.png')
+                    if ~mycontains(nodes(i,:), '.png')
                         omits = cat(2, omits, i);
                     end
                 end
@@ -206,7 +206,7 @@ classdef ImageStack < handle
             parse(ip, varargin{:});
             
             % Get the image source file if no file path specified
-            if ~contains(fname, filesep) 
+            if ~mycontains(fname, filesep) 
                 ind = strfind(obj.head.filePath, filesep);
                 fname = [obj.head.filePath(1:ind(end)-1), filesep, fname];
             end
