@@ -24,7 +24,14 @@ function curveData = parseClosedCurve(str)
             curveStrings = strsplit(str, '),');
             for i = 1:numel(curveStrings)
                 tmp = curveStrings{i};
-                curveStrings{i} = tmp(2:end-1);
+                a = strfind(tmp, '(');
+                b = strfind(tmp, ')');
+                if ~isempty(a) && numel(a) == 1
+                    curveStrings{i} = tmp(a:end);
+                end
+                if ~isempty(b) && numel(b) == 1
+                    curveStrings{i} = tmp(1:b);
+                end
             end
         end
 		numCurves = numel(curveStrings);
@@ -36,6 +43,10 @@ function curveData = parseClosedCurve(str)
 	curveData = cell(numCurves, 1);
 
 	for i = 1:numCurves
+        % There might be an extra paren
+        if strcmp(curveStrings{i}(1), '(')
+            curveStrings{i} = curveStrings{i}(2:end);
+        end
 		% Split by commas into cell of {'x y'} values
 		xyString = strsplit(curveStrings{i}, ', ');
 		% Store the xy values in Nx2 matrix

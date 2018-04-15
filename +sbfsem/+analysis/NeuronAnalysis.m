@@ -64,7 +64,7 @@ classdef (Abstract) NeuronAnalysis < handle
             str = [datestr(now), ' - appended new ', class(newData), '\n'];
             if isstruct(newData)
                 newData = struct2table(newData);
-            else isa(newData, 'NeuronAnalysis')
+            elseif isa(newData, 'NeuronAnalysis')
                 str = [str, '\nBEGIN APPENDED LOG\n',...
                     newData.actions, 'END APPENDED LOG\n\n'];
                 newData = struct2table(newData.data);

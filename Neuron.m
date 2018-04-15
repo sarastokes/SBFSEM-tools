@@ -214,8 +214,7 @@ classdef Neuron < handle
             %   EXPORTSCENEDAE
             % -------------------------------------------------------------
             if isempty(obj.model)
-                warning('No model - use BUILD function first');
-                return;
+                obj.build();
             elseif isnumeric(obj.model) || isa(obj.model, 'sbfsem.builtin.ClosedCurve')
                 warning('Model must be a Cylinder render, use exportSceneDAE');
                 return;

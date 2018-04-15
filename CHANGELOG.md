@@ -1,19 +1,27 @@
 # Changelog
 
-### 12Apr2018
-- Created COLLADA class to organize .dae export code for better testing and consistent ui.
+### 15Apr2018
+- Fixed issue in `parseClosedCurve.m` where str2double was returning a NaN for the first X point of each curve.
+- Improved the existing explanations and figures on `cylinderRender.mlx` tutorial. Added better comments to `sbfsem.render.Cylinder.m`.
+- Pulled helper functions from `sbfsem.render.Cylinder.m` and added them to the `util` folder: `normalCircle.m`, `getAB.m` and `minimizeRot.m`.
 
-## 10Apr2018
+### 14Apr2018
+- Work on a JSON export/import option for storing Neurons. This will be used to preserve the state of the neuron/database when data was analyzed for a paper (`sbfsem.io.JSON`).
+
+### 12Apr2018
+- Created COLLADA class to organize .dae export code for better testing and consistent ui (`sbfsem.io.COLLADA`).
+
+### 10Apr2018
 - New closed curve render function. Works standalone but hasn't been incorporated into closed curve objects yet.
 - Fixed error in Neuron\getDAspect()
-- Shadow function contains.m for older Matlab versions was causing problems, renamed to mycontains.m
-- Option to specify the number of spline points for catmullRomSpline.m as 100 points was excessive for ClosedCurve renders 
-- Option to resize volume before rendering (volumeRender.m)
+- Shadow function contains.m for older Matlab versions was causing problems, renamed to `mycontains.m`
+- Option to specify the number of spline points for `catmullRomSpline.m` as 100 points was excessive for ClosedCurve renders 
+- Option to resize volume before rendering (`volumeRender.m`)
 
 ### 4Apr2018
 - Quick Network method to get number of contacts between a Neuron and other post-synaptic neurons.
 - More testing
-- Function to parse datetime offset from OData
+- Function to parse datetime offset from OData (`parseDatetime.m`)
 - gitignore for .asv files
 
 ### 2Apr2018
@@ -31,7 +39,7 @@
 ### 26Mar2018
 - Support for network queries, final Network structures are still under development.
 - Removed need for blank omitted id files for each volume. Now just create one if needed, using data/OMITTED_IDS_RC1.txt as an example.
-- Option to switch between SD and SEM in printStat.m
+- Option to switch between SD and SEM in `printStat.m`
 - Fixed bug opening help menu in Render App
 
 ### 20Mar2018
@@ -41,22 +49,22 @@
 - Updating renders in RenderView no longer resets camera angle.
 
 ### 7Mar2018
-- New class to coordinate scale bar dimensions of exported Viking frames (+sbfsem/+image/VikingFrame.m)
+- New class to coordinate scale bar dimensions of exported Viking frames (`+sbfsem/+image/VikingFrame.m`)
 
 ### 6Mar2018
-- Added a simple metric for estimating a neuron's IE ratio (util/analysis/ieRatio.m)
+- Added a simple metric for estimating a neuron's IE ratio (`util/analysis/ieRatio.m`)
 - Switched JSON decoding to JSONLab, updated all OData classes
 
 ### 4Mar2018
 - UI improvements: interactive mouse mode for 3d pan/zoom, back to Matlab's default color picker menu, which has really improved in the latest version.
-- Moved some infrequently used functions out of Neuron.m and into utility folder: util/analysis/addAnalysis.m , util/renders/getBoundingBox.m
+- Moved some infrequently used functions out of Neuron.m and into utility folder: `util/analysis/addAnalysis.m`, `util/renders/getBoundingBox.m`
 
 ### 1Mar2018
-- Added Viking synapse markers used in RC1 to +sbfsem/+core/StructureTypes.m
+- Added Viking synapse markers used in RC1 to `+sbfsem/+core/StructureTypes.m`
 
 ### 28Feb2018
-- Updates to synapseSphere.m and a tutorial on how to add synapses to renders (in new tutorial folder).
-- Fixed Matlab version compatibility issues with segmentColorROI.m
+- Updates to `synapseSphere.m` and a tutorial on how to add synapses to renders (in new tutorial folder - `tutorialSynapseRender.m`).
+- Fixed Matlab version compatibility issues with `segmentColorROI.m`
 
 ### 25Feb2018
 - Beginnings of a Network OData class.. currently just a function for 1 degree networks (getStructureLinks.m)
@@ -65,14 +73,14 @@
 - Updated Neuron/synapseIDs method to return synapse IDs (parent ID not location IDs).
 
 ### 20Feb2018
-- New 'numBins' input parameter to decide histogram bins for IPLDepth.m
-- Added missing helper function (sem.m)
+- New 'numBins' input parameter to decide histogram bins for `IPLDepth.m`
+- Added missing helper function (`sem.m`)
 
 ### 19Feb2018
 - Reorganized folders, cleaned out old code and unused libraries.
 
 ### 16Feb2018 
-- Ability to omit nodes from renders by adding them to OMITTED_NODES_VOLNAME.txt in the data folder. The first entry is the cell ID, the second is the location ID. The nodes are omitted when a graph/digraph is made of the neuron's annotations and connections.
+- Ability to omit nodes from renders by adding them to `OMITTED_NODES_VOLNAME.txt` in the data folder. The first entry is the cell ID, the second is the location ID. The nodes are omitted when a graph/digraph is made of the neuron's annotations and connections.
 - Added updateAll() and getAll() methods to sbfsem.ConeMosaic
 
 ### 15Feb2018
@@ -88,20 +96,20 @@
 
 ### 7Feb2018
 - Improved boundary renderings - can now be added and removed to scenes
-- IPL depth estimates for individual cells (iplDepth.m). This is a first pass - it looks good but there's significant room for improvement.
-- Matlab figures can be converted to sbfsem.ui.FigureView thru constructor
+- IPL depth estimates for individual cells (`iplDepth.m`). This is a first pass - it looks good but there's significant room for improvement.
+- Matlab figures can be converted to `sbfsem.ui.FigureView` thru constructor
 - Fixed issue where images exported from RenderApp all had white backgrounds.
 
 ### 6Feb2018
-- Added a sbfsem.core.BoundaryMarker subclass for IPL-GCL markers (sbfsem.core.GCLMarker).
-- Semi-transparent overlays with standard RGB values (255/0/0, 0/255/0, 0/0/255) now have defaults in segmentColorROI.m
+- Added a sbfsem.core.BoundaryMarker subclass for IPL-GCL markers (`sbfsem.core.GCLMarker.m`).
+- Semi-transparent overlays with standard RGB values (255/0/0, 0/255/0, 0/0/255) now have defaults in `segmentColorROI.m`
 
 ### 28Jan2018
-- More efficient version of clipMesh.m - deletes unused vertices now
+- More efficient version of `clipMesh.m` - deletes unused vertices now
 - Fixed some bugs with the Collada export function used outside RenderApp (exportDAE.m)
 
 ### 25Jan2018
-- New alignment function: branchRegistration. See data/NeitzInferiorMonkeyRegistration.m for more details
+- New alignment function: branchRegistration. See `data/NeitzInferiorMonkeyRegistration.m` for more details
 - Fixed issue with closed curve render XYZ scaling
 
 ### 19Jan2018

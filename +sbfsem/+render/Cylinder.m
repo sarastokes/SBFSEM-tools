@@ -303,48 +303,53 @@ classdef Cylinder < handle
     
     methods (Access = private)       
         function [FV, gencylFlag] = Line3(obj, data, radius)
-            x = data(:,1);
-            y = data(:,2);
-            z = data(:,3);
-            N = obj.CIRCLEPTS;
             
             % Flags situations where fminsearch doesn't converge. These
             % segments will then be sent to alternative rendering method.
             gencylFlag = 0;
             options = optimset('Display', 'off');
             
-            % Vertex points around each circle
-            angles=0:(360/N):359.999;
+            x = data(:,1);
+            y = data(:,2);
+            z = data(:,3);
+            
+            % Each annotation is rendered as a circle of N points/vertices
+            N = obj.CIRCLEPTS;            
+            % Location of the points, in degrees
+            angles=0:(360/N):359.999;            
+            
+            % Magnitude of the vector between the points
+            mag = sqrt((diff(x)).^2 + (diff(y)).^2 + (diff(z)).^2);
             
             % Buffer distance between two line pieces.
             bufferDist = max(radius);
-            
-            D = sqrt((diff(x)).^2 + (diff(y)).^2 + (diff(z)).^2);
-            
-            if (min(D)/2.2) < bufferDist
-                bufferDist = min(D)/2.2;
+            if (min(mag)/2.2) < bufferDist
+                bufferDist = min(mag)/2.2;
             end            
             
-            % Calculate normals
-            normal = diff(data);
-            % Keep the line point count consistent
+            % Calculate the normal by dividing the magnitude out of the
+            % distance. This leaves a unit vector for the direction
+            normal = diff(data) ./ (mag * ones(1,3));
+            
+            % Duplicate the last normal to keep the number of points
+            % consistent throughout the code
             normal = [normal; normal(end,:)];
-            
-            normal = normal ./ (sqrt(normal(:,1).^2 + normal(:,2).^2 ...
-                + normal(:,3).^2) * ones(1,3));
-            
+                        
             % Create a list to store vertex points
             FV.vertices = zeros(N * length(data), 3);
             
-            % In plane rotation of 2d circle coordinates
-            jm = 0;
+            % In plane rotation of 2d circle coordinates. The vertices
+            % on two circles are connected to create faces. This rotates
+            % the vertices on a circle so they align better with the points
+            % on a neighboring circle.
+            angleOffset = 0;
             
             % Track the number of cylinder elements
             numCylinders = 0;
             
             % Calculate the 3D circle coordinates of the first circle/cylinder
-            [a, b] = obj.getab(normal(1, :));
-            circm = obj.normalCircle(angles, jm, a, b);
+            [a, b] = getAB(normal(1, :));
+            circm = normalCircle(angles, angleOffset, a, b);
             
             % Add a half sphere at line start
             for j=5:-0.5:1
@@ -360,7 +365,7 @@ classdef Cylinder < handle
             
             % Make a 3 point circle for rotation alignment with the next
             % circle
-            circmo = obj.normalCircle([0 120 240], 0, a, b);
+            circmo = normalCircle([0 120 240], 0, a, b);
             
             % Loop through all line pieces.
             for i=1:length(data)-1
@@ -369,8 +374,8 @@ classdef Cylinder < handle
                 iNormal=normal(i,:); iData=data(i,:);
                 
                 % Calculate the 3D circle coordinates
-                [a, b] = obj.getab(iNormal);
-                circm = obj.normalCircle(angles,jm,a,b);
+                [a, b] = getAB(iNormal);
+                circm = normalCircle(angles, angleOffset, a, b);
                 
                 % Translate the circle on it's position on the line
                 circmp = circm*radius(i)...
@@ -401,21 +406,21 @@ classdef Cylinder < handle
                 % Rotate circle coordinates in plane to align with the
                 % previous circle by minimizing distance between the
                 % coordinates of two circles with 3 coordinates.
-                [a, b] = obj.getab(ijNormal);
-                [jm, ~, exitFlag] = fminsearch(...
-                    @(j) obj.minimizeRot([0 120 240], circmo, j, a, b), jm,...
-                    options);
+                [a, b] = getAB(ijNormal);
+                [angleOffset, ~, exitFlag] = fminsearch(...
+                    @(j) minimizeRot([0 120 240], circmo, j, a, b),...
+                    angleOffset, options);
                 if exitFlag == 0
                     gencylFlag = 1;
                 end
                 
                 % Keep a 3 point circle for rotation alignment with the
                 % next circle
-                [a, b] = obj.getab(ijNormal);
-                circmo = obj.normalCircle([0 120 240], jm, a, b);
+                [a, b] = getAB(ijNormal);
+                circmo = normalCircle([0 120 240], angleOffset, a, b);
                 
                 % Calculate the 3D circle coordinates
-                circm = obj.normalCircle(angles, jm, a, b);
+                circm = normalCircle(angles, angleOffset, a, b);
                 
                 % Translate the circle on it's position on the line
                 circmp = circm*radius(i+1) + ones(N,1)*(ijData);
@@ -427,17 +432,17 @@ classdef Cylinder < handle
                 % Rotate circle coordinates in plane to align with the
                 % previous circle by minimizing distance between the
                 % coordinates of two circles with 3 coordinates.
-                [a, b] = obj.getab(jNormal);                
-                [jm, ~, exitFlag] = fminsearch(...
-                    @(j) obj.minimizeRot([0, 120, 240], circmo, j, a, b), jm,...
-                    options);
+                [a, b] = getAB(jNormal);                
+                [angleOffset, ~, exitFlag] = fminsearch(...
+                    @(j) minimizeRot([0, 120, 240], circmo, j, a, b),...
+                    angleOffset, options);
                 if exitFlag == 0
                     gencylFlag = 0;
                 end
                 
                 % Keep a 3 point circle for rotation alignment with the
                 % next circle
-                circmo = obj.normalCircle([0, 120, 240], jm, a, b);
+                circmo = normalCircle([0, 120, 240], angleOffset, a, b);
             end
             
             % Add a half sphere made by 5 cylinders
@@ -466,14 +471,6 @@ classdef Cylinder < handle
                     (Fb + (i-1)*N);
             end
         end
-        
-        function [err,circm] = minimizeRot(obj, angles, circmo, angleoffset, a, b)
-            % This function calculates a distance "error", between the same
-            % coordinates in two circles on a line.
-            [circm]=obj.normalCircle(angles,angleoffset,a,b);
-            dist=(circm-circmo).^2;
-            err=sum(dist(:));
-        end
     end
     
     methods (Static)
@@ -488,32 +485,6 @@ classdef Cylinder < handle
                 numIter = 1;
             end
             [FV.vertices, FV.faces] = smoothMesh(FV.vertices, FV.faces, numIter);
-        end
-        
-        function [X, a, b] = normalCircle(angles, angleoffset, a, b)
-            % This function rotates a 2D circle in 3D to be orthogonal with
-            % a normal vector.
-            
-            % 2D circle coordinates.
-            circ=[cosd(angles+angleoffset); sind(angles+angleoffset)]';
-            
-            X = [circ(:,1).*a(1) circ(:,1).*a(2) circ(:,1).*a(3)]+...
-                [circ(:,2).*b(1) circ(:,2).*b(2) circ(:,2).*b(3)];
-        end
-        
-        function [a, b] = getab(normal)
-            % A normal vector only defines two rotations not the in plane
-            % rotation. Thus a (random) vector is needed which is not
-            % orthogonal with the normal vector.
-            randomv = [0.57745, 0.5774, 0.57735];
-
-            % Calculate 2D to 3D transform parameters
-            a = normal - randomv/(randomv*normal'); 
-            
-            a = a/sqrt(a*a');
-            
-            b = cross(normal, a); 
-            b = b / sqrt(b * b');
         end
         
         function saveDAE(filename, FV)
