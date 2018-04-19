@@ -20,24 +20,49 @@ classdef VikingFrame < handle
 %	7Mar2018 - SSP
 % ----------------------------------------------------------------------
 
+    properties (Access = private)
+        nm_per_pix
+    end
+    
 	properties (Constant = true)
-		PIX_PER_INCH = 95.9866;
-	end
-
-	methods (Static)
-		function in = um2in(microns, source)
+		PIX_PER_INCH = 0.0104; % 95.9866;
+    end
+    
+    methods
+        function obj = VikingFrame(source)
+            % VIKINGFRAME  Constructor
+            if nargin == 0
+                obj.nm_per_pix = 7.5;
+            else
+                source = validateSource(source);
+                volumeScale = getODataScale(source);
+                obj.nm_per_pix = volumeScale(1);
+            end
+        end
+        
+		function in = um2in(obj, microns, imPix, imInch)
 			% GETSCALEBAR
-			if nargin < 2
-				nm_per_pix = 7.5;
-			else
-				source = validateSource(source);
-				volumeScale = getODataScale(source);
-				% Assuming equal X and Y dimension scaling
-				nm_per_pix = volumeScale(1);
-			end
-			um_per_pix = nm_per_pix/1e3;
+            % 
+            % Input:
+            %   microns
+            % Optional input:
+            %   imPix       Pixels on height/width of exported image 
+            %               Default = 2500
+            %   imInch      Inches on height/width when placed into Adobe
+            %               Illustrator. Default = 26.0453.
+	
+            % Convert from nm/pix to um/pix
+			um_per_pix = obj.nm_per_pix/1e3;
+            % Get the scale bar size in pixels
 			pix = microns / um_per_pix;
-			in = pix / sbfsem.image.VikingFrame.PIX_PER_INCH;			
+            
+            if nargin < 3
+                pix2in = obj.PIX_PER_INCH;
+                disp('VikingFrame - assuming 2500 pixels and 26.0453 in')
+            else
+                pix2in = imInch/imPix;
+            end
+			in = pix * pix2in;
 		end
 	end
 end
