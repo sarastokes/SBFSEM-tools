@@ -2,21 +2,21 @@
 
 SBFSEM-tools is a Matlab toolbox developed for serial EM data and connectomics in the Neitz Lab at University of Washington. While SBFSEM-tools was built around the Viking annotation software, many aspects are quite general and may apply easily to other programs and imaging methods.
 
-SBFSEM-tools imports annotation data through Viking's OData service and parses the results into Matlab data types. This happens behind the scenes so users can work with familiar objects (neuron, synapse, etc). Other features include:
-- Single neuron analysis: dendritic field area, dendrite diameter, soma size, stratification, synapse distribution
-- Group analysis: density recovery profile, nearest neighbor, synapse statistics
-- Efficent 3D rendering of neurons, support for generating high-resolution, publication-quality images:
+SBFSEM-tools provides Matlab support for accessing th connectome annotation database API. Annotation data through Viking's OData service and parsed into Matlab data types. This is abstracted so users can work with familiar objects (neuron, synapse, etc). SBFSEM-tools provides a framework to support data mining and user-defined analysis as well as user interfaces to avoid programming entirely. 
+
+Key features:
+- Efficent, accurate 3D rendering of neurons:
   - Volume rendering of Closed Curve annotations
   - Polygon meshes from Disc annotations
   - Segmentation and volume rendering of free-form traces over a stack of EM images. 
-  - Support for generating high resolution, publication quality images
-  - Export 3D models to use in programs like Blender
+- Standard analysis routines for both single neurons and networks.
 - Image registration: surfaces from IPL boundary markers, XY offset calculations.
-- Misc UIs for visualizing renders, EM images and annotations
+- Support for generating high resolution, publication quality images
+- Export 3D models to use in programs like Blender
 
-See the tutorials and documentation for the most up to date information. 
+See the documentation for more information. 
 
-Work in progress: (1) A more intuitive representation of connectivity networks. (2) A more generalized framework for OData queries (in the meantime, contact me for a [Postman][postman] collection with common queries). (3) SWC export and support for biophysical models.
+Work in progress: (1) A more intuitive representation of connectivity networks. (2) A more generalized framework for OData queries (in the meantime, contact us if you would like a [Postman][postman] collection explaining common queries). (3) SWC export and support for biophysical models.
 
 ##### More information:
 * [Viking][viking] annotation software

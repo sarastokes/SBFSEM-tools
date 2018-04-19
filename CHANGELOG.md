@@ -1,5 +1,9 @@
 # Changelog
 
+### 18Apr2018
+- Cleaned up the `util/analysis` folder and checked `Tutorial.m`
+- Data export through `sbfsem.io.JSON` works, volume metadata is still undefined.
+
 ### 15Apr2018
 - Fixed issue in `parseClosedCurve.m` where str2double was returning a NaN for the first X point of each curve.
 - Improved the existing explanations and figures on `cylinderRender.mlx` tutorial. Added better comments to `sbfsem.render.Cylinder.m`.

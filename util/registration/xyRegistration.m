@@ -38,9 +38,10 @@ function [data, S] = xyRegistration(source, sections, visualize)
     data = webread([getServiceRoot(source), str,...
         '&$select=ID,ParentID,VolumeX,VolumeY,Z,Radius'],...
         getODataOptions());
+    value = cat(1, data.value{:});
 
     % Convert to a table
-    T = struct2table(data.value);
+    T = struct2table(value);
     T.Properties.VariableNames = {'ID', 'ParentID', 'X', 'Y', 'Z', 'Radius'};
 
     % Catch false annotations with X/Y=0

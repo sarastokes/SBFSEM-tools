@@ -194,7 +194,6 @@ classdef (Abstract) BoundaryMarker < handle
 			data = readOData([obj.baseURL,...
 				'Structures?$filter=TypeID eq ' num2str(obj.TYPEID),... 
 				'&$select=ID']);
-			% markerIDs = struct2array(data.value);
             value = cat(1, data.value{:});
             markerIDs = vertcat(value.ID);
             xyz = [];

@@ -29,7 +29,6 @@ function h = volumeRender(vol, varargin)
 	addParameter(ip, 'Tag', 'volRender', @ischar);
 	addParameter(ip, 'doSmooth', true, @islogical);
 	addParameter(ip, 'resize', 1, @isnumeric);
-    addParameter(ip, 'Tag', 'volRender', @ischar);
 	parse(ip, varargin{:});
     
     resizeFac = ip.Results.resize;

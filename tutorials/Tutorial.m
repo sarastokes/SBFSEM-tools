@@ -188,7 +188,7 @@ inl.doAnalysis();
 % Plot the surface:
 plot(inl);
 % To see the surface with the raw data
-plot(inl, true);
+plot(inl, 'showData', true);
 
 % You can alsow increase the surface resolution (default=100 points)
 inl.doAnalysis(500);
@@ -244,6 +244,7 @@ a.plot();
 a = DendriticFieldHull(c4568);
 a.plot();
 
+%% Neuron Analysis class part 2
 % The 2nd cell has an axon that should be excluded from analysis.
 a = DendriticFieldHull(c28);
 a.plot();

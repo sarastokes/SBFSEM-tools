@@ -502,7 +502,7 @@ classdef Neuron < handle
 
             if ip.Results.directed
                 G = digraph(cellstr(num2str(obj.edges.A(edge_rows,:))),...
-                    cellstr(num2str(obj.edges.B(edge_rows,:))));
+                    cellstr(deblank(num2str(obj.edges.B(edge_rows,:)))));
             else
                 G = graph(cellstr(num2str(obj.edges.A(edge_rows,:))),...
                     cellstr(num2str(obj.edges.B(edge_rows,:))));
@@ -560,11 +560,7 @@ classdef Neuron < handle
             end
             fprintf('\n-------------------\n');
         end
-        
-        function addAnnotationInfo(obj)
-            
-        end
-        
+               
         function checkSynapses(obj)
             % SYNAPSECHECK  If no synapses, import them
             
