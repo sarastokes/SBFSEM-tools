@@ -519,14 +519,11 @@ classdef Neuron < handle
 
             % Remove any omitted nodes from the graph
             if ~isempty(obj.omittedIDs)
-                fprintf('c%u has %u nodes, %u edges\n',... 
-                    obj.ID, G.numnodes, G.numedges);
                 for i = 1:numel(obj.omittedIDs)
                     G = G.rmnode(find(nodeIDs == (obj.omittedIDs(i))'));
                     nodeIDs = str2double(G.Nodes{:,:});
                 end
-                fprintf('c%u has %u nodes, %u edges\n',... 
-                    obj.ID, G.numnodes, G.numedges);
+                fprintf('Omitted %u locations\n', numel(obj.omittedIDs));
             end
         end
 
