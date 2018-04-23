@@ -231,16 +231,20 @@ classdef SynapseOData < sbfsem.io.OData
                 if ~isempty(x{i}) && numel(x{i}) > 1 && ~strcmp(x{i}, '-')
                     tag = x{i};
                     str = [];
-                    % Tags are inside quotes
+                    % Standard tags are inside quotes
                     ind = strfind(tag, '"');
-                    % Each column is a beginning and ending quote
-                    ind = reshape(ind, 2, numel(ind)/2);
-                    for j = 1:numel(ind)/2
-                        % Get the string inside each set of quotes
-                        str = [str, tag(ind(1,j)+1:ind(2,j)-1), ';']; %#ok<AGROW>
+                    if ~isempty(ind)
+                        % Each column is a beginning and ending quote
+                        ind = reshape(ind, 2, numel(ind)/2);
+                        for j = 1:numel(ind)/2
+                            % Get the string inside each set of quotes
+                            str = [str, tag(ind(1,j)+1:ind(2,j)-1), ';']; %#ok<AGROW>
+                        end
+                        % Remove the last semicolon
+                        str = str(1:end-1);
+                    else
+                        str = cell(1,1);
                     end
-                    % Remove the last semicolon
-                    str = str(1:end-1);
                 else
                     str = cell(1,1);
                 end

@@ -166,6 +166,29 @@ classdef OData < handle
             data = webread(str, obj.webOpt);
             data = cat(1, data.value{:});
         end
+        
+        function data = getUserLastAnnotations(obj, username, numAnnotations)
+            % GETUSERLASTANNOTATIONS
+            %
+            % Input:
+            %   username
+            %
+            % Optional input:
+            %   numAnnotations      Number to return (default = 1)
+            % -------------------------------------------------------------
+            
+            if nargin < 3
+                numAnnotations = 1;
+            end
+            
+            str = [getServiceRoot(obj.source),...
+                'Locations?$filter=Username eq ''',...
+                username, '''&$orderby=LastModified desc ',...
+                '&$select=LastModified,ID,ParentID,TypeCode',...
+                '&$top=', num2str(numAnnotations)];
+            data = webread(str, obj.webOpt);
+            data = cat(1, data.value{:});
+        end
     end
 
     

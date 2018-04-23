@@ -16,7 +16,7 @@ classdef Cylinder < handle
     %
     %
     % Methods:
-    %   obj.render('ax', axHandle, 'facecolor', 'b'); 
+    %   obj.render('ax', axHandle, 'FaceColor', 'b'); 
     %   FV = condense(obj);
     %   fh = plot(obj); 
     %   obj.dae();
@@ -38,7 +38,7 @@ classdef Cylinder < handle
         % Render in a new figure
         r1411.render();
         % Add to existing figure
-        r1441.render('ax', gca, 'facecolor', [0.8 0.5 0]);
+        r1441.render('ax', gca, 'FaceColor', [0.8 0.5 0]);
         % Export both to COLLADA .dae files
         dae(r1411); dae(r1441);
     %}
@@ -135,19 +135,21 @@ classdef Cylinder < handle
             %
             % Optional key/value inputs:
             %   ax              Existing axis handle (default = new figure)
-            %   facecolor       Color for render faces
+            %   FaceColor       Color for render faces
             %   useSegments     Render as a single patch
             %   reduce          Apply patch face reduction
 
             ip = inputParser();
             ip.CaseSensitive = false;
-            addParameter(ip, 'faceColor', [0.5 0 0.8],...
+            addParameter(ip, 'FaceColor', [0.5 0 0.8],...
                 @(x) isvector(x) || ischar(x));
+            addParameter(ip, 'FaceAlpha', 1, @isnumeric);
             addParameter(ip, 'ax', [], @ishandle);
             addParameter(ip, 'useSegments', false, @islogical);
             addParameter(ip, 'reduce', false, @islogical);
             parse(ip, varargin{:});
-            faceColor = ip.Results.faceColor;
+            FaceColor = ip.Results.FaceColor;
+            FaceAlpha = ip.Results.FaceAlpha;
             
             if obj.reduceFac == 1
                 doReduction = false;
@@ -171,7 +173,8 @@ classdef Cylinder < handle
             if ip.Results.useSegments
                 for i = 1:numel(obj.FV)
                     p = patch(obj.FV{i},...
-                        'FaceColor', faceColor,...
+                        'FaceColor', FaceColor,...
+                        'FaceAlpha', FaceAlpha,...
                         'EdgeColor', 'none',...
                         'Tag', sprintf('c%u', obj.ID),...
                         'Parent', ax);
@@ -185,7 +188,8 @@ classdef Cylinder < handle
                     meshFV = obj.smooth(meshFV, obj.smoothIter);
                 end
                 p = patch(meshFV,...
-                    'FaceColor', faceColor,...
+                    'FaceColor', FaceColor,...
+                    'FaceAlpha', FaceAlpha,...
                     'EdgeColor', 'none',...
                     'Tag', sprintf('c%u', obj.ID),...
                     'Parent', ax);

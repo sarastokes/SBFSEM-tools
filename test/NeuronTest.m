@@ -1,8 +1,6 @@
 classdef NeuronTest < matlab.unittest.TestCase
 % NEURONTEST
 %
-% Description:
-%   Long overdue testing framework. Work in progress
 %
 % History:
 %   30Mar2018 - SSP
