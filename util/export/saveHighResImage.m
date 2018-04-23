@@ -1,4 +1,4 @@
-function saveHighResImage(fh, fpath, fname)
+function saveHighResImage(fh, filePath, fileName)
 	% SAVEHIGHRESIMAGE
 	%
 	% Inputs:
