@@ -1,5 +1,24 @@
 # Changelog
 
+### 27Apr2018
+- Debugged `branchRegistration.m` and added several sections to NeitzInferiorMonkey's xy offset file.
+- Expanded `hideAxes.m` to take figure inputs, apply to multiple axes in one figure and to show hidden axes.
+
+### 24Apr2018
+- Fixed bug caused by single child structure having an empty Tags field (`+sbfsem/+io/SynapseOData.m`)
+- More progress on cylinder render tutorial (`cylinderRender.mlx`)
+
+### 23Apr2018
+- Added FaceAlpha argument to render functions, temporarily. New Material code will eventually replace this (`sbfsem.render.Material.m`).
+- Fixed an RC1 import bug caused by tags without quotes
+- Added preliminary cache support (`util/CacheNeuron`);
+
+### 20Apr2018
+- Added to `data/OMITTED_IDS_RC1.txt`: 2 locations for c476, 1 for c5542.
+
+### 19Apr2018
+- Made `sbfsem.image.VikingFrame` user-friendly and wrote a tutorial, `tutorial_ImageScaleBar.m`
+
 ### 18Apr2018
 - Cleaned up the `util/analysis` folder and checked `Tutorial.m`
 - Data export through `sbfsem.io.JSON` works, volume metadata is still undefined.

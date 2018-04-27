@@ -28,14 +28,16 @@ function [xyOffset, offsetList] = branchRegistration(source, sections, writeToLo
 	% Query and process data from vitread (min) section
 	data = readOData([getServiceRoot(source),...
 		sprintf(template, min(sections))]);
-	vitread = struct2table(data.value);
+    value = cat(1, data.value{:});
+	vitread = struct2table(value);
 	vitread.Properties.VariableNames = propNames;
 	vitread = catchFalse(vitread);
 
 	% Query and process data from sclerad (max) section 
 	data = readOData([getServiceRoot(source),...
 		sprintf(template,  max(sections))]);
-	sclerad = struct2table(data.value);
+    value = cat(1, data.value{:});
+	sclerad = struct2table(value);
 	sclerad.Properties.VariableNames = propNames;
 	sclerad = catchFalse(sclerad);
 
@@ -59,8 +61,9 @@ function [xyOffset, offsetList] = branchRegistration(source, sections, writeToLo
 	offsetList = [];
 	for i = 1:height(sclerad)
 		data = readOData(sprintf(linkQuery, sclerad.ID(i)));
-		for j = 1:numel(data.LocationLinksA)
-			linkedID = data.LocationLinksA(j).B;
+        locationLinksA = cat(1, data.LocationLinksA{:});
+		for j = 1:numel(locationLinksA)
+			linkedID = locationLinksA(j).B;
 			linkedLoc = vitread{find(vitread.ID == linkedID),{'X', 'Y'}};
 			if ~isempty(linkedLoc)
 				xyOffset = sclerad{i, {'X', 'Y'}} - linkedLoc;
@@ -69,10 +72,10 @@ function [xyOffset, offsetList] = branchRegistration(source, sections, writeToLo
 		end
     end
 
-    try
-    	printStat(offsetList(:,1));
-        printStat(offsetList(:,2));
-    end
+    printStat(offsetList(:,1)');
+    printStat(offsetList(:,2)');
+    % Take the median (horizontally branching neurons will register as
+    % large outliers, which influence the mean more than the median)
 	xyOffset = median(offsetList);
 
 	if visualize
@@ -85,7 +88,7 @@ function [xyOffset, offsetList] = branchRegistration(source, sections, writeToLo
 	end
 	
 	if writeToLog
-		fPath = [fileparts(fileparts(mfilename('fullpath'))),... 
+		fPath = [fileparts(fileparts(fileparts(mfilename('fullpath')))),... 
             '\data\XY_OFFSET_NEITZINFERIORMONKEY.txt'];
 		data = dlmread(fPath);
 		% data = dlmread([fileparts(fileparts(mfilename('fullpath'))),...
