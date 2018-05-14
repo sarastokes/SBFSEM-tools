@@ -50,7 +50,7 @@ classdef GraphApp < handle
             % GRAPHAPP
             if nargin == 2
                 obj.source = validateSource(source);
-                obj.neuron = Neuron(neuron, obj.source);
+                obj.neuron = CacheNeuron(neuron, obj.source);
             elseif nargin == 1
                 obj.neuron = neuron;
                 obj.source = neuron.source;

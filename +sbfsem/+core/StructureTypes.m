@@ -176,8 +176,6 @@ classdef StructureTypes
 
 			if nargin < 2 || isempty(tags)
 				tags = '';
-			else
-				% tags = lower(tags);
 			end
 
 			switch vikingStructure

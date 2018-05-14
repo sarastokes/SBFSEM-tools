@@ -3,25 +3,25 @@
 SBFSEM-tools is a Matlab toolbox developed for serial EM data and connectomics in the [Neitz Lab][neitz] at University of Washington. While SBFSEM-tools was built around the Viking annotation software, many aspects are quite general and may apply easily to other programs and imaging methods.
 
 #### About
-SBFSEM-tools provides Matlab support for accessing th connectome annotation database API. Annotation data is queried through Viking's OData service and parsed into Matlab data types. This is abstracted so users can work with familiar objects like neuron, synapse, etc. SBFSEM-tools provides a framework to support data mining and user-defined analysis as well as user interfaces to avoid programming entirely. 
+SBFSEM-tools provides Matlab support for accessing th connectome annotation database API. Annotation data is queried through Viking's OData service and parsed into Matlab data types. This is abstracted so users can work with familiar objects like neuron, synapse, etc. SBFSEM-tools provides a framework to support data mining and user-defined analysis. However, the key functionality can be accessed without programming through user interfaces.
 
-Importantly, this program is designed around an interest in open sourcing the data and code used in scientific research. Resources to enable sharing the data and code used in by this program for publications are in place. A package to facilitate the use of these tools is coming soon. 
+Importantly, this program is designed around an interest in open sourcing the data and code used in scientific research. Resources to enable sharing the data and code used in by this program for publications are in place. A package to facilitate the use of these tools is coming soon.
 
 #### Key features:
 - Efficent, accurate 3D rendering of neurons:
   - Volume rendering of Closed Curve annotations
   - Polygon meshes from Disc annotations
-  - Segmentation and volume rendering of free-form traces over a stack of EM images. 
+  - Segmentation and volume rendering of free-form traces over a stack of EM images.
 - Standard analysis routines for both single neurons and networks.
 - Image registration: surfaces from IPL boundary markers, XY offset calculations.
 - Support for generating high resolution, publication quality images
 - Export 3D models to use in programs like Blender
 
-See the [documentation][docs] for more details. 
+See the [wiki documentation][docs] for more details.
 
-#### Work in progress: 
-- A more intuitive representation of connectivity networks. 
-- A more generalized framework for OData queries (in the meantime, contact us if you would like a [Postman][postman] collection explaining common queries). 
+#### Work in progress:
+- A more intuitive representation of connectivity networks.
+- A more generalized framework for OData queries (in the meantime, contact us if you would like a [Postman][postman] collection explaining common queries).
 - SWC export and support for biophysical models.
 
 #### More information:

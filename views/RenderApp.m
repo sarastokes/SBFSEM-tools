@@ -23,6 +23,7 @@ classdef RenderApp < handle
     %   5Jan2018 - SSP
     %   19Jan2018 - SSP - menubar, replaced table with checkbox tree
     %   12Feb2018 - SSP - IPL boundaries and scale bars
+    %   26Apr2018 - SSP - Added NeuronCache option to Import menu
     % ---------------------------------------------------------------------
     
     properties (SetAccess = private)
@@ -46,6 +47,7 @@ classdef RenderApp < handle
         % UI properties
         isInverted          % Is axis color inverted
         isInteractive       % Is the interactive mouse enabled
+        useCache            % Whether to load cached neurons
 
         % UI controls
         azel = [-37.5, 30];
@@ -101,6 +103,7 @@ classdef RenderApp < handle
             obj.volumeScale = getODataScale(obj.source);
             obj.isInverted = false;
             obj.isInteractive = true;
+            obj.useCache = false;
             obj.xyOffset = [];
         end
     end
@@ -635,6 +638,14 @@ classdef RenderApp < handle
                     return;
             end
         end
+    
+        function onUseCache(obj, ~, ~)
+            if obj.useCache
+                obj.useCache = false;
+            else
+                obj.useCache = true;
+            end
+        end
     end
     
     methods (Access = private)
@@ -642,7 +653,11 @@ classdef RenderApp < handle
             % ADDNEURON  Add a new neuron and render
             % See also: NEURON
             
-            neuron = Neuron(newID, obj.source, obj.SYNAPSES);
+            if obj.useCache
+                neuron = CacheNeuron(newID, obj.source);
+            else
+                neuron = Neuron(newID, obj.source, obj.SYNAPSES);
+            end
             % Build the 3D model
             obj.statusUpdate(sprintf('Rendering c%u', newID));
             neuron.build();

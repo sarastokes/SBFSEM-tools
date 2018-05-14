@@ -461,14 +461,19 @@ classdef Cylinder < handle
                     [circmp(:,1), circmp(:,2), circmp(:,3)];
             end
             
-            % Faces of one meshed line-part (cylinder)
+            % Faces are defined by the connections between 3 vertices
+            % Calculate for 1 segment (2 connected circles) then generalize
+            % to the rest.
             Fb=[[1:N, (1:N)+1];...
                 [(1:N)+N, (1:N)];...
                 [(1:N)+N+1, (1:N) + N + 1]]';
+            % Roll back the points at N*2+1 to N+1
             Fb(N, 3) = 1 + N;
-            Fb(N*2, 1) = 1;
             Fb(N*2, 3) = 1 + N;
+            % Roll back the last row's X point from N+1 to 1
+            Fb(N*2, 1) = 1;
             
+            % Fill out the faces matrix
             FV.faces = zeros(N*2*(numCylinders-1), 3);
             for i = 1:numCylinders-1
                 FV.faces(((i-1)*N*2+1):((i)*N*2), 1:3) =...

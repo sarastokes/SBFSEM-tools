@@ -1,27 +1,35 @@
-function mat = getImageRGB(im, rgb, clipFlag) %#ok<INUSD>
-	% GETIMAGERGB  Return index of pixels matching RGB
+function mat = getImageRGB(im, rgb, rotFlag) %#ok<INUSD>
+	% GETIMAGERGB  
+    %
+    % Description:
+    %   Return index of pixels matching RGB
 	%
     % INPUTS:
     %   im          image (x*y*3)
     %   rgb         target RGB values
-    %   clipFlag    cut out toolbar from image
+    %   rotFlag     transpose output (default = false)
     % OUTPUTS:
     %   r, c        row/columns matching RGB value
     %
 	% 15Aug2017 - SSP - created
-	
+    % 11May2018 - SSP - Generalized: rm clipFlag, auto rotation
+	% ------------------------------------------------------------------
     if ~isa(im, 'double')
         im = im2double(im);
     end
-    
-    if nargin == 3
-        im = im(1:end-100,:,:);
+    if nargin < 3
+        rotFlag = false;
     end
+    
+    % Old clip toolbar option
+    % if nargin == 3
+    %     im = im(1:end-100,:,:);
+    % end
 	
 	[m, n, t] = size(im);
 	im = reshape(im, [m*n t]);
 	
-	% get the points matching all 3 RGB values
+	% Get the points matching all 3 RGB values
 	ind = zeros(m*n, 1);
 	for ii = 1:3
 		ind = ind + bsxfun(@eq, rgb(ii), im(:,ii));
@@ -34,8 +42,10 @@ function mat = getImageRGB(im, rgb, clipFlag) %#ok<INUSD>
     	ind = reshape(ind, [m n]);
 	
         [r, c] = find(ind);
-    
-        %mat = rotateZ(r, c, -90);
-        mat = [r,c]';
+
+        mat = [r, c];
+        if rotFlag
+            mat = mat';
+        end
     end
 end
