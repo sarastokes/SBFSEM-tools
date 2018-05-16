@@ -4,6 +4,12 @@ classdef SWC < handle
 % Description:
 %	A class for handling SWC files
 %
+% Example:
+%   c4568 = Neuron(4568, 'i');
+%   x = sbfsem.io.SWC(c4568);
+%   x.save();
+%   
+%
 % Layout:
 %       --> n T x y z R P <--
 % n is an integer label that identifies the current point and increments by
@@ -37,19 +43,16 @@ classdef SWC < handle
         hasSoma
         hasAxon
         fPath
+        fName
     end
 
-    properties (Access = private)
+    properties (Access = public)
         neuron
         G
 	end
 
-	properties (Transient = true, Access = private)
-		nodeCount
-	end
-
 	methods
-		function obj = SWC(neuron, fPath, varargin)
+		function obj = SWC(neuron, varargin)
 			% Parse the inputs
 			assert(isa(neuron, 'Neuron'), 'Input a Neuron object');
             obj.neuron = neuron;
@@ -58,17 +61,13 @@ classdef SWC < handle
             ip.CaseSensitive = false;
             addParameter(ip, 'hasSoma', true, @islogical);
             addParameter(ip, 'hasAxon', false, @islogical);
-            addParameter(ip, 'fPath', cd, @isdir);
+            addParameter(ip, 'fPath', [], @isdir);
             parse(ip, varargin{:});
             obj.hasSoma = ip.Results.hasSoma;
             obj.hasAxon = ip.Results.hasAxon;
-            
-            if isempty(ip.Results.fPath)
-                obj.fPath = uiputfile();
-            else
-            	assert(isdir(ip.Results.fPath), 'fPath must be a valid file path!');
-                obj.fPath = ip.Results.fPath;
-            end
+            obj.fPath = ip.Results.fPath;
+
+            obj.fName = ['c', num2str(obj.neuron.ID), '.swc'];
 
             % Convert to a directed graph
             [G, obj.idMap] = graph(neuron, 'directed', true);
@@ -79,9 +78,8 @@ classdef SWC < handle
 
         function go(obj)
             % GO  Create the SWC table
-
-            obj.nodeCount = 0;
-
+            
+            disp('Creating SWC node table...');
             % Identify the starting node
             startNode = find(obj.G.indegree == 0);
 
@@ -101,18 +99,19 @@ classdef SWC < handle
         
         function save(obj, fPath)
             if nargin == 2
+                assert(isdir(fPath), 'fPath must be a valid file path!')
                 obj.fPath = fPath;
             end
+
+            if isempty(obj.fPath)
+                obj.fPath = uigetdir();
+            end
             
-            obj.initSWC();
-        end
-        
-        function str = createEntry(obj, nodeNumber)
-            % ADDENTRY
-            row = obj.T(nodeNumber, :);
+            if isempty(obj.T)
+                obj.go();
+            end
             
-            str = sprintf('%u %u %.3f %.3f %.3f %.3f %d\n',...
-                nodeNumber, row.SWC, row.XYZ, row.Radius, row.Parent);
+            obj.writeSWC();
         end
 	end
 
@@ -151,18 +150,17 @@ classdef SWC < handle
 
             for i = 1:height(obj.T)
                 iID = obj.T(i, :).ID;
-                x = obj.neuron.nodes(find(obj.neuron.nodes.ID == iID), :);
+                x = obj.neuron.nodes(obj.neuron.nodes.ID == iID, :);
                 obj.T(i, :).Radius = x.Rum;
                 obj.T(i, :).XYZ = x.XYZum;
             end
         end
-	end
 
-	methods (Static)
-		function obj = initSWC(obj)
-			% INITSWC  Creates the headers for an SWC file
+		function obj = writeSWC(obj)
+			% WRITESWC  Creates the headers for an SWC file
 
-            fid = fopen([obj.fPath, filesep, '.swc']);
+            fid = fopen([obj.fPath, filesep, obj.fName], 'w');
+            % Write the metadata
 			fwrite(fid, ['# ORIGINAL_SOURCE sbfsem tools', newline], 'char');
 			fprintf(fid, '# CREATURE %s\n', getAnimal(obj.neuron.source));
 			fprintf(fid, '# REGION');
@@ -179,11 +177,19 @@ classdef SWC < handle
 			fprintf(fid, '# SOMA_AREA %.3f\n', pi*obj.neuron.getSomaSize^2);
 			fprintf(fid, '# SHRINKAGE_CORRECTION 1.0 1.0 1.0\n');
 			fprintf(fid, '# VERSION_NUMBER 1.0\n');
-			fprintf(fid, '# VERSION_DATE 2017-03-12\n');
-			fprintf(fid, '# SCALE %.4f %.4f %.4f',...
-				volumeScale/max(volumeScale));
+			fprintf(fid, '# VERSION_DATE %s\n', datestr(now, 'YYYY-mm-DD'));
+			fprintf(fid, '# SCALE 1.0 1.0 1.0\n');
 			fprintf(fid, '\n');
+
+            % Write the data
+            for i = 1:height(obj.T)
+                row = obj.T(i, :);
+                fprintf(fid, '%u %u %.4f %.4f %.2f %.4f %d\n',...
+                    i, row.SWC, row.XYZ, row.Radius, row.Parent);
+            end
             fclose(fid);
+            
+            disp(['Saved as ', obj.fPath, filesep, obj.fName]);
 		end
 	end
 end

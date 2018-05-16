@@ -567,15 +567,6 @@ classdef Neuron < handle
                 obj.getSynapses();
             end
         end
-        
-        function checkSWC(obj)
-            % CHECKSWC
-            % If SWCType column isn't present in nodes, run addNodeSWC().
-            % -------------------------------------------------------------
-            if ~ismember('SWCType', obj.nodes.Properties.VariableNames)
-                obj.addNodeSWC();
-            end
-        end
     end
 
     methods (Access = private)
@@ -666,18 +657,6 @@ classdef Neuron < handle
                     makeConsistent(obj);
                 end
             end                         
-        end
-        
-        function addNodeSWC(obj)
-            % ADDNODESWC
-            % Checks whether SWCType column exists, creates if missing.
-            % Sets synapses to NaN, the rest to 0,
-            % -------------------------------------------------------------
-            if ~ismember('SWCType', obj.nodes.Properties.VariableNames)
-                obj.nodes.SWCType = zeros(height(obj.nodes), 1);
-                row = obj.nodes.ParentID ~= obj.ID;
-                obj.nodes.SWCType(row, :) = NaN;
-            end            
         end
     end
 end

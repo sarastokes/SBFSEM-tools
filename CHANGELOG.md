@@ -1,5 +1,8 @@
 # Changelog
 
+### 16May2018
+- Minimally working SWC export (`sbfsem.io.SWC.m`).
+
 ### 27Apr2018
 - Debugged `branchRegistration.m` and added several sections to NeitzInferiorMonkey's xy offset file.
 - Expanded `hideAxes.m` to take figure inputs, apply to multiple axes in one figure and to show hidden axes.
@@ -38,7 +41,7 @@
 - New closed curve render function. Works standalone but hasn't been incorporated into closed curve objects yet.
 - Fixed error in Neuron\getDAspect()
 - Shadow function contains.m for older Matlab versions was causing problems, renamed to `mycontains.m`
-- Option to specify the number of spline points for `catmullRomSpline.m` as 100 points was excessive for ClosedCurve renders 
+- Option to specify the number of spline points for `catmullRomSpline.m` as 100 points was excessive for ClosedCurve renders
 - Option to resize volume before rendering (`volumeRender.m`)
 
 ### 4Apr2018
@@ -53,7 +56,7 @@
 - Fixed GABAPost LocalName assignment error
 
 ### 1Apr2018
-- Long overdue testing framework 
+- Long overdue testing framework
 - Fixed bug in Neuron/getSomaID
 
 ### 29Mar2018
@@ -102,7 +105,7 @@
 ### 19Feb2018
 - Reorganized folders, cleaned out old code and unused libraries.
 
-### 16Feb2018 
+### 16Feb2018
 - Ability to omit nodes from renders by adding them to `OMITTED_NODES_VOLNAME.txt` in the data folder. The first entry is the cell ID, the second is the location ID. The nodes are omitted when a graph/digraph is made of the neuron's annotations and connections.
 - Added updateAll() and getAll() methods to sbfsem.ConeMosaic
 
