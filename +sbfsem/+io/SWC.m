@@ -35,22 +35,28 @@ classdef SWC < handle
 %   12Mar2018 - SSP
 %   16Apr2018 - SSP - finished
 %	13May2018 - SSP - almost complete re-write
+%   1Jun2018 - SSP - new algorithm
 % ----------------------------------------------------------------------
 
 	properties (SetAccess = private)
 		T
-		idMap
         hasSoma
         hasAxon
+        startNode
+        segments
+        idMap
+    end
+    
+    properties (Access = private)
         fPath
         fName
     end
-
-    properties (Access = public)
+    
+    properties (Transient = true, Access = private)
         neuron
         G
-	end
-
+    end
+    
 	methods
 		function obj = SWC(neuron, varargin)
 			% Parse the inputs
@@ -62,42 +68,46 @@ classdef SWC < handle
             addParameter(ip, 'hasSoma', true, @islogical);
             addParameter(ip, 'hasAxon', false, @islogical);
             addParameter(ip, 'fPath', [], @isdir);
+            addParameter(ip, 'startNode', [], @isnumeric);
             parse(ip, varargin{:});
             obj.hasSoma = ip.Results.hasSoma;
             obj.hasAxon = ip.Results.hasAxon;
             obj.fPath = ip.Results.fPath;
+            obj.startNode = ip.Results.startNode;
 
             obj.fName = ['c', num2str(obj.neuron.ID), '.swc'];
 
             % Convert to a directed graph
-            [G, obj.idMap] = graph(neuron, 'directed', true);
-            assert(nnz(G.indegree == 2) == 0, 'Greater than 1 indegree!');
-            % assert(numel(G.indegree) > 1, 'More than one starting node!');
-            obj.G = G;
+            [obj.G, obj.idMap] = graph(obj.neuron);
+            [obj.segments, ~, ~, obj.startNode] = dendriteSegmentation(...
+                obj.neuron, 'startNode', obj.startNode);
         end
 
         function go(obj)
-            % GO  Create the SWC table
-            
+            % GO  Create the SWC table            
             disp('Creating SWC node table...');
-            % Identify the starting node
-            startNode = find(obj.G.indegree == 0);
-
+            
             % Create the SWC table
             obj.T = table(obj.idMap, NaN(size(obj.idMap)),...
                 zeros(numel(obj.idMap), 3), zeros(size(obj.idMap)),...
                 zeros(size(obj.idMap)));
             obj.T.Properties.VariableNames = {'ID', 'SWC', 'XYZ',...
                 'Radius', 'Parent'};
-            obj.T(startNode, :).Parent = -1;
-            obj.T(startNode, :).SWC = 5;
+            obj.T(obj.startNode, :).Parent = -1;
+            obj.T(obj.startNode, :).SWC = 5;
 
-            % Now recursively assign all SWC types
-            obj.assignType(1);
+            for i = 1:numel(obj.segments)
+                obj.segmentTyping(obj.segments{i});
+            end
+            
+            if ~isempty(isnan(obj.T.SWC))
+                disp(obj.T.ID(isnan(obj.T.SWC)));
+            end
             obj.assignAttributes();
         end
         
         function save(obj, fPath)
+            % SAVE  Save SWC table as .swc file
             if nargin == 2
                 assert(isdir(fPath), 'fPath must be a valid file path!')
                 obj.fPath = fPath;
@@ -117,33 +127,22 @@ classdef SWC < handle
 
 	methods (Access = private)
 
-
-		function assignType(obj, baseNode)
-			% ASSIGNTYPE  Recursively assign dendrites to 3 types:
-			%	3 = Dendrite, 5 = Fork point, 6 = End point
-
-			childNodes = obj.G.successors(baseNode);
-			if numel(childNodes) == 0
-				fprintf('No child nodes for base node %u\n', baseNode);
-				return
-			end
-
-			for i = 1:numel(childNodes)
-				iNode = childNodes(i);
-				obj.T(iNode, :).Parent = baseNode;
-
-				switch numel(obj.G.successors(iNode))
-					case 0 % End point
-						obj.T(iNode, :).SWC = 6;
-					case 1 % Dendrite
-						obj.T(iNode, :).SWC = 3;
-						obj.assignType(iNode);
-					otherwise % Fork point
-						obj.T(iNode, :).SWC = 5;
-						obj.assignType(iNode);
-				end
-			end
-		end
+        function segmentTyping(obj, segment)
+            % SEGMENTTYPING
+            
+            for i = 1:numel(segment)-1
+                node = segment(i);
+                obj.T(node, :).Parent = segment(i+1);
+                switch numel(neighbors(obj.G, node))
+                    case 1
+                        obj.T(node, :).SWC = 6;
+                    case 2
+                        obj.T(node, :).SWC = 3;
+                    otherwise
+                        obj.T(node, :).SWC = 5;
+                end
+            end
+        end
 
         function assignAttributes(obj)
             % ASSIGNATTRIBUTES
@@ -161,8 +160,8 @@ classdef SWC < handle
 
             fid = fopen([obj.fPath, filesep, obj.fName], 'w');
             % Write the metadata
-			fwrite(fid, ['# ORIGINAL_SOURCE sbfsem tools', newline], 'char');
-			fprintf(fid, '# CREATURE %s\n', getAnimal(obj.neuron.source));
+			fprintf(fid, '# ORIGINAL_SOURCE sbfsem tools\n');
+            fprintf(fid, '# CREATURE %s\n', getAnimal(obj.neuron.source));
 			fprintf(fid, '# REGION');
 			switch obj.neuron.source
 				case 'NeitzTemporalMonkey'

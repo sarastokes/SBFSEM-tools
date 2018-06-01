@@ -18,7 +18,7 @@ classdef GraphApp < handle
     % See also:
     %   RENDERAPP
     % ---------------------------------------------------------------------
-    
+
     properties
         neuron
         source
@@ -26,14 +26,15 @@ classdef GraphApp < handle
         ui
         figureHandle
         dataCursor
+        offedges
     end
-    
+
     properties (SetAccess = private)
         segments
         idMap
         hasSynapses
     end
-    
+
     properties (Access = private, Transient = true)
         azel = [-37.5, 30];
         zoomFac = 0.9;
@@ -44,7 +45,7 @@ classdef GraphApp < handle
     properties (Constant = true, Hidden = true)
         COLORMAPS = {'parula','hsv','cubicl','viridis','redblue','haxby'};
     end
-    
+
     methods
         function obj = GraphApp(neuron, source)
             % GRAPHAPP
@@ -58,17 +59,17 @@ classdef GraphApp < handle
                 warning('Implement dialog box for picking neuron');
                 return;
             end
-            
+
             obj.hasSynapses = false;
             [~, obj.segments, obj.idMap] = dendriteSegmentation(obj.neuron);
             obj.createUi();
         end
     end
-    
-    methods (Access = private)       
+
+    methods (Access = private)
         function onClickMode(obj, ~, ~)
             % ONCLICKMODE  Enable or disable data tips
-            
+
             switch obj.dataCursor.Enable
                 case 'on'
                     set(obj.dataCursor, 'Enable', 'off');
@@ -77,7 +78,7 @@ classdef GraphApp < handle
             end
             % c = getCursorInfo(obj.dataCursor);
         end
-        
+
         function txt = onUpdateCursor(obj, ~, evt)
             % ONUPDATECURSOR  Custom data tip display callback
             pos = get(evt,'Position');
@@ -85,9 +86,9 @@ classdef GraphApp < handle
             txt = {['ID: ' num2str(locID)],...
                 ['X: ', num2str(pos(1))],...
                 ['Y: ', num2str(pos(2))],...
-                ['Z: ', num2str(pos(3))]};          
+                ['Z: ', num2str(pos(3))]};
         end
-        
+
         function onCheckedColorSegments(obj, src, ~)
             % ONCOLORSEGMENTS  Randomly color to distinguish segments
             if src.Value == 1
@@ -137,7 +138,7 @@ classdef GraphApp < handle
 
         function onSelectedMarkerType(obj, src, ~)
             % ONSELECTEDMARKERTYPE  Change node markers
-            
+
             switch src.Value
                 case 1 % Normal
                     set(findall(obj.ax, 'Color', 'k'),...
@@ -152,7 +153,7 @@ classdef GraphApp < handle
 
         function onChangeColormap(obj, src, ~)
             % ONCHANGECOLORMAP  Change colormap
-            
+
             obj.colorMap = src.String{src.Value};
         end
 
@@ -175,10 +176,10 @@ classdef GraphApp < handle
                     if eventdata.Character == 'Z'
                         obj.zoomFac = 1/obj.zoomFac;
                     end
-                    
+
                     x = get(obj.ax, 'XLim');
                     y = get(obj.ax, 'YLim');
-                    
+
                     set(obj.ax, 'XLim',...
                         [0, obj.zoomFac*diff(x)] + x(1)...
                         + (1-obj.zoomFac) * diff(x)/2);
@@ -210,7 +211,7 @@ classdef GraphApp < handle
             view(obj.ax, obj.azel);
         end
     end
-    
+
     methods (Access = private)
         function colorSegments(obj)
             % COLORSEGMENTS  Assign each segment a different color
@@ -268,15 +269,15 @@ classdef GraphApp < handle
                 'Menubar', 'none',...
                 'Toolbar', 'none',...
                 'KeyPressFcn', @obj.onKeyPress);
-            
+
             obj.dataCursor = datacursormode(obj.figureHandle);
             set(obj.dataCursor,...
                 'Enable', 'off',...
                 'UpdateFcn', @obj.onUpdateCursor);
-            
+
             mainLayout = uix.HBox('Parent', obj.figureHandle,...
                 'BackgroundColor', 'w');
-            
+
             % Create the user interface panel
             obj.ui.root = uix.VBox('Parent', mainLayout,...
                 'BackgroundColor', [1 1 1],...
@@ -286,7 +287,7 @@ classdef GraphApp < handle
                 'String', obj.source);
             obj.ui.dcm = uicontrol(obj.ui.root,...
                 'Style', 'push',...
-                'String', 'Use Data Cursor',...
+                'String', 'Data Cursor',...
                 'Callback', @obj.onClickMode);
             obj.ui.markerType = uicontrol(obj.ui.root,...
                 'Style', 'popup',...
@@ -299,7 +300,7 @@ classdef GraphApp < handle
                 'Value', 0,...
                 'Callback', @obj.onIncludeSynapses);
             obj.ui.offedges = uicontrol(obj.ui.root,...
-                'Style', 'checkbox',... 
+                'Style', 'checkbox',...
                 'String', 'Show off edges',...
                 'Callback', @obj.onCheckOffEdges);
             obj.ui.colorSeg = uicontrol(obj.ui.root,...
@@ -311,7 +312,7 @@ classdef GraphApp < handle
                 'Style', 'popup',...
                 'String', obj.COLORMAPS,...
                 'Callback', @obj.onChangeColormap);
-            
+
             % Data cursor mode requires parent with pixel property
             % Use Matlab's uipanel between axes and HBoxFlex
             hp = uipanel('Parent', mainLayout,...
@@ -323,13 +324,13 @@ classdef GraphApp < handle
             if ~isempty(obj.neuron)
                 obj.segmentPlot();
             end
-            
+
             hold(obj.ax, 'on');
             axis(obj.ax, 'equal', 'tight');
             view(obj.ax, 3);
             grid(obj.ax, 'on');
         end
-        
+
         function segmentPlot(obj)
             % SEGMENTPLOT  Plot each segment individually with ID tag
             for i = 1:height(obj.segments)
@@ -367,7 +368,7 @@ classdef GraphApp < handle
             end
         end
     end
-    
+
     methods (Static)
         function str = getInstructions()
             % GETINSTRUCTIONS  Return instructions as multiline string

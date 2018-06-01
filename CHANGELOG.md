@@ -1,7 +1,11 @@
 # Changelog
 
+### 1Jun2018
+- Rewrote SWC export algorithm (`+sbfsem/+io/SWC.m`).
+- Added a test for graph methods (`test/GraphTest.m`).
+
 ### 16May2018
-- Minimally working SWC export (`sbfsem.io.SWC.m`).
+- Minimally working SWC export (`+sbfsem/+io/SWC.m`).
 
 ### 27Apr2018
 - Debugged `branchRegistration.m` and added several sections to NeitzInferiorMonkey's xy offset file.

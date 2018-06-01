@@ -8,7 +8,7 @@ classdef Interface < handle
 %   8May2018 - SSP - created as generic version of TogglePartsView
 % ----------------------------------------------------------------------
 
-    properties (GetAccess = public, SetAccess = public)
+    properties (Access = protected, Hidden = true)
         ui = struct();
         figureHandle
         ax
@@ -36,6 +36,15 @@ classdef Interface < handle
             obj.ui.ctrl = uix.VBoxFlex(...
                 'Parent', obj.ui.root,...
                 'BackgroundColor', 'w');
+        end
+        
+        function S = debug(obj)
+            % DEBUG  Return a structure of handles
+            
+            S = struct();
+            S.ui = struct(obj.ui);
+            S.figureHandle = struct(obj.figureHandle);
+            S.ax = struct(obj.ax);
         end
     end
 

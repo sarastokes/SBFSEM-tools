@@ -1,39 +1,69 @@
-function [segments, segmentTable, nodeIDs] = dendriteSegmentation(neuron, visualize)
-    % DENDRITESEGMENTATION  Split neuron into non-branching segments
+function [segments, segmentTable, nodeIDs, startNode] = dendriteSegmentation(neuron, varargin)
+    % DENDRITESEGMENTATION  
+    %
+    % Description:
+    %   Split neuron into non-branching segments
+    %
+    % Syntax:
+    %   [segments, table, nodeIDs] = dendriteSegmentation(neuron,...
+    %       'startNode', 1, 'visualize', false);
     %
     % Inputs:
     %   neuron          Neuron object
-    %   visualize       Plot segments (false)
+    % Optional key/value inputs
+    %   startNode       Location or node ID to begin search (default = 1)
+    %   visualize       Plot segments (default = false)
+    %
     % Outputs:
     %   segments        Cell array of segments, each is a list of IDs
     %   segmentTable    Information on each segment
+    %   nodeIDs         Array of locationIDs indexed by nodeID
+    %   startNode       Node ID of dfsearch start
     %
-    % 14Dec2017 - SSP - moved from sbfsem.render.Cylinder
-    % 06Jan2017 - SSP - added nodeIDs output
+    % See also:
+    %   SBFSEM.RENDER.CYLINDER, DFSEARCH, NEURON/GRAPH
+    %
+    % History:
+    %   14Dec2017 - SSP - moved from sbfsem.render.Cylinder
+    %   06Jan2018 - SSP - added nodeIDs output
+    %   30May2018 - SSP - added option to specify starting node
     % ---------------------------------------------------------------------
     
-    if nargin < 2
-        visualize = false;
-    end
+    ip = inputParser();
+    ip.CaseSensitive = false;
+    addParameter(ip, 'StartNode', 1, @isnumeric);
+    addParameter(ip, 'Visualize', false, @islogical);
+    parse(ip, varargin{:});
     
     % Generate an undirected graph of dendritic annotations
-    G = graph(neuron);
-    nodeIDs = str2double(G.Nodes{:,:});
+    [G, nodeIDs] = graph(neuron, 'directed', false);
+    
+    % Parse start node, specified by location ID or node ID
+    startNode = ip.Results.StartNode;
+    if ismember(startNode, nodeIDs) 
+        % Find node ID for a location ID
+        startNode = find(nodeIDs == startNode);
+        fprintf('Location ID mapped to node ID %u\n', startNode);
+    elseif startNode > numel(nodeIDs)    
+        warning('Invalid StartNode, setting to nodeID = 1');
+        startNode = 1;
+    end
     
     % Run a depth-first search on the graph
     % T is a table of events: when each node is first and last encountered.
     % 'finishnode' will translate to the list of nodes in each segment. For
     % lack of a better method, I'm using 'discovernode' to separate the
     % 'finishnode' lists.
-    T = dfsearch(G, 1,...
+    T = dfsearch(G, startNode,...
         {'discovernode', 'finishnode'},... 
         'Restart', true);
+    
     % If two annotations aren't connected, the Restart=true option will 
     % keep the dfsearch from stopping. Track this and print the location
     % IDs to the command line so the user knows to fix it
     extraStartNodes = [];
     
-    % Variable setup
+    % Variable init
     openSegment = false;
     segments = cell(0,1);
     nodeList = [];
@@ -106,8 +136,8 @@ function [segments, segmentTable, nodeIDs] = dendriteSegmentation(neuron, visual
     segmentTable = table(segments, sections, locations, radii,...
         'VariableNames', {'ID','Z','XYZum','Rum'});
 
-    % Put this into a separate routine soon
-    if visualize
+    % TODO: Put this into a separate routine soon
+    if ip.Results.Visualize
         fh = figure('Name', 'Dendrite Segmentation');
         ax = axes('Parent', fh);
         hold(ax, 'on');
