@@ -22,7 +22,6 @@ See the [wiki documentation][docs] for more details.
 #### Work in progress:
 - A more intuitive representation of connectivity networks.
 - A more generalized framework for OData queries (in the meantime, contact us if you would like a [Postman][postman] collection explaining common queries).
-- SWC export and support for biophysical models.
 
 #### More information:
 * [Documentation][docs]
