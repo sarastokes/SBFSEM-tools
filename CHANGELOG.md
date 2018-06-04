@@ -1,5 +1,8 @@
 # Changelog
 
+### 4Jun2018
+- Improved structure link code (`util/import/getStructureLinks.m`) with new JSON decoder compatibility and a new output argument (synapseIDs) to link presynaptic neuron IDs to the post-synaptic synapse ID. Still limited: one synapse at a time, no bidirectional synapses.
+
 ### 1Jun2018
 - Rewrote SWC export algorithm (`+sbfsem/+io/SWC.m`).
 - Added a test for graph methods (`test/GraphTest.m`).
