@@ -15,7 +15,7 @@ Importantly, this program is designed around an interest in open sourcing the da
 - Standard analysis routines for both single neurons and networks.
 - Image registration: surfaces from IPL boundary markers, XY offset calculations.
 - Support for generating high resolution, publication quality images
-- Export 3D models to use in programs like Blender
+- Export 3D models to use in programs like Blender, ParaView and NEURON
 
 See the [wiki documentation][docs] for more details.
 
