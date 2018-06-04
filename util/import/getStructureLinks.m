@@ -1,29 +1,34 @@
-function [linkedIDs, G] = getStructureLinks(neuron, synapseType)
+function [linkedIDs, synapseIDs, G] = getStructureLinks(neuron, synapseType)
 	% GETSTRUCTURELINKS
 	%
 	% Description:
-	%	Returns the IDs all cells linked to input neuron.
+	%	Returns the IDs of all cells linked to input neuron.
 	%
 	% Syntax:
 	%	[linkedIDs, G] = getStructureLinks(neuron, synapseType);
 	%
 	% Inputs:
 	%	neuron  		Neuron object
-	% Optional input:
 	%	synapseType 	Synapse name (char or StructureType)
 	%
 	% Outputs:
 	%	linkedIDs 		Structure IDs of linked cells (vector)
+    %   synapseIDs      Synapse IDs linked to above structure IDs (vector)
 	%	G 				Network of connected neurons (digraph)
+    %
+    % Todo:
+    %   The colormap calculation required to plot the graph doesn't
+    %   handle networks with 2 or less nodes.
 	%
 	% See also:
 	%	READODATA, NEURON, GRAPH
 	%
 	% History:
 	%	26Feb2018 - SSP
-	% ------------------------------------------------------------------
+    %   2Jun2018 - SSP - updated JSON decoding, added synapseID output
+	% --------------------------------------------------------------------
 	assert(isa(neuron, 'Neuron'), 'Input neuron object');
-	
+
 	url = [getServiceRoot('i'), 'StructureLinks?$filter='];
 
 	postTemplate = 'TargetID eq %u &$expand=Source($expand=Parent($select=ID))';
@@ -32,10 +37,12 @@ function [linkedIDs, G] = getStructureLinks(neuron, synapseType)
 		'&$expand=Source($expand=Parent($select=ID)),',...
 		'Target($expand=Parent($select=ID))'];
 	parseBoth = true;
-	
+
+
 	if nargin < 2
-		IDs = neuron.synapses.ID;
-		url = [url, bothTemplate];
+        error('All synapses not yet implemented')
+		% IDs = neuron.synapses.ID;
+		% url = [url, bothTemplate];
 	else % Synapse-specific network
 		if ischar(synapseType)
 			synapseType = sbfsem.core.StructureTypes(synapseType);
@@ -50,24 +57,36 @@ function [linkedIDs, G] = getStructureLinks(neuron, synapseType)
 			url = [url, postTemplate];
 			parseBoth = false;
 		else
-			url = [url, bothTemplate];
+            error('Bidirectional synapses are not yet implemented');
+			% url = [url, bothTemplate];
 		end
     end
 
     linkedIDs = [];
-    
+
+    fprintf('Found %u IDs\n', numel(IDs));
+
 	for i = 1:numel(IDs)
         if parseBoth
             importedData = readOData(sprintf(url), IDs(i), IDs(i));
         else
             importedData = readOData(sprintf(url, IDs(i)));
         end
-        data = importedData.value;
+        data = importedData.value{1};
 
-		linkedIDs = [linkedIDs, parsePre(data), parsePost(data)]; %#ok
+        if ~isempty(parsePre(data))
+            linkedIDs = [linkedIDs, parsePre(data)];
+        elseif ~isempty(parsePost(data))
+    		linkedIDs = [linkedIDs, parsePost(data)];
+        end
     end
-    
-    if nargout == 2 && ~isempty(linkedIDs)
+    linkedIDs = linkedIDs';
+
+    if nargout == 2
+        synapseIDs = IDs;
+    end
+
+    if nargout == 3 && ~isempty(linkedIDs)
         [a, b] = findgroups(linkedIDs);
         weights = splitapply(@numel, linkedIDs, a);
         names = arrayfun(@num2str, [b, neuron.ID], 'UniformOutput', false);
@@ -75,7 +94,7 @@ function [linkedIDs, G] = getStructureLinks(neuron, synapseType)
         figure();
         p = plot(G);
         p.LineWidth = 3;
-        
+
         co = pmkmp(max(weights), 'cubicl');
         for i = 1:numel(b)
             highlight(p, [4 i], 'EdgeColor', co(weights(i), :));
@@ -89,7 +108,7 @@ end
 function ID = parsePre(data)
 	% PARSEPRE  Get ID of pre-synaptic neurons
 	if isfield(data, 'Target')
-		ID = data.Target.Parent.ID;
+		ID = data.Target.ParentID;
 	else
 		ID = [];
 	end
@@ -98,8 +117,9 @@ end
 function ID = parsePost(data)
 	% PARSEPOST  Get IDs of post-synaptic neurons
 	if isfield(data, 'Source')
-		ID = data.Source.Parent.ID;
+		ID = data.Source.ParentID;
 	else
 		ID = [];
 	end
 end
+
