@@ -1,6 +1,12 @@
 # Changelog
 
 ### 4Jun2018
+- Rewrote structure link code (`util/import/getLinkedNeurons.m`) but left the old function for backwards compatibility.
+- Short tutorial for querying linked structures (`tutorials/tutorial_LinkedNeurons.m`).
+- Added a new pair of sections to xy offset translation matrix for NeitzInferiorMonkey (see `data/NeitzInferiorMonkeyRegistration.m`)
+- Included RC1-specific post-bipolar cell synapse tags to `+sbfsem/+core/StructureTypes.m`.
+
+### 3Jun2018
 - Improved structure link code (`util/import/getStructureLinks.m`) with new JSON decoder compatibility and a new output argument (synapseIDs) to link presynaptic neuron IDs to the post-synaptic synapse ID. Still limited: one synapse at a time, no bidirectional synapses.
 
 ### 1Jun2018

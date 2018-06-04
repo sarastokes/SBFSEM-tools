@@ -162,7 +162,7 @@ classdef Neuron < handle
             
             obj.setupSynapses();
         end
-        
+                
         function update(obj)
             % UPDATE  Updates existing OData
             % If you haven't imported synapses the update will skip them

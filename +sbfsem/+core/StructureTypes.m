@@ -191,7 +191,7 @@ classdef StructureTypes
 					switch tags
 						case {'Conventional;GABA', 'GABA'}
 							obj = StructureTypes.GABAPost;
-						case 'Bipolar;Ribbon;Glutamate'
+						case {'Bipolar;Ribbon;Glutamate', 'Ribbon', 'Ribbon;Glutamate'}
 							obj = StructureTypes.RibbonPost;
 						case 'Bipolar;Conventional;Glutamate'
 							obj = StructureTypes.BipConvPost;
