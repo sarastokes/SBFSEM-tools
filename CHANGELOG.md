@@ -1,5 +1,14 @@
 # Changelog
 
+### 9Jun2018
+- Improvements to `sbfsem.io.SWC` which now ensures ParentID's are always higher than Node IDs.
+- Wrote a new class (`sbfsem.analysis.Segments`) to handle increasing workload for `dendriteSegmentation.m` function.
+
+### 5Jun2018
+- Added `volumeScale` property to `+sbfsem/Ultrastructure.m`.
+- Improvements to mitochondria class (`+sbfsem/Mitochondria.m`): updated OData import, added geometries import, function for finding mitochondrial volume.
+- New helper function for identifying location IDs of most vitread and sclerad annotations in a single structure (`util/minmaxNodes.m`).
+
 ### 4Jun2018
 - Rewrote structure link code (`util/import/getLinkedNeurons.m`) but left the old function for backwards compatibility.
 - Short tutorial for querying linked structures (`tutorials/tutorial_LinkedNeurons.m`).
@@ -7,7 +16,7 @@
 - Included RC1-specific post-bipolar cell synapse tags to `+sbfsem/+core/StructureTypes.m`.
 
 ### 3Jun2018
-- Improved structure link code (`util/import/getStructureLinks.m`) with new JSON decoder compatibility and a new output argument (synapseIDs) to link presynaptic neuron IDs to the post-synaptic synapse ID. Still limited: one synapse at a time, no bidirectional synapses.
+- Improved structure link code (`util/import/getStructureLinks.m`) with new JSON decoder compatibility and a new output argument (`synapseIDs`) to link presynaptic neuron IDs to the post-synaptic synapse ID. Still limited: one synapse at a time, no bidirectional synapses.
 
 ### 1Jun2018
 - Rewrote SWC export algorithm (`+sbfsem/+io/SWC.m`).
@@ -65,7 +74,7 @@
 
 ### 2Apr2018
 - BoundaryMarker test and small debugging
-- Added basic synapses to NeuronTest
+- Added basic synapses to `tests/NeuronTest.m`
 - Fixed GABAPost LocalName assignment error
 
 ### 1Apr2018
@@ -112,7 +121,7 @@
 - Updated Neuron/synapseIDs method to return synapse IDs (parent ID not location IDs).
 
 ### 20Feb2018
-- New 'numBins' input parameter to decide histogram bins for `IPLDepth.m`
+- New `numBins` input parameter to decide histogram bins for `IPLDepth.m`
 - Added missing helper function (`sem.m`)
 
 ### 19Feb2018
@@ -120,7 +129,7 @@
 
 ### 16Feb2018
 - Ability to omit nodes from renders by adding them to `OMITTED_NODES_VOLNAME.txt` in the data folder. The first entry is the cell ID, the second is the location ID. The nodes are omitted when a graph/digraph is made of the neuron's annotations and connections.
-- Added updateAll() and getAll() methods to sbfsem.ConeMosaic
+- Added updateAll() and getAll() methods to `+sbfsem/ConeMosaic`
 
 ### 15Feb2018
 - Option to fix axes at XY, YZ and XZ in RenderApp (Plot Modifers -> Set Axis Rotation)
@@ -128,7 +137,7 @@
 
 ### 12Feb2018
 - Option for cone outlines of unidentified cone type (label 'uTRACE')
-- Fixed bug in +sbfsem/+render/Cylinder.m
+- Fixed bug in `+sbfsem/+render/Cylinder.m`
 - Added ScaleBar3 class for 3D scale bars
 - ScaleBar and Add Lighting option for RenderApp
 - Expanded RenderApp help menus
@@ -163,7 +172,7 @@
 
 ### 5Jan2018
 - Fixed bugs, added dependencies
-- Preliminary methods for rendering synapses (synapseSphere.m) and cone outlines (ConeMosaic.m)
+- Preliminary methods for rendering synapses (`synapseSphere.m`) and cone outlines (ConeMosaic.m)
 
 ### 3Jan2018
 - RenderApp

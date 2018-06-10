@@ -96,7 +96,13 @@ function [segments, segmentTable, nodeIDs, startNode] = dendriteSegmentation(neu
         segments = cat(1, segments, {nodeList});
     end
     
+    % Print status to command line
     disp(['Found ' num2str(numel(segments)), ' segments']);
+    if ~isempty(extraStartNodes)
+        fprintf('Found %u extra start nodes:\t', numel(extraStartNodes));
+        disp(extraStartNodes);
+        fprintf('\n');
+    end
     
     % Connect each back to the parent node
     for i = 1:numel(segments)

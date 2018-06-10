@@ -12,11 +12,13 @@ classdef (Abstract) Ultrastructure < handle
 %   TYPEID          Viking StructureType ID - must be defined by subclasses
 %
 % History:
-%   5Jan - SSP - created
+%   5Jan2018 - SSP - created
+%   5Jun2018 - Added volume scale property
 % -------------------------------------------------------------------------
     
     properties (SetAccess = private, GetAccess = public)
         source
+        volumeScale
     end
 
     properties (SetAccess = protected, GetAccess = public)
@@ -35,6 +37,7 @@ classdef (Abstract) Ultrastructure < handle
         function obj = Ultrastructure(source)
             obj.source = validateSource(source);
             obj.baseURL = getServiceRoot(source);
+            obj.volumeScale = getODataScale(obj.source);
         end
     end
 end

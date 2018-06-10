@@ -37,9 +37,9 @@ classdef GeometryOData < sbfsem.io.OData
             assert(isnumeric(ID), 'ID must be numeric');
             obj.ID = ID;
 
-            obj.Query = [getServerName(), obj.source,...
-                '/OData/Structures(', num2str(obj.ID),...
-                ')\Locations?$filter=TypeCode eq 6'];
+            obj.Query = [getServiceRoot(obj.source),...
+                'Structures(', num2str(obj.ID),...
+                ')/Locations?$filter=TypeCode eq 6'];
             
             volumeScale = getODataScale(obj.source); % nm
             obj.volumeScale = volumeScale .* 1e-3; % um
@@ -57,6 +57,11 @@ classdef GeometryOData < sbfsem.io.OData
             % RUNQUERY  OData query for ClosedCurve data
             geometries = [];
             importedData = readOData(obj.Query);
+            % Exit if no closed curve annotations found
+            if isempty(importedData.value)
+                geometries = [];
+                return
+            end
             value = cat(1, importedData.value{:});
             
             for i = 1:numel(value)
