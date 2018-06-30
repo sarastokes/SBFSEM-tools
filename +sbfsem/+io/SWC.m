@@ -8,7 +8,7 @@ classdef SWC < handle
 %   c4568 = Neuron(4568, 'i');
 %   x = sbfsem.io.SWC(c4568);
 %   x.save();
-%   
+%
 %
 % Layout:
 %       --> n T x y z R P <--
@@ -19,9 +19,9 @@ classdef SWC < handle
 % axon, apical dendrite, etc. The standard accepted integer values are
 % given below.
 %
-% 0 = undefined 1 = soma 2 = axon 3 = dendrite 4 = apical dendrite 5 = fork
-% point 6 = end point 7 = custom x, y, z gives the cartesian coordinates of
-% each node.
+% 0 = undefined, 1 = soma, 2 = axon, 3 = dendrite, 4 = apical dendrite, 
+% 5 = fork, point 6 = end point 7 = custom x, y, z gives the cartesian  
+% coordinates of each node.
 %
 % R is the radius at that node.
 %
@@ -40,21 +40,21 @@ classdef SWC < handle
 % -------------------------------------------------------------------------
 
 	properties (SetAccess = private)
-		T
-        hasSoma
+		ID
+        T
         hasAxon
         Segmentation
     end
-    
+
     properties (Access = private)
         fPath
         fName
     end
-    
+
     properties (Transient = true, Access = private)
         neuron
     end
-    
+
     properties (Dependent = true, Hidden = true)
         startNode
         segments
@@ -62,21 +62,20 @@ classdef SWC < handle
         swcMap
         G
     end
-    
+
 	methods
 		function obj = SWC(neuron, varargin)
 			% Parse the inputs
 			assert(isa(neuron, 'Neuron'), 'Input a Neuron object');
             obj.neuron = neuron;
+            obj.ID = neuron.ID;
 
             ip = inputParser();
             ip.CaseSensitive = false;
-            addParameter(ip, 'hasSoma', true, @islogical);
             addParameter(ip, 'hasAxon', false, @islogical);
             addParameter(ip, 'fPath', [], @isdir);
             addParameter(ip, 'startNode', [], @isnumeric);
             parse(ip, varargin{:});
-            obj.hasSoma = ip.Results.hasSoma;
             obj.hasAxon = ip.Results.hasAxon;
             obj.fPath = ip.Results.fPath;
             if isempty(ip.Results.startNode)
@@ -86,35 +85,35 @@ classdef SWC < handle
             end
 
             obj.fName = ['c', num2str(obj.neuron.ID), '.swc'];
-            
+
             % Perform graph segmentation
             obj.Segmentation = sbfsem.render.Segment(neuron, startNode);
         end
-        
+
         function startNode = get.startNode(obj)
             if ~isempty(obj.Segmentation)
                 startNode = obj.Segmentation.startNode;
             end
         end
-        
+
         function segments = get.segments(obj)
             if ~isempty(obj.Segmentation)
                 segments = obj.Segmentation.segments;
             end
         end
-        
+
         function idMap = get.idMap(obj)
             if ~isempty(obj.Segmentation)
                 idMap = obj.Segmentation.nodeIDs;
             end
         end
-        
+
         function swcMap = get.swcMap(obj)
             if ~isempty(obj.Segmentation)
                 swcMap = obj.Segmentation.discoverIDs;
             end
         end
-        
+
         function G = get.G(obj)
             if ~isempty(obj.Segmentation)
                 G = obj.Segmentation.Graph;
@@ -122,9 +121,9 @@ classdef SWC < handle
         end
 
         function go(obj)
-            % GO  Create the SWC table            
+            % GO  Create the SWC table
             disp('Creating SWC node table...');
-            
+
             % Create the SWC table
             obj.T = table(obj.idMap, NaN(size(obj.idMap)),...
                 zeros(numel(obj.idMap), 3), zeros(size(obj.idMap)),...
@@ -134,21 +133,21 @@ classdef SWC < handle
                 'Radius', 'Parent', 'SWCID', 'SWCParent'};
             obj.T(obj.startNode, :).Parent = -1;
             obj.T(obj.startNode, :).SWCParent = -1;
-            obj.T(obj.startNode, :).SWC = 5;
+            obj.T(obj.startNode, :).SWC = 1;
             obj.T(obj.startNode, :).SWCID = obj.node2swc(obj.startNode);
 
             for i = 1:numel(obj.segments)
                 obj.segmentTyping(obj.segments{i});
             end
-            
+
             if ~isempty(isnan(obj.T.SWC))
                 disp(obj.T.ID(isnan(obj.T.SWC)));
             end
             obj.assignAttributes();
-            
+
             obj.T = sortrows(obj.T, 'SWCID');
         end
-        
+
         function save(obj, fPath)
             % SAVE  Save SWC table as .swc file
             if nargin == 2
@@ -159,24 +158,24 @@ classdef SWC < handle
             if isempty(obj.fPath)
                 obj.fPath = uigetdir();
             end
-            
+
             if isempty(obj.T)
                 obj.go();
             end
-            
+
             obj.writeSWC();
         end
 	end
 
 	methods (Access = private)
-        
+
         function swcID = node2swc(obj, nodeID)
             swcID = find(obj.swcMap == nodeID);
         end
 
         function segmentTyping(obj, segment)
             % SEGMENTTYPING
-            
+
             for i = 1:numel(segment)-1
                 node = segment(i);
                 obj.T(node, :).SWCID = obj.node2swc(node);
@@ -196,12 +195,18 @@ classdef SWC < handle
         function assignAttributes(obj)
             % ASSIGNATTRIBUTES
 
+            soma_id = obj.neuron.getSomaID();
+
             for i = 1:height(obj.T)
                 iID = obj.T(i, :).ID;
+                if isequal(iID, soma_id)
+                    obj.T(i, :).SWC = 1;
+                end
                 x = obj.neuron.nodes(obj.neuron.nodes.ID == iID, :);
                 obj.T(i, :).Radius = x.Rum;
                 obj.T(i, :).XYZ = x.XYZum;
             end
+
         end
 
 		function obj = writeSWC(obj)
@@ -236,7 +241,7 @@ classdef SWC < handle
                     row.SWCID, row.SWC, row.XYZ, row.Radius, row.SWCParent);
             end
             fclose(fid);
-            
+
             disp(['Saved as ', obj.fPath, filesep, obj.fName]);
 		end
 	end

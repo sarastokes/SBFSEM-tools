@@ -5,13 +5,14 @@
 
 viewMode = true;
 saveMode = false;
+overwriteMode = false;
 
 [~, S] = xyRegigistration('i', [1284 1305], viewMode);
-updateRegistration('i', S);
+updateRegistration('i', S, overwriteMode);
 
-branchRegistration('i', [914 936], viewMode, saveMode);
-branchRegistration('i', [1121 1122], viewMode, saveMode);
-branchRegistration('i', [1454 1455], viewMode, saveMode);
-branchRegistration('i', [1553 1554], viewMode, saveMode);
-branchRegistration('i', [1517 1518], viewMode, saveMode);
-branchRegistration('i', [1613 1614], viewMode, saveMode);
+branchRegistration('i', [914 936], saveMode, viewMode);
+branchRegistration('i', [1121 1122], saveMode, viewMode);
+branchRegistration('i', [1454 1455], saveMode, viewMode);
+branchRegistration('i', [1553 1554], saveMode, viewMode);
+branchRegistration('i', [1517 1518], saveMode, viewMode);
+branchRegistration('i', [1613 1614], saveMode, viewMode);

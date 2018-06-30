@@ -57,12 +57,16 @@ allPatches = findall(axHandle, 'Type', 'patch');
 % Get the unique tags
 graphNames = unique(arrayfun(@(x) get(x, 'Tag'),...
     allPatches, 'UniformOutput', false));
+% Remove empty tags
+graphNames(cellfun(@isempty, graphNames)) = [];
+
 fprintf('Saving meshes:');
 disp(graphNames)
 
 allFV = containers.Map();
 % Condense each tag into a single mesh
 for i = 1:numel(graphNames)
+    fprintf('Writing %s...\n', graphNames{i});
     patches = findall(axHandle, 'Tag', graphNames{i});
     F = arrayfun(@(x) get(x, 'Faces'), patches,...
         'UniformOutput', false);

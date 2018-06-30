@@ -197,7 +197,7 @@ classdef ConeMosaic < handle
             %   ax              axes handle
             %   tag             custom tag for patch obj
             % -------------------------------------------------------------
-            if nargin < 3
+            if nargin < 3 || isempty(ax)
                 fh = figure('Name', 'Cone Outlines');
                 ax = axes('Parent', fh);
             end

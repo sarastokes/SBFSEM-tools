@@ -73,10 +73,14 @@ classdef OData < handle
             
             data = webread(str, obj.webOpt);
             
+            if isempty(data.value)
+                fprintf('No results for %s\n', label);
+                return;
+            end
             value = cat(1, data.value{:});
             ids = vertcat(value.ID);
             if nargout == 2 && ~exactMatch
-                labels = vertcat(value.Label);
+                labels = {value.Label};
             else
                 labels = label;
             end
