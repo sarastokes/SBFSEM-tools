@@ -1,8 +1,19 @@
 # Changelog
 
+### 8Jul2018
+- Quick revert for soma assignment in `sbfsem.io.SWC.m`.
+- Added `views/ConnectivityView.m` to quickly visualize neuron graph connectivity.
+- New helper function `util/nearestNodes.m` identifies neuron node closest to an associated synapse marker.
+
+### 30Jun2018
+- Corrected error assigning soma in `sbfsem.io.SWC.m`.
+- Updates to `sbfsem.ConeMosaic.m`.
+- Fixed a bug in `exportSceneDAE.m`.
+- Moved Segment class to `sbfsem.render.Segment.m`.
+
 ### 9Jun2018
-- Improvements to `sbfsem.io.SWC` which now ensures ParentID's are always higher than Node IDs.
-- Wrote a new class (`sbfsem.analysis.Segments`) to handle increasing workload for `dendriteSegmentation.m` function.
+- Improvements to `sbfsem.io.SWC.m` which now ensures ParentID's are always higher than Node IDs.
+- Wrote a new class (`sbfsem.analysis.Segments.m`) to handle increasing workload for `dendriteSegmentation.m` function.
 
 ### 5Jun2018
 - Added `volumeScale` property to `+sbfsem/Ultrastructure.m`.

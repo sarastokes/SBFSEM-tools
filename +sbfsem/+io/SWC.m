@@ -39,7 +39,7 @@ classdef SWC < handle
 %   9Jun2018 - SSP - Segment class, now node ID is always < parent ID
 % -------------------------------------------------------------------------
 
-	properties (SetAccess = private)
+	properties (SetAccess = public)
 		ID
         T
         hasAxon
@@ -88,6 +88,9 @@ classdef SWC < handle
 
             % Perform graph segmentation
             obj.Segmentation = sbfsem.render.Segment(neuron, startNode);
+            
+            % Setup the SWC information
+            obj.go();
         end
 
         function startNode = get.startNode(obj)
@@ -133,7 +136,14 @@ classdef SWC < handle
                 'Radius', 'Parent', 'SWCID', 'SWCParent'};
             obj.T(obj.startNode, :).Parent = -1;
             obj.T(obj.startNode, :).SWCParent = -1;
-            obj.T(obj.startNode, :).SWC = 1;
+            switch numel(neighbors(obj.G, obj.startNode))
+                case 1
+                    obj.T(obj.startNode, :).SWC = 6;
+                case 2
+                    obj.T(obj.startNode, :).SWC = 3;
+                otherwise
+                    obj.T(obj.startNode, :).SWC = 5;
+            end
             obj.T(obj.startNode, :).SWCID = obj.node2swc(obj.startNode);
 
             for i = 1:numel(obj.segments)

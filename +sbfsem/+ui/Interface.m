@@ -16,14 +16,17 @@ classdef Interface < handle
     end
 
     methods
-        function obj = Interface()
+        function obj = Interface(createAxes)
+            if nargin < 1
+                createAxes = true;
+            end
+            
             obj.figureHandle = figure(...
                 'Color', 'w',...
                 'NumberTitle', 'off',...
                 'DefaultUicontrolFontName', 'Segoe UI',...
                 'DefaultUicontrolFontSize', 10,...
-                'DefaultUicontrolBackgroundColor', 'w',...
-                'KeyPressFcn', @obj.onKeyPress);
+                'DefaultUicontrolBackgroundColor', 'w');
             mainLayout = uix.HBoxFlex(...
                 'Parent', obj.figureHandle,...
                 'BackgroundColor', 'w');
@@ -32,7 +35,14 @@ classdef Interface < handle
                 'BackgroundColor', 'w');
             obj.ui.plot = uipanel(mainLayout,...
                 'BackgroundColor', 'w');
-            obj.ax = axes('Parent', obj.ui.plot);
+            
+            if createAxes
+                obj.ax = axes('Parent', obj.ui.plot);
+                set(obj.figureHandle, 'KeyPressFcn', @obj.onKeyPress);
+            else
+                obj.ax = [];
+            end
+            
             obj.ui.ctrl = uix.VBoxFlex(...
                 'Parent', obj.ui.root,...
                 'BackgroundColor', 'w');

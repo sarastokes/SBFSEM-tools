@@ -40,8 +40,6 @@ classdef Segment < handle
             
             % Segment
             obj.performSegmentation(neuron);
-            
-            
         end
         
         function segments = get.segments(obj)

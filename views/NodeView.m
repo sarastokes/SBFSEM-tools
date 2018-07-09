@@ -1,6 +1,6 @@
 classdef NodeView < sbfsem.ui.TogglePartsView
     
-    properties (SetAccess = private, Hidden = true)
+    properties (SetAccess = private, Hidden = false)
         neuron
         azel = [-37.5, 30];
     end
