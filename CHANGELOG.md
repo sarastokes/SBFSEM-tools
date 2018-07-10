@@ -1,5 +1,8 @@
 # Changelog
 
+### 9Jul2018
+- Improved `GraphApp.m` with a help panel and an annotation table panel
+
 ### 8Jul2018
 - Quick revert for soma assignment in `sbfsem.io.SWC.m`.
 - Added `views/ConnectivityView.m` to quickly visualize neuron graph connectivity.
