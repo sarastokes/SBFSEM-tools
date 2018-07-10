@@ -48,11 +48,11 @@ classdef GraphApp < handle
     end
 
     methods
-        function obj = GraphApp2(neuron, source)
+        function obj = GraphApp(neuron, source)
             % GRAPHAPP
             if nargin == 2
                 obj.source = validateSource(source);
-                obj.neuron = CacheNeuron(neuron, obj.source);
+                obj.neuron = Neuron(neuron, obj.source);
             elseif nargin == 1
                 obj.neuron = neuron;
                 obj.source = neuron.source;
@@ -62,6 +62,13 @@ classdef GraphApp < handle
                     'Name', 'RenderApp Source Selection',...
                     'SelectionMode', 'single',...
                     'ListString', obj.SOURCES);
+                if selectedSource
+                    obj.source = obj.SOURCES{selection};
+                    fprintf('Running with %s\n', obj.source);
+                else
+                    warning('No source selected... exiting');
+                    return;
+                end
             end
 
             obj.hasSynapses = false;
