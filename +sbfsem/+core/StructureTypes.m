@@ -253,7 +253,7 @@ classdef StructureTypes
                 case VikingStructureTypes.NeuroglialAdherens
                     obj = StructureTypes.NeuroglialAdherens;
                 case VikingStructureTypes.OrganizedSER
-                    obj = StructureTypes.OrangizedSER;
+                    obj = StructureTypes.OrganizedSER;
 				case VikingStructureTypes.Plaque
 					obj = StructureTypes.Plaque;
                 case VikingStructureTypes.Polysomes

@@ -248,7 +248,7 @@ classdef OData < handle
         function Locs = processLocationData(value)
             % PROCESSLOCATIONDATA  Organize according to headers
             % ID, ParentID, VolumeX, VolumeY, Z, Radius, X, Y, OffEdge,
-            % Terminal, Geometry
+            % Terminal, Geometry, Username, LastModified
             Locs = zeros(size(value, 1), 11);
             Locs(:, 1) = vertcat(value.ID);
             Locs(:, 2) = vertcat(value.ParentID);

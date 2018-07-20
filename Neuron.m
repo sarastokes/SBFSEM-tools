@@ -1,6 +1,6 @@
 classdef Neuron < handle
 % NEURON
-% 
+%
 % Description:
 %   A Matlab representation of a neuron ('Structure') in Viking
 %
@@ -8,7 +8,7 @@ classdef Neuron < handle
 %   obj = Neuron(cellID, source, includeSynapses);
 %       or
 %   obj = Neuron({cellID, source, includeSynapses});
-% 
+%
 % Inputs:
 %   cellID      Viking Structure ID (double)
 %   source      Volume name or abbreviation (char)
@@ -32,13 +32,14 @@ classdef Neuron < handle
 %   4Jan2018  - SSP - New OData classes, added render methods
 %   16Feb2018 - SSP - Added the omittedIDs property, applied in obj.graph()
 %   6Mar2018  - SSP - NeuronCache compatibility
+%   19Jul2018 - SSP - Option to specify different XY transforms
 % -------------------------------------------------------------------------
-    
+
     properties (SetAccess = private, GetAccess = public)
         % Cell ID in Viking
         ID
         % Volume cell exists in
-        source 
+        source
         % Neuron's data from Viking
         viking
         % Table of each location ID
@@ -51,34 +52,32 @@ classdef Neuron < handle
         synapses
         % Closed curve geometries
         geometries
-        % Date info pulled from odata             
-        lastModified 
+        % Date info pulled from odata
+        lastModified
         % Analyses related to the neuron
         analysis = containers.Map();
         % Render of neuron
         model = [];
         % Omitted location IDs
         omittedIDs = [];
+        % Transform applied to XY coordinates
+        transform = []
     end
-    
+
     properties (Transient = true, Hidden = true)
         ODataClient
         GeometryClient
         SynapseClient
         includeSynapses
     end
-    
+
     properties (Dependent = true, Transient = true, Hidden = true)
         somaRow     % Largest "cell" node's row
         offEdges    % Unfinished branches
     end
-    
-    properties (Constant = true, Transient = true, Hidden = true)
-        USETRANSFORM = true;
-    end
 
     methods
-        function obj = Neuron(ID, source, includeSynapses)
+        function obj = Neuron(ID, source, includeSynapses, transform)
             % NEURON  Basic cell data model
             %
             % Required inputs:
@@ -93,7 +92,9 @@ classdef Neuron < handle
 
             % By default, synapses are not imported
             obj.includeSynapses = false;
-            
+            % Default transform is local sbfsem-tools XY offset
+            obj.transform = sbfsem.core.Transforms.SBFSEMTools;
+
             % NeuronCache inputs a single cell, cmd line as 2-3 arguments
             if nargin == 1 && iscell(ID)
                 source = ID{2};
@@ -105,14 +106,21 @@ classdef Neuron < handle
             elseif nargin == 3
                 validateattributes(includeSynapses, {'logical'}, {});
                 obj.includeSynapses = includeSynapses;
+            elseif nargin == 4
+                if isa(transform, 'sbfsem.core.Transforms')
+                    obj.transform = transform;
+                else
+                    obj.transform = sbfsem.core.Transforms.fromStr(transform);
+                end
             end
-            
+
             validateattributes(ID, {'numeric'}, {'numel', 1});
             source = validateSource(source);
+            obj.transform = validateTransform(obj.transform, source);
             obj.ID = ID;
             obj.source = source;
-            fprintf('-----c%u-----\n', obj.ID);            
-            
+            fprintf('-----c%u-----\n', obj.ID);
+
             % XYZ volume dimensions in nm/pix, nm/pix, nm/sections
             obj.volumeScale = getODataScale(obj.source);
 
@@ -124,7 +132,7 @@ classdef Neuron < handle
                 obj.SynapseClient = [];
             end
             obj.GeometryClient = [];
-            
+
             % Fetch neuron OData and parse
             obj.pull();
 
@@ -132,10 +140,10 @@ classdef Neuron < handle
             obj.omittedIDs = omitLocations(obj.ID, obj.source);
 
             % Track when the Neuron object was created
-            obj.lastModified = datestr(now);            
+            obj.lastModified = datestr(now);
             fprintf('\n\n');
         end
-        
+
         function getGeometries(obj)
             % GETGEOMETRIES  Import ClosedCurve-related OData
             if isempty(obj.GeometryClient)
@@ -159,10 +167,10 @@ classdef Neuron < handle
             % Merge with neuron nodes/edges
             obj.nodes = [obj.nodes; obj.setXYZum(childNodes)];
             obj.edges = [obj.edges; childEdges];
-            
+
             obj.setupSynapses();
         end
-                
+
         function update(obj)
             % UPDATE  Updates existing OData
             % If you haven't imported synapses the update will skip them
@@ -173,7 +181,7 @@ classdef Neuron < handle
 
         function model = build(obj, renderType, varargin)
             % BUILD  Quick access to render methods
-            % 
+            %
             % Inputs:
             %   renderType      'cylinder' (default), 'closedcurve', 'disc'
             %   varargin        Input to render function
@@ -183,11 +191,11 @@ classdef Neuron < handle
             if nargin < 2
                 renderType = 'cylinder';
             end
-            
+
             if ~isempty(obj.model)
                 obj.model = [];
             end
-            
+
             switch lower(renderType)
                 case {'cylinder', 'cyl'}
                     model = sbfsem.render.Cylinder(obj, varargin{:});
@@ -210,7 +218,7 @@ classdef Neuron < handle
             % Inputs:
             %   fName       filename (char)
             %
-            % See also: 
+            % See also:
             %   EXPORTSCENEDAE
             % -------------------------------------------------------------
             if isempty(obj.model)
@@ -232,11 +240,11 @@ classdef Neuron < handle
             %
             % Inputs:
             %   varargin        See render function inputs
-            % 
+            %
             % See also:
             %   RENDERCLOSEDCURVE, SBFSEM.RENDER.CYLINDER
             % -------------------------------------------------------------
-            
+
             if ~isempty(obj.model)
                 if isa(obj.model, 'sbfsem.builtin.ClosedCurve')
                     obj.model.trace(varargin{:});
@@ -252,12 +260,12 @@ classdef Neuron < handle
                 warning('No model - use BUILD function first');
             end
         end
-        
+
         function somaRow = get.somaRow(obj)
             % This is the row associated with the largest annotation
             somaRow = find(obj.nodes.Radius == max(obj.nodes.Radius));
         end
-        
+
         function offEdges = get.offEdges(obj)
             rows = obj.nodes.OffEdge == 1;
             offEdges = obj.nodes(rows,:).ID;
@@ -269,17 +277,17 @@ classdef Neuron < handle
             % Input:
             %   toChar          Convert to char (default = false)
             %
-            % Output: 
+            % Output:
             %   synapseNames    Array of sbfsem.core.StructureTypes
             %                   Or cell of strings, if toChar = true
             % -------------------------------------------------------------
-            
+
             if nargin < 2
                 toChar = false;
             end
-            
+
             obj.checkSynapses();
-            
+
             synapseNames = unique(obj.synapses.LocalName);
             if toChar
                 synapseNames = vertcat(arrayfun(@(x) char(x),...
@@ -315,16 +323,16 @@ classdef Neuron < handle
             row = obj.nodes.ParentID == obj.ID;
             cellNodes = obj.nodes(row, :);
         end
-        
+
         function IDs = synapseIDs(obj, whichSyn)
             % SYNAPSEIDS  Return parent IDs for synapses
             %
             % Input:
             %   whichSyn        synapse name (default = all)
             % -------------------------------------------------------------
-            
+
             obj.checkSynapses();
-            
+
             if nargin < 2
                 IDs = obj.synapses.ID;
             else % Return a single synapse type
@@ -344,7 +352,7 @@ classdef Neuron < handle
             if nargin < 2
                 useMicrons = true;
             end
-            
+
             row = obj.nodes.ParentID == obj.ID;
             if useMicrons
                 xyz = obj.nodes{row, 'XYZum'};
@@ -388,11 +396,11 @@ classdef Neuron < handle
             end
             n = nnz(obj.synapses.LocalName == synapseName);
         end
-        
+
         function xyz = getSynapseXYZ(obj, syn, useMicrons)
             % GETSYNAPSEXYZ  Get xyz of synapse type
             %
-            % Inputs:   
+            % Inputs:
             %   syn             Synapse name
             %   useMicrons      Logical (default = true)
             % -------------------------------------------------------------
@@ -400,13 +408,13 @@ classdef Neuron < handle
                 useMicrons = true;
             end
             obj.checkSynapses();
-            
+
             % Find the synapse structures matching synapse name
             if ischar(syn)
                 syn = sbfsem.core.StructureTypes(syn);
             end
-            
-            row = obj.synapses.LocalName == syn;                           
+
+            row = obj.synapses.LocalName == syn;
             IDs = obj.synapses.ID(row,:);
             % Find the unique instances of each synapse ID
             row = ismember(obj.nodes.ParentID, IDs) & obj.nodes.Unique;
@@ -417,19 +425,19 @@ classdef Neuron < handle
             else
                 xyz = obj.dataTable{row, {'X', 'Y', 'Z'}};
             end
-        end 
-        
+        end
+
         function id = getSomaID(obj, toClipboard)
             % GETSOMAID  Get location ID for current "soma" node
-            % 
+            %
             % Optional input:
             %   toClipboard     Copy to clipboard (default = false)
             % ----------------------------------------------------------
-            
+
             if nargin < 2
                 toClipboard = false;
             end
-            
+
             id = obj.nodes{obj.somaRow, 'ID'};
             % In case more than one node has maximum size
             id = id(1);
@@ -461,14 +469,14 @@ classdef Neuron < handle
                 xyz = xyz(1,:);
             end
         end
-        
+
         function xyz = getDAspect(obj, ax)
-            % GETDASPECT  
+            % GETDASPECT
             %   Scales a plot by x,y,z dimensions
             % Optional inputs:
             %   ax      axesHandle to apply daspect
-            % ----------------------------------------------------------            
-            % xyz = obj.volumeScale/max(abs(obj.volumeScale));  
+            % ----------------------------------------------------------
+            % xyz = obj.volumeScale/max(abs(obj.volumeScale));
             xyz = max(obj.volumeScale)./obj.volumeScale;
             if nargin == 2
                 assert(isa(ax, 'matlab.graphics.axis.Axes'),...
@@ -489,7 +497,7 @@ classdef Neuron < handle
             %   G               graph or digraph
             %   nodesIDs        array (ith entry is loc ID of node i)
             % -------------------------------------------------------------
-            
+
             ip = inputParser();
             addParameter(ip, 'directed', false, @islogical);
             addParameter(ip, 'synapses', false, @islogical);
@@ -514,7 +522,7 @@ classdef Neuron < handle
                 figure();
                 plot(G);
             end
-            
+
             % Lookup table for locationIDs of nodes where ith entry is
             % the location ID of node i.
             nodeIDs = str2double(G.Nodes{:,:});
@@ -535,10 +543,10 @@ classdef Neuron < handle
             uisave(obj, sprintf('c%u', obj.ID));
             fprintf('Saved!\n');
         end
-                 
+
         function printSyn(obj)
             % PRINTSYN  Print synapse summary to the command line
-            
+
             obj.checkSynapses();
             % Viking synapse names first
             [a, b] = findgroups(obj.synapses.TypeID);
@@ -559,10 +567,10 @@ classdef Neuron < handle
             end
             fprintf('\n-------------------\n');
         end
-               
+
         function checkSynapses(obj)
             % SYNAPSECHECK  If no synapses, import them
-            
+
             if isempty(obj.synapses)
                 obj.getSynapses();
             end
@@ -584,26 +592,27 @@ classdef Neuron < handle
 
             % XY transform and then convert data to microns
             obj.nodes = obj.setXYZum(obj.nodes);
-            
+
             if nnz(obj.nodes.Geometry == 6)
                 obj.getGeometries();
-                fprintf('     %u closed curve geometries\n',... 
+                fprintf('     %u closed curve geometries\n',...
                     height(obj.geometries));
             end
-        end        
-        
+        end
+
         function nodes = setXYZum(obj, nodes)
             % SETXYZUM  Convert Viking pixels to microns
-            
-            volX = nodes.VolumeX;
-            volY = nodes.VolumeY;            
-            % Apply transforms to NeitzInferiorMonkey            
-            if strcmp(obj.source, 'NeitzInferiorMonkey') && obj.USETRANSFORM
+
+            % Apply transforms to NeitzInferiorMonkey
+            if obj.transform == sbfsem.core.Transforms.SBFSEMTools
                 xyDir = [fileparts(mfilename('fullpath')), '\data'];
                 xydata = dlmread([xyDir,...
                     '\XY_OFFSET_NEITZINFERIORMONKEY.txt']);
-                volX = nodes.VolumeX + xydata(nodes.Z,2);
-                volY = nodes.VolumeY + xydata(nodes.Z,3);                           
+                volX = nodes.X + xydata(nodes.Z,2);
+                volY = nodes.Y + xydata(nodes.Z,3);
+            else
+                volX = nodes.VolumeX;
+                volY = nodes.VolumeY;
             end
 
             % Create an XYZ in microns column
@@ -613,15 +622,15 @@ classdef Neuron < handle
                 [volX, volY, nodes.Z],...
                 (obj.volumeScale./1e3));
             % Create a column for radius in microns
-            nodes.Rum = nodes.Radius * obj.volumeScale(1)./1000; 
+            nodes.Rum = nodes.Radius * obj.volumeScale(1)./1000;
         end
-        
+
         function setupSynapses(obj)
-            % SETUPSYNAPSES  
+            % SETUPSYNAPSES
             % TODO: This should be done elsewhere
 
             import sbfsem.core.StructureTypes;
-            % Create a new column for "unique" synapses 
+            % Create a new column for "unique" synapses
             % The purpose of this is having 1 marker per synapse structure
             obj.nodes.Unique = zeros(height(obj.nodes), 1);
             if ~isempty(obj.synapses)
@@ -649,14 +658,14 @@ classdef Neuron < handle
                 localNames = cell(numel(structures),1);
                 for i = 1:numel(structures)
                     localNames{i,:} = sbfsem.core.StructureTypes.fromViking(...
-                        structures(i), obj.synapses.Tags{i,:});   
+                        structures(i), obj.synapses.Tags{i,:});
                 end
                 obj.synapses.LocalName = vertcat(localNames{:});
                 % Make sure synapses match the new naming conventions
                 if ~strcmp(obj.source, 'RC1')
                     makeConsistent(obj);
                 end
-            end                         
+            end
         end
     end
 end
