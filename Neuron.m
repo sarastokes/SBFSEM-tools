@@ -271,6 +271,11 @@ classdef Neuron < handle
             offEdges = obj.nodes(rows,:).ID;
         end
 
+        function xyz = id2xyz(obj, IDs)
+            row = ismember(obj.nodes.ID, IDs);
+            xyz = obj.nodes{row, 'XYZum'};
+        end
+
         function synapseNames = synapseNames(obj, toChar)
             % SYNAPSENAMES  Returns a list of synapse types
             %

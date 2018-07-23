@@ -1,5 +1,8 @@
 function fh = vissoma(xyr, varargin)
-	% plot soma using viscircles
+	% VISSOMA
+    %
+    % Description:
+    %   Plot soma using viscircles
 	%
 	% INPUT: 
 	%		xyr 					[x, y, radius]
@@ -11,31 +14,35 @@ function fh = vissoma(xyr, varargin)
 	%		fh 			figureHandle
 	%
 	% 29Jul2017 - SSP - created
+    % 22Jul2018 - SSP - updated to current Neuron functions
+    % ---------------------------------------------------------------------
 
 
 
 	ip = inputParser();
 	ip.CaseSensitive = false;
 	ip.addParameter('ax', [], @ishandle);
-	ip.addParameter('Color', [0 0 0], @isnumeric);
+	ip.addParameter('Color', 'k', @(x) isnumeric(x) || ischar(x));
 	ip.addParameter('LineWidth', 1, @isnumeric);
 	ip.parse(varargin{:});
 	ax = ip.Results.ax;
 
 	if isa(xyr, 'Neuron')
-		row = neuron.getSomaRow();
-		xyr = [row.XYZum(1:2), row.Rum];
+        neuron = xyr;
+		xyz = neuron.getSomaXYZ();
+		xyr = [xyz(1:2), neuron.getSomaSize];
 	end
 
 	if isempty(ax)
-		fh = figure();
-		ax = gca;
+		fh = figure('Renderer', 'painters');
+		ax = axes('Parent', fh);
 	else
 		fh = ax.Parent;
-	end
+    end
+    hold(ax, 'on');
 
 	viscircles(ax, xyr(1:2), xyr(3),...
-		'LineWidth', ip.Results.lw,... 
-		'EdgeColor', ip.Results.co);
+		'LineWidth', ip.Results.LineWidth,... 
+		'EdgeColor', ip.Results.Color);
 
 	hold on; axis equal;
