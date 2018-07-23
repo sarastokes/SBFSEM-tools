@@ -414,7 +414,7 @@ classdef Neuron < handle
             end
             obj.checkSynapses();
 
-            % Find the synapse structures matching synapse name
+            % Find synapse structures matching synapse name
             if ischar(syn)
                 syn = sbfsem.core.StructureTypes(syn);
             end
@@ -428,7 +428,7 @@ classdef Neuron < handle
             if useMicrons
                 xyz = obj.nodes{row, 'XYZum'};
             else
-                xyz = obj.dataTable{row, {'X', 'Y', 'Z'}};
+                xyz = obj.nodes{row, {'X', 'Y', 'Z'}};
             end
         end
 
@@ -588,16 +588,16 @@ classdef Neuron < handle
 
             % Get the relevant data with OData queries
             [obj.viking, obj.nodes, obj.edges] = obj.ODataClient.pull();
+            % XY transform and then convert data to microns
+            obj.nodes = obj.setXYZum(obj.nodes);
+            
             if obj.includeSynapses
                 [obj.synapses, childNodes, childEdges] = obj.SynapseClient.pull();
-                obj.nodes = [obj.nodes; childNodes];
+                obj.nodes = [obj.nodes; obj.setXYZum(childNodes)];
                 obj.edges = [obj.edges; childEdges];
                 obj.setupSynapses();
             end
-
-            % XY transform and then convert data to microns
-            obj.nodes = obj.setXYZum(obj.nodes);
-
+            
             if nnz(obj.nodes.Geometry == 6)
                 obj.getGeometries();
                 fprintf('     %u closed curve geometries\n',...
@@ -607,7 +607,10 @@ classdef Neuron < handle
 
         function nodes = setXYZum(obj, nodes)
             % SETXYZUM  Convert Viking pixels to microns
-
+            if sum(nodes.X + nodes.Y) == 0
+                nodes = estimateSynapseXY(obj, nodes);
+            end
+            
             % Apply transforms to NeitzInferiorMonkey
             if obj.transform == sbfsem.core.Transforms.SBFSEMTools
                 xyDir = [fileparts(mfilename('fullpath')), '\data'];

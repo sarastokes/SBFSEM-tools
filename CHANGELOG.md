@@ -3,7 +3,8 @@
 ### 23Jul2018
 - Updated `util/plots/vissoma.m` to match new method of `Neuron.m`.
 - Major updates to `GraphApp.m` and `RenderApp.m`.
-- Changed `Neuron.m` parsing of XYZ data to be robust to annotations with and without the SliceToVolume1 transform. Unfortunately, synapses in NeitzInferiorMonkey are no longer associated with an XY location. Will fix this soon.
+- Changed `Neuron.m` parsing of XYZ data to be robust to annotations with and without the SliceToVolume1 transform. For now, synapse locations are ballpark, using `util/import/estimateSynapseXY.m`.
+- Added two colormaps missing from `lib/` folder: `lbmap.m` and `viridis.m`.
 
 ### 19Jul2018
 - `Neuron` class now has a property specifying the XY transform applied to annotation data (`sbfsem.core.Transforms.m`). Default is `SBFSEMTools`, the local transforms found in the `registration/` folder. The `Viking` transform applies the SliceToVolume1 transform. Raw XY values can be used by applying the `None` transform.
