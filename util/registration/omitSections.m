@@ -24,11 +24,12 @@ function Z = omitSections(source)
 	source = validateSource(source);
 	source = upper(source);
 
-	dataFile = [fileparts(fileparts(mfilename('fullpath'))),...
+	dataFile = [fileparts(fileparts(fileparts(mfilename('fullpath')))),...
 		filesep, 'data', filesep, 'OMITTED_SECTIONS_', source, '.txt'];
+    disp(dataFile)
 
 	if exist(dataFile, 'file')
-		data = dlmread(dataFile);
+		Z = dlmread(dataFile);
 	else
 		Z = [];
 	end

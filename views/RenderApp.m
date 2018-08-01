@@ -150,90 +150,6 @@ classdef RenderApp < handle
             end
         end
 
-        function onKeyPress(obj, ~, eventdata)
-            % ONKEYPRESS  Control plot view with keyboard
-            %
-            % See also: AXDRAG
-            switch eventdata.Character
-                case 'h' % help menu
-                    helpdlg(obj.getInstructions, 'Navigation Instructions');
-                case 28 % Rotate (azimuth -)
-                    obj.azel(1) = obj.azel(1) - 5;
-                case 30 % Rotate (elevation -)
-                    obj.azel(2) = obj.azel(2) - 5;
-                case 31 % Rotate (elevation +)
-                    obj.azel(2) = obj.azel(2) + 5;
-                case 29 % Rotate (azimuth +)
-                    obj.azel(1) = obj.azel(1) + 5;
-                case 'a' % Pan (x+)
-                    x = get(obj.ax, 'XLim');
-                    set(obj.ax, 'XLim', x + obj.panFac * diff(x));
-                case 'd' % Pan (x-)
-                    x = get(obj.ax, 'XLim');
-                    set(obj.ax, 'XLim', x - obj.panFac * diff(x));
-                case 'e' % Pan (y+)
-                    y = get(gca, 'YLim');
-                    set(obj.ax, 'YLim', y + obj.panFac * diff(y));
-                case 'q' % Pan (y-)
-                    y = get(gca, 'YLim');
-                    set(obj.ax, 'YLim', y - obj.panFac * diff(y));
-                case 'w' % pan (z+)
-                    z = get(obj.ax, 'ZLim');
-                    set(obj.ax, 'ZLim', z + obj.panFac * diff(z));
-                case 's' % pan (z-)
-                    z = get(obj.ax, 'ZLim');
-                    set(obj.ax, 'ZLim', z - obj.panFac * diff(z));
-                case {'z', 'Z'} % Zoom
-                    % SHIFT+Z changes zoom direction
-                    if eventdata.Character == 'Z'
-                        obj.zoomFac = 1/obj.zoomFac;
-                    end
-
-                    x = get(obj.ax, 'XLim');
-                    y = get(obj.ax, 'YLim');
-
-                    set(obj.ax, 'XLim',...
-                        [0, obj.zoomFac*diff(x)] + x(1)...
-                        + (1-obj.zoomFac) * diff(x)/2);
-                    set(obj.ax, 'YLim',...
-                        [0, obj.zoomFac*diff(y)] + y(1)...
-                        + (1-obj.zoomFac) * diff(y)/2);
-                case 'm' % Return to original dimensions
-                    axis(obj.ax, 'tight');
-                case 'c' % Copy the last click location
-                    % Don't copy position if no neurons are plotted
-                    if isempty(obj.neurons)
-                        return;
-                    end
-
-                    % Convert microns to Viking pixel coordinates
-                    posMicrons = mean(get(obj.ax, 'CurrentPoint')); %um
-                    um2pix = obj.volumeScale/1e3; % nm/pix -> um/pix
-                    posViking = posMicrons./um2pix; % pix
-
-                    % Reverse the xyOffset applied on Neuron creation
-                    if strcmp(obj.source, 'NeitzInferiorMonkey')
-                        if isempty(obj.xyOffset)
-                            dataDir = fileparts(fileparts(mfilename('fullpath')));
-                            offsetPath = [dataDir,filesep,'data',filesep,...
-                                'XY_OFFSET_', upper(obj.source), '.txt'];
-                            obj.xyOffset = dlmread(offsetPath);
-                        end
-                        posViking(3) = round(posViking(3));
-                        appliedOffset = obj.xyOffset(posViking(3), 1:2);
-                        posViking(1:2) = posViking(1:2) - appliedOffset;
-                    end
-
-                    % Format to copy into Viking
-                    locationStr = obj.formatCoordinates(posViking);
-                    clipboard('copy', locationStr);
-                    fprintf('Copied to clipboard:\n %s\n', locationStr);
-                otherwise % Unregistered key press
-                    return;
-            end
-            view(obj.ax, obj.azel);
-        end
-
         function onToggleGrid(obj, src, ~)
             % TOGGLEGRID  Show/hide the grid
             if src.Value == 1
@@ -364,6 +280,91 @@ classdef RenderApp < handle
             % ONEXPORTFIGURE  Copy figure to new window
             obj.exportFigure();
         end
+        
+        function onKeyPress(obj, ~, eventdata)
+            % ONKEYPRESS  Control plot view with keyboard
+            %
+            % See also: AXDRAG
+            switch eventdata.Character
+                case 'h' % help menu
+                    helpdlg(obj.getInstructions, 'Navigation Instructions');
+                case 28 % Rotate (azimuth -)
+                    obj.azel(1) = obj.azel(1) - 5;
+                case 30 % Rotate (elevation -)
+                    obj.azel(2) = obj.azel(2) - 5;
+                case 31 % Rotate (elevation +)
+                    obj.azel(2) = obj.azel(2) + 5;
+                case 29 % Rotate (azimuth +)
+                    obj.azel(1) = obj.azel(1) + 5;
+                case 'a' % Pan (x+)
+                    x = get(obj.ax, 'XLim');
+                    set(obj.ax, 'XLim', x + obj.panFac * diff(x));
+                case 'd' % Pan (x-)
+                    x = get(obj.ax, 'XLim');
+                    set(obj.ax, 'XLim', x - obj.panFac * diff(x));
+                case 'e' % Pan (y+)
+                    y = get(gca, 'YLim');
+                    set(obj.ax, 'YLim', y + obj.panFac * diff(y));
+                case 'q' % Pan (y-)
+                    y = get(gca, 'YLim');
+                    set(obj.ax, 'YLim', y - obj.panFac * diff(y));
+                case 'w' % pan (z+)
+                    z = get(obj.ax, 'ZLim');
+                    set(obj.ax, 'ZLim', z + obj.panFac * diff(z));
+                case 's' % pan (z-)
+                    z = get(obj.ax, 'ZLim');
+                    set(obj.ax, 'ZLim', z - obj.panFac * diff(z));
+                case {'z', 'Z'} % Zoom
+                    % SHIFT+Z changes zoom direction
+                    if eventdata.Character == 'Z'
+                        obj.zoomFac = 1/obj.zoomFac;
+                    end
+
+                    x = get(obj.ax, 'XLim');
+                    y = get(obj.ax, 'YLim');
+
+                    set(obj.ax, 'XLim',...
+                        [0, obj.zoomFac*diff(x)] + x(1)...
+                        + (1-obj.zoomFac) * diff(x)/2);
+                    set(obj.ax, 'YLim',...
+                        [0, obj.zoomFac*diff(y)] + y(1)...
+                        + (1-obj.zoomFac) * diff(y)/2);
+                case 'm' % Return to original dimensions
+                    axis(obj.ax, 'tight');
+                case 'c' % Copy the last click location
+                    % Don't copy position if no neurons are plotted
+                    if isempty(obj.neurons)
+                        return;
+                    end
+
+                    % Convert microns to Viking pixel coordinates
+                    posMicrons = mean(get(obj.ax, 'CurrentPoint')); %um
+                    um2pix = obj.volumeScale/1e3; % nm/pix -> um/pix
+                    posViking = posMicrons./um2pix; % pix
+
+                    % Reverse the xyOffset applied on Neuron creation
+                    if strcmp(obj.source, 'NeitzInferiorMonkey')
+                        if isempty(obj.xyOffset)
+                            dataDir = fileparts(fileparts(mfilename('fullpath')));
+                            offsetPath = [dataDir,filesep,'data',filesep,...
+                                'XY_OFFSET_', upper(obj.source), '.txt'];
+                            obj.xyOffset = dlmread(offsetPath);
+                        end
+                        posViking(3) = round(posViking(3));
+                        appliedOffset = obj.xyOffset(posViking(3), 1:2);
+                        posViking(1:2) = posViking(1:2) - appliedOffset;
+                    end
+
+                    % Format to copy into Viking
+                    locationStr = obj.formatCoordinates(posViking);
+                    clipboard('copy', locationStr);
+                    fprintf('Copied to clipboard:\n %s\n', locationStr);
+                otherwise % Unregistered key press
+                    return;
+            end
+            view(obj.ax, obj.azel);
+        end
+
 
         function openHelpDlg(obj, src, ~)
             % OPENHELPDLG  Opens instructions dialog
@@ -438,6 +439,7 @@ classdef RenderApp < handle
                 case 'GraphApp'
                     GraphApp(neuron);
             end
+            obj.statusUpdate('');
         end
 
         function onImportCones(obj, src, ~)
@@ -708,6 +710,9 @@ classdef RenderApp < handle
                     'Callback', @obj.onSetTransparency)
             end
             v = uimenu(c, 'Label', 'Open view');
+            uimenu(v, 'Label', 'GraphApp',...
+                'Tag', obj.id2tag(ID),...
+                'Callback', @obj.onOpenView);
             uimenu(v, 'Label', 'Node View',...
                 'Tag', obj.id2tag(ID),...
                 'Callback', @obj.onOpenView);

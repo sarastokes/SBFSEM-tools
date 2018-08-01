@@ -36,6 +36,7 @@ classdef GraphApp < handle
         showSurface
         showSynapses
         showOffEdges
+        showTerminals
     end
     
     properties (Access = private, Transient = true)
@@ -76,7 +77,7 @@ classdef GraphApp < handle
             end
             
             import sbfsem.render.*;
-            obj.segments = sbfsem.render.Segment(neuron);
+            obj.segments = sbfsem.render.Segment(obj.neuron);
             obj.createUi();
         end
     end
@@ -110,6 +111,11 @@ classdef GraphApp < handle
         function showOffEdges = get.showOffEdges(obj)
             h = findobj(obj.figureHandle, 'Tag', 'ShowOffEdges');
             showOffEdges = logical(h.Value);
+        end
+        
+        function showTerminals = get.showTerminals(obj)
+            h = findobj(obj.figureHandle, 'Tag', 'ShowTerminals');
+            showTerminals = logical(h.Value);
         end
     end
     
@@ -222,6 +228,29 @@ classdef GraphApp < handle
                 set(h, 'Visible', 'off');
             end
         end
+        
+        function plotTerminals(obj)
+            % PLOTTERMINALS  Plot nodes marked as terminals
+            % Delete any existing off edge nodes
+            delete(findall(obj.figureHandle, 'Tag', 'Terminal'));
+            % Get OffEdge node IDs
+            terminalIDs = obj.neuron.terminals;
+            % Return if no off edges in neuron
+            if isempty(terminalIDs)
+                return;
+            end
+            
+            xyz = obj.neuron.id2xyz(terminalIDs);
+            h = line(obj.ax, xyz(:, 1), xyz(:, 2), xyz(:, 3),...
+                'Marker', '.', 'MarkerSize', 12,...
+                'MarkerFaceColor', 'b',...
+                'MarkerEdgeColor', 'b',...
+                'LineStyle', 'none',...
+                'Tag', 'Terminal');
+            if ~obj.showTerminals
+                set(h, 'Visible', 'off');
+            end
+        end
     end
     
     % Callback functions
@@ -242,6 +271,7 @@ classdef GraphApp < handle
                 obj.plotCylinders();
             end
             obj.plotOffEdges();
+            obj.plotTerminals();
             obj.plotSynapses();
         end
         
@@ -379,6 +409,7 @@ classdef GraphApp < handle
                     % Toggle visibility
                     set(findall(obj.ax, 'Tag', 'Synapse'), 'Visible', 'on');
                 else
+                    obj.neuron.getSynapses();
                     obj.plotSynapses();
                 end
             else
@@ -395,6 +426,15 @@ classdef GraphApp < handle
                 set(findall(obj.ax, 'Tag', 'OffEdge'), 'Visible', 'on');
             else
                 set(findall(obj.ax, 'Tag', 'OffEdge'), 'Visible', 'off');
+            end
+        end
+        
+        function onShowTerminals(obj, src, ~)
+            % ONSHOWOFFEDGES  Toggle terminal branch markers
+            if src.Value == 1
+                set(findall(obj.ax, 'Tag', 'Terminal'), 'Visible', 'on');
+            else
+                set(findall(obj.ax, 'Tag', 'Terminal'), 'Visible', 'off');
             end
         end
         
@@ -488,6 +528,13 @@ classdef GraphApp < handle
                 'Tag', 'ShowOffEdges',...
                 'TooltipString', 'Show nodes marked as unfinished',...
                 'Callback', @obj.onShowOffEdges);
+            uicontrol(uiLayout,...
+                'Style', 'checkbox',...
+                'String', 'Show Terminals',...
+                'Value', 0,...
+                'Tag', 'ShowTerminals',...
+                'TooltipString', 'Show nodes marked as terminals',...
+                'Callback', @obj.onShowTerminals);
             LayoutManager.verticalBoxWithLabel(uiLayout, 'Marker Size:',...
                 'Style', 'popup',...
                 'String', {'Minimal', 'Medium', 'Large'},...
@@ -508,7 +555,7 @@ classdef GraphApp < handle
                 'Callback', @obj.onUpdateNeuron);
             
             set(uiLayout, 'Heights',...
-                [-0.5, -1, -0.5, -0.5, -0.5, -0.5, -1, -1, -1]);
+                [-0.5, -1, -0.5, -0.5, -0.5, -0.5, -0.5, -1, -1, -1]);
             
             % Data cursor mode requires parent with pixel property
             % Use Matlab's uipanel between axes and HBoxFlex
@@ -536,6 +583,7 @@ classdef GraphApp < handle
                 warning('Upgrade Matlab version to enable surface plots');
             end
             obj.plotOffEdges();
+            obj.plotTerminals();
             obj.plotSynapses();
             
             axis(obj.ax, 'equal', 'tight');

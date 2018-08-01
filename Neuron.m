@@ -74,6 +74,7 @@ classdef Neuron < handle
     properties (Dependent = true, Transient = true, Hidden = true)
         somaRow     % Largest "cell" node's row
         offEdges    % Unfinished branches
+        terminals   % Branch endings
     end
 
     methods
@@ -135,9 +136,6 @@ classdef Neuron < handle
 
             % Fetch neuron OData and parse
             obj.pull();
-
-            % Search for omitted location IDs
-            obj.omittedIDs = omitLocations(obj.ID, obj.source);
 
             % Track when the Neuron object was created
             obj.lastModified = datestr(now);
@@ -270,6 +268,11 @@ classdef Neuron < handle
             rows = obj.nodes.OffEdge == 1;
             offEdges = obj.nodes(rows,:).ID;
         end
+        
+        function terminals = get.terminals(obj)
+            rows = obj.nodes.Terminal == 1;
+            terminals = obj.nodes(rows, :).ID;
+        end
 
         function xyz = id2xyz(obj, IDs)
             row = ismember(obj.nodes.ID, IDs);
@@ -318,8 +321,6 @@ classdef Neuron < handle
 
             % Sort by parentID
             synapseNodes = sortrows(synapseNodes, 'ParentID');
-            synapseTable = sortrows(obj.synapses, 'ParentID');
-            synapseNodes = [synapseNodes, synapseTable(:, {'N', 'LocalName'})];
         end
 
         function cellNodes = getCellNodes(obj)
@@ -535,7 +536,7 @@ classdef Neuron < handle
             % Remove any omitted nodes from the graph
             if ~isempty(obj.omittedIDs)
                 for i = 1:numel(obj.omittedIDs)
-                    G = G.rmnode(find(nodeIDs == (obj.omittedIDs(i))'));
+                    G = G.rmnode(find(nodeIDs == obj.omittedIDs(i))); %#ok
                     nodeIDs = str2double(G.Nodes{:,:});
                 end
                 fprintf('Omitted %u locations\n', numel(obj.omittedIDs));
@@ -603,11 +604,22 @@ classdef Neuron < handle
                 fprintf('     %u closed curve geometries\n',...
                     height(obj.geometries));
             end
+            
+            
+            % Search for omitted nodes by location ID and section number
+            obj.omittedIDs = omitLocations(obj.ID, obj.source);
+            omittedSections = omitSections(obj.source);
+            if ~isempty(omittedSections)
+                for i = 1:numel(omittedSections)
+                    row = obj.nodes.Z == omittedSections(i);
+                    obj.omittedIDs = [obj.omittedIDs; obj.nodes(row,:).ID];
+                end
+            end
         end
 
         function nodes = setXYZum(obj, nodes)
             % SETXYZUM  Convert Viking pixels to microns
-            if sum(nodes.X + nodes.Y) == 0
+            if nnz(nodes.X) + nnz(nodes.Y) > 2
                 nodes = estimateSynapseXY(obj, nodes);
             end
             

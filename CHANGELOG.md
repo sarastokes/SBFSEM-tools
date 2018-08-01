@@ -1,5 +1,11 @@
 # Changelog
 
+### 31Jul2018
+- Implemented `util/registration/omitSections.m` and moved code setting the `omittedIDs` property of `Neuron` objects to the `Neuron.pull()` method, to keep omitted IDs in sync with updates.
+- Fixed bug in `Neuron.getSynapseNodes()`
+- Added option to show nodes labeled Terminal in `GraphApp.m`.
+- General bug fixes to `RenderApp.m` and `GraphApp.m`, both are fully functional.
+
 ### 23Jul2018
 - Updated `util/plots/vissoma.m` to match new method of `Neuron.m`.
 - Major updates to `GraphApp.m` and `RenderApp.m`.
