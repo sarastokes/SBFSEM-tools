@@ -89,6 +89,11 @@ classdef JSON < handle
             
             % Matlab doesn't like converting objects to structures
             warning('off', 'MATLAB:structOnObject');
+            % First convert the model object, if necessary
+            if ~isempty(neuron.model)
+                neuron.model = struct(neuron.model);
+            end
+            % Next convert the entire Neuron object to a structure
             S = struct(neuron);
             
             S = obj.prep(S);
@@ -102,7 +107,8 @@ classdef JSON < handle
     methods (Access = private)        
         function tf = findNeuron(obj, ID)
             % FINDNEURON
-            str = sprintf(obj.NEURON_NAME, getVolumeAbbrev(obj.source), ID);
+            str = sprintf(obj.NEURON_NAME,... 
+                getVolumeAbbrev(obj.source), ID);
             cd(obj.fPath);
             x = cellstr(ls(str));
             tf = ~isempty(x);
@@ -120,10 +126,10 @@ classdef JSON < handle
         function saveMetadata(obj)
             % SAVEMETADATA
             
-            S = struct('VolumeName', obj.source, 'DateCreated', datestr(now));
-            
+            S = struct(...
+                'VolumeName', obj.source,... 
+                'DateCreated', datestr(now));       
             dataDir = [fileparts(mfilename('fullpath')), '\data'];
-            
         end
     end
     
@@ -135,11 +141,7 @@ classdef JSON < handle
             S = rmfield(S, {'ODataClient', 'GeometryClient', 'SynapseClient'});
             S = rmfield(S, {'somaRow', 'offEdges'});
             S = rmfield(S, {'includeSynapses', 'USETRANSFORM'});
-            
-            S.volumeScale = struct(...
-                'value', S.volumeScale,...
-                'unit', {'nm per pixel', 'nm per pixel', 'nm per section'});
-            
+
             S.nodes = table2struct(S.nodes);
             S.edges = table2struct(S.edges);
             
