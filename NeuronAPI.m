@@ -35,10 +35,10 @@ classdef (Abstract) NeuronAPI < handle
         terminals   % Branch endings
  	end
 
-	methods (Abstract)
-		checkSynapses(obj)			% Any synapses/child structures?
-		checkGeometries(obj) 		% Any polygon annotations?
-	end
+	% methods (Abstract)
+	% 	checkSynapses(obj)			% Any synapses/child structures?
+	% 	checkGeometries(obj) 		% Any polygon annotations?
+	% end
 
 	methods
 		function obj = NeuronAPI()
