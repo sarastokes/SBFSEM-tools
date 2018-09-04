@@ -38,7 +38,7 @@ function synapseSphere(neuron, synapse, varargin)
     %   28Feb2018 - SSP - Added synapse name to tag
     % ---------------------------------------------------------------------
     
-    assert(isa(neuron, 'Neuron'), 'First argument must be neuron object');
+    assert(isa(neuron, 'NeuronAPI'), 'First argument must be neuron object');
     
     if isnumeric(synapse)
         xyz = synapse;

@@ -25,7 +25,7 @@ function [IE, numExc, numInh] = ieRatio(neuron, verbose)
 	%	5Mar2018 - SSP
 	% ------------------------------------------------------------------
 
-	assert(isa(neuron, 'Neuron'), 'Input a neuron object');
+	assert(isa(neuron, 'NeuronAPI'), 'Input a neuron object');
 	if nargin < 2
 		verbose = false;
     end

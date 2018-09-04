@@ -1,7 +1,7 @@
 function exportSWC(neuron, fname, fpath)
 	% EXPORTSWC  Export neuron in SWC format
 
-	assert(isa(neuron, {'Neuron'}), 'Input a Neuron');
+	assert(isa(neuron, {'NeuronAPI'}), 'Input a Neuron');
 	if strcmp(fname(end-3:end), '.swc')
 		fname = [fname, '.swc'];
 	end

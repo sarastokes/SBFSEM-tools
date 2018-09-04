@@ -25,7 +25,7 @@ classdef (Abstract) NeuronAPI < handle
         model = [];
         % Omitted location IDs
         omittedIDs = [];
-        % Transform appli		
+        % Transform applied	
         transform = [];
 	end
 

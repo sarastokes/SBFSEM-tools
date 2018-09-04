@@ -8,7 +8,7 @@ classdef StratificationView < sbfsem.ui.TogglePartsView
     methods
         function obj = StratificationView(neuron)
             obj@sbfsem.ui.TogglePartsView();
-            assert(isa(neuron, 'Neuron'), 'Input a neuron object');
+            assert(isa(neuron, 'NeuronAPI'), 'Input a neuron object');
             if ~neuron.includeSynapses
                 neuron.getSynapses();
             end

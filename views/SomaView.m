@@ -67,7 +67,7 @@ classdef SomaView < handle
     methods (Access = private)
         function parseNeuron(obj, neuron)
             % PARSENEURON
-            if isa(neuron, 'Neuron')
+            if isa(neuron, 'NeuronAPI')
                 if ismember(neuron.ID, obj.IDs)
                     return
                 end

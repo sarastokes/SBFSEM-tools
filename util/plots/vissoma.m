@@ -27,7 +27,7 @@ function fh = vissoma(xyr, varargin)
 	ip.parse(varargin{:});
 	ax = ip.Results.ax;
 
-	if isa(xyr, 'Neuron')
+	if isa(xyr, 'NeuronAPI')
         neuron = xyr;
 		xyz = neuron.getSomaXYZ();
 		xyr = [xyz(1:2), neuron.getSomaSize];

@@ -16,15 +16,15 @@ classdef NeuronJSON < NeuronAPI
 	end
 
 	methods
-		function obj = NeuronJSON(fPath)
-			[fPath, fName, ext] = fileparts(fPath);
+		function obj = NeuronJSON(jsonPath)
+			[~, fName, ext] = fileparts(jsonPath);
 			assert(strcmp(ext, '.json'), 'Input path to a JSON file!');
-			obj.fPath = fPath;
+			obj.fPath = jsonPath;
 
 			obj.source = validateSource(fName(1));
-			obj.ID = num2str(fName(2:end));
+			obj.ID = str2double(fName(2:end));
 
-			obj.parseJSON();
+			obj.parseJSON(obj.fPath);
         end
 	end
 
@@ -44,8 +44,8 @@ classdef NeuronJSON < NeuronAPI
 			obj.lastModified = S.lastModified;
 
 			% Convert to tables
-			obj.nodes = struct2table(vertcat(obj.nodes{:}{:}));
-			obj.edges = struct2table(vertcat(obj.edges{:}{:}));
+			obj.nodes = struct2table(vertcat(S.nodes{:}{:}));
+			obj.edges = struct2table(vertcat(S.edges{:}{:}));
 			if ~isempty(S.geometries)
 				obj.geometries = struct2table(vertcat(S.geometries{:}{:}));
 			end
@@ -55,9 +55,7 @@ classdef NeuronJSON < NeuronAPI
 
 			% Convert the enumerations
 			obj.transform = sbfsem.core.Transforms.fromStr(S.transform);
-			obj.synapses.LocalName = vertcat(arrayfun(...
-				@(x) sbfsem.core.StructureTypes(x.LocalName),...
-				obj.synapses));
+            obj.synapses.LocalName = arrayfun(@(x) sbfsem.core.StructureTypes(x), obj.synapses.LocalName);
 
 			% Convert the model... ? For now, just rebuild it.
 			if ~isempty(S.model)

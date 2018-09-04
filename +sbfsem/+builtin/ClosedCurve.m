@@ -44,7 +44,7 @@ classdef ClosedCurve < sbfsem.core.Annotation
             %	Inputs:
             %		data        row of geometry table
             
-            if isa(data, 'Neuron')
+            if isa(data, 'NeuronAPI')
                 data = data.geometries;
             end
             

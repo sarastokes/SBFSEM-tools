@@ -28,7 +28,7 @@ classdef Transforms
 
         function tf = hasViking(neuron)
 
-            assert(isa(neuron, 'Neuron'), 'Input a neuron object');
+            assert(isa(neuron, 'NeuronAPI'), 'Input a neuron object');
 
             if neuron.nodes.VolumeX == neuron.nodes.X ...
                     && neuron.nodes.VolumeY == neuron.nodes.Y

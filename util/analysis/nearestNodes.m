@@ -14,7 +14,7 @@ function nodeIDs = nearestNodes(neuron, synapseName, swc)
     %   3Jul2018 - SSP
     % ---------------------------------------------------------------------
 
-    assert(isa(neuron, 'Neuron'), 'Input a neuron object');
+    assert(isa(neuron, 'NeuronAPI'), 'Input a neuron object');
 
     xyz = neuron.getSynapseXYZ(synapseName);
 

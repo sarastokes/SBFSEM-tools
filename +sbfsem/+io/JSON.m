@@ -19,18 +19,13 @@ classdef JSON < handle
         hasMetadata
     end
     
-    properties (Constant = true, Access = private)
-        NEURON_NAME = '%s%u.json';
-        METADATA_NAME = '%s_metadata.json';
-    end
-
     methods
         function obj = JSON(source, fPath)
             % JSON Constructor
             % Input:
             %   fPath   Directory to save JSON data
             
-            if nargin == 0 || ~isdir(fPath)
+            if nargin == 1 || ~isfolder(fPath)
                 obj.fPath = uigetdir();
             else
                 obj.fPath = fPath;
@@ -38,45 +33,19 @@ classdef JSON < handle
             cd(obj.fPath);
             
             obj.source = validateSource(source);
-            
-            obj.hasMetadata = obj.findMetadata;
-            if ~obj.hasMetadata
-                fprintf('No metadata found for %s\n', obj.source);
-                value = questdlg(...
-                    'No volume metadata found. Create one?',...
-                    'Volume Metadata Dialog', 'Yes', 'No', 'Yes');
-                if ~isempty(value)
-                    switch value
-                        case 'Yes'
-                            obj.saveMetadata();
-                        case 'No'
-                            return;
-                    end
-                end
-            end
         end
             
-        function export(obj, neuron)
+        function str = export(obj, neuron)
             % EXPORT  Exports a neuron to filePath
             % 
             % Input:
             %   neuron      Neuron object
             % -------------------------------------------------------------
             
-            assert(isa(neuron, 'Neuron'), 'Input a Neuron!'); 
+            assert(isa(neuron, 'NeuronAPI'), 'Input a Neuron!'); 
             
             fName = sprintf('%s%u.json',... 
-                getVolumeAbbrev(obj.source), num2str(neuron.ID), '.json');
-            
-            hasNeuron = obj.findNeuron(obj, ID);
-            
-            if hasNeuron
-                value = questdlg('Overwrite existing file?',...
-                    'Overwrite dialog', 'Yes', 'No', 'Yes');
-                if ~isempty(value) || strcmp(value, 'No')
-                    return;
-                end
-            end
+                getVolumeAbbrev(obj.source), neuron.ID);
             
             % Ensure synapses and geometries are present, if existing
             if isempty(neuron.synapses)
@@ -98,38 +67,7 @@ classdef JSON < handle
             
             S = obj.prep(S);
             
-            obj.findNeuron(fName);
-            
-            savejson('', S, [obj.fPath, filesep, fName]);
-        end
-    end
-    
-    methods (Access = private)        
-        function tf = findNeuron(obj, ID)
-            % FINDNEURON
-            str = sprintf(obj.NEURON_NAME,... 
-                getVolumeAbbrev(obj.source), ID);
-            cd(obj.fPath);
-            x = cellstr(ls(str));
-            tf = ~isempty(x);
-        end
-      
-        function tf = findMetadata(obj)
-            % FINDMETADATA
-            
-            str = sprintf(obj.METADATA_NAME, obj.source);
-            cd(obj.fPath)
-            x = cellstr(ls(str));
-            tf = ~isempty(x);           
-        end
-        
-        function saveMetadata(obj)
-            % SAVEMETADATA
-            
-            S = struct(...
-                'VolumeName', obj.source,... 
-                'DateCreated', datestr(now));       
-            dataDir = [fileparts(mfilename('fullpath')), '\data'];
+            str = savejson('', S, [obj.fPath, filesep, fName]);
         end
     end
     
@@ -139,8 +77,7 @@ classdef JSON < handle
             
             % Remove unecessary, transient/dependent properties
             S = rmfield(S, {'ODataClient', 'GeometryClient', 'SynapseClient'});
-            S = rmfield(S, {'somaRow', 'offEdges'});
-            S = rmfield(S, {'includeSynapses', 'USETRANSFORM'});
+            S = rmfield(S, {'somaRow', 'offEdges', 'includeSynapses'});
 
             S.nodes = table2struct(S.nodes);
             S.edges = table2struct(S.edges);
@@ -150,6 +87,8 @@ classdef JSON < handle
                     'UniformOutput', false);
             end
             S.synapses = table2struct(S.synapses);
+            % Enumeration to string
+            S.transform = char(S.transform);
             
             if ~isempty(S.analysis)
                 % Create a struct for storing analyses

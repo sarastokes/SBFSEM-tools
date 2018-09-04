@@ -61,7 +61,7 @@ classdef NeuronGroup < handle
             % Input:
             %   neuron      ID numbers or Neurons
             % TODO: consolidate constructor and add
-            if isa(neuron, 'Neuron')
+            if isa(neuron, 'NeuronAPI')
                 for i = 1:numel(neuron)
                     obj.IDs = cat(1, obj.IDs, neuron);
                     for j = 1:numel(obj.IDs)

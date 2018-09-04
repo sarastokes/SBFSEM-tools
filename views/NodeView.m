@@ -10,9 +10,13 @@ classdef NodeView < sbfsem.ui.TogglePartsView
             % Setup from superclass
             obj@sbfsem.ui.TogglePartsView();
             
-            assert(isa(neuron, 'Neuron'), 'Input a neuron object');
-            if ~neuron.includeSynapses
-                neuron.getSynapses();
+            assert(isa(neuron, 'NeuronAPI'), 'Input a neuron object');
+
+            obj.neuron = neuron;
+            obj.partNames = neuron.synapseNames;
+            
+            if ~obj.neuron.includeSynapses
+                obj.neuron.getSynapses();
             end
             
             % Add context menu to axis
@@ -20,11 +24,7 @@ classdef NodeView < sbfsem.ui.TogglePartsView
             obj.ax.UIContextMenu = c;
             uimenu(c, 'Label', 'Rotate On', 'Callback', @obj.onAxisMenu);
             uimenu(c, 'Label', 'Grid on', 'Callback', @obj.onAxisMenu);
-            
-            assert(isa(neuron, 'Neuron'), 'Input a neuron object');
-            obj.neuron = neuron;
-            obj.partNames = neuron.synapseNames;
-            
+
             % Plot the cell body nodes
             xyz = obj.populateNodeData('body');
             obj.parts('body') = line(...

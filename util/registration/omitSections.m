@@ -26,7 +26,6 @@ function Z = omitSections(source)
 
 	dataFile = [fileparts(fileparts(fileparts(mfilename('fullpath')))),...
 		filesep, 'data', filesep, 'OMITTED_SECTIONS_', source, '.txt'];
-    disp(dataFile)
 
 	if exist(dataFile, 'file')
 		Z = dlmread(dataFile);

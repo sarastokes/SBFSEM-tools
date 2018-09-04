@@ -52,7 +52,7 @@ classdef NeuronGraph < handle
 
 	methods
 		function obj = NeuronGraph(neuron, isDirected)
-			assert(isa(neuron, 'Neuron'), 'Input neuron object');
+			assert(isa(neuron, 'NeuronAPI'), 'Input neuron object');
 			if nargin < 2
 				obj.isDirected = true;
 			else

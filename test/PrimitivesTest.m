@@ -1,0 +1,83 @@
+classdef PrimitivesTest < matlab.unittest.TestCase
+
+    properties
+        X
+        basePoints
+        baseCells
+    end
+    
+    methods (TestClassSetup)
+        function createPrimitives(testCase)
+            [testCase.baseCells, testCase.basePoints] = Primitives.BaseSphere();
+        end
+    end
+    
+    methods (Test)
+        function testSphere_pointStart(testCase)
+            
+            [sphereCells, ~] = Primitives.Sphere();
+            testCase.verifyEqual(...
+                sphereCells(1).points,...
+                testCase.baseCells(1).points,...
+                'Sphere and BaseSphere points do not match');
+            
+            [sphereCells, ~] = Primitives.Sphere('PointStart', 2);
+            testCase.verifyEqual(...
+                sphereCells(1).points-2,...
+                testCase.baseCells(1).points,...
+                'Error applying startPoint to Sphere');
+        end
+        
+        function testSphere_points(testCase)
+            % Default Sphere points should be equal to the BaseSphere
+            [~, spherePoints] = Primitives.Sphere();
+            
+            testCase.verifyEqual(...
+                spherePoints, testCase.basePoints,...
+                'Default sphere points do to match base sphere points');
+        end
+        
+        function testSphere_translation(testCase)
+            
+            [~, spherePoints] = Primitives.Sphere('pos', [5, 0, 0]);
+            testCase.verifyEqual(...
+                testCase.basePoints(:, 2:3),...
+                spherePoints(:, 2:3),...
+                'Sphere X-axis translation changed Y and Z axes.');
+            
+            testCase.verifyEqual(...
+                testCase.basePoints(:, 1),...
+                spherePoints(:, 1) - 5,...
+                'Incorrect translation of Sphere.');
+        end
+        
+        function testSphere_scale(testCase)
+            [~, spherePoints] = Primitives.Sphere('size', 5);
+            
+            testCase.verifyEqual(...
+                testCase.basePoints,...
+                spherePoints / 5,...
+                'Incorrect scaling of Sphere');
+        end
+        
+        function testLine_defaults(testCase)
+            [lineCell, linePoints] = Primitives.Line();
+            
+            testCase.verifyEqual(...
+                lineCell.type, 3,...
+                'Incorrect type for default Line');
+            
+            testCase.verifyEqual(...
+                lineCell.data, 0,...
+                'Incorrect data for default Line');
+            
+            testCase.verifyEqual(...
+                lineCell.points, [0 1],...
+                'Incorrect cell points for default Line');
+            
+            testCase.verifyEqual(...
+                linePoints, zeros(2, 3),...
+                'Incorrect xyz points for default Line');
+        end
+    end
+end

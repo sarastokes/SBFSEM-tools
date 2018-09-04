@@ -16,7 +16,8 @@ classdef Neuron < NeuronAPI
 %   includeSynapses     Load synapses (logical, default = false)
 %
 % Methods:
-%   For a complete list, see the docs or type 'methods('Neuron')'
+%   For a complete list, see the docs or type 'methods('Neuron')'.
+%   or 'methods('NeuronAPI')'.
 %
 % Methods moved to external functions:
 %   util/analysis/addAnalysis.m

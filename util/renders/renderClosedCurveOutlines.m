@@ -3,7 +3,7 @@ function vol = renderClosedCurveOutlines(neuron, splinePts)
     % History:
     %   9Apr2018 - first working version
 
-    assert(isa(neuron, 'Neuron'), 'Input Neuron object');
+    assert(isa(neuron, 'NeuronAPI'), 'Input Neuron object');
     
     % TODO: add return for non-cc objects (prob in setGeometries)
     if isempty(neuron.geometries)
