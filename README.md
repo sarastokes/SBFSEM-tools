@@ -3,9 +3,9 @@
 SBFSEM-tools is a Matlab toolbox developed for serial EM data and connectomics in the [Neitz Lab][neitz] at University of Washington. While SBFSEM-tools was built around the Viking annotation software, many aspects are quite general and may apply easily to other programs and imaging methods.
 
 #### About
-SBFSEM-tools provides Matlab support for accessing th connectome annotation database API. Annotation data is queried through Viking's OData service and parsed into Matlab data types. This is abstracted so users can work with familiar objects like neuron, synapse, etc. SBFSEM-tools provides a framework to support data mining and user-defined analysis. However, the key functionality can be accessed without programming through user interfaces.
+SBFSEM-tools provides Matlab support for accessing the connectome annotation database API. Annotation data is queried through Viking's OData service and parsed into Matlab data types. This is abstracted so users can work with familiar objects like neuron, synapse, etc. SBFSEM-tools provides a framework to support data mining and user-defined analysis. However, the key functionality can be accessed without programming through user interfaces.
 
-Importantly, this program is designed around an interest in open sourcing the data and code used in scientific research. Resources to enable sharing the data and code used in by this program for publications are in place. A package to facilitate the use of these tools is coming soon.
+Importantly, this program is designed around an interest in open sourcing the data and code used in scientific research. See the wiki for information on resources to enable sharing the data and code used in by this program for publications.
 
 #### Key features:
 - Efficent, accurate 3D rendering of neurons:
@@ -31,6 +31,7 @@ See the [wiki documentation][docs] for more details.
 
 ![c6](https://github.com/sarastokes/SBFSEM-tools/blob/master/docs/c6_render.png?raw=true)
 <img src="https://github.com/sarastokes/SBFSEM-tools/blob/master/docs/renderapp_hcs2.png?raw=true" width="400">
+<img src="https://github.com/sarastokes/SBFSEM-tools/blob/master/docs/c1441_graphapp.png?raw=true" width="400">
 
 [neitz]: <http://www.neitzvision.com/>
 [viking]: <https://connectomes.utah.edu/>

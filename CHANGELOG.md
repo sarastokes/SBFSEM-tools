@@ -2,6 +2,7 @@
 
 ### 6Sept2018
 - Fixed bug in returning OffEdge and Terminal nodes from `NeuronAPI.m`.
+- Edited the main `Tutorial.m` and the wiki.
 
 ### 5Sept2018
 - Improved `views/ImageStackApp.m` to output cropped images.

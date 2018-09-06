@@ -2,7 +2,7 @@
 % The purpose of this tutorial is to demonstrate the program's basic
 % capabilities while checking to ensure each component is installed
 % correctly. I'm hoping this will be clear even to those who haven't worked
-% with Matlab before.
+% with Matlab before. This is meant to be run line-by-line.
 
 %% First, add sbfsem-tools to your path by editing the filepath below:
 addpath(genpath('C:\users\...\sbfsem-tools'));
@@ -231,6 +231,9 @@ h1hc.somaPlot('addLabel', true);
 % Note: I'm still trying to decide what to do with NeuronAnalysis so this
 % is likely to change in the future.
 
+% Also, there is a more detailed tutorial for the Dendrite Diameter class 
+% in the tutorial folder.
+
 import sbfsem.analysis.*;
 
 % Import two horizontal cells
@@ -238,7 +241,7 @@ c4568 = Neuron(4568, 'i');
 c28 = Neuron(28, 'i');
 
 % Here's the primary dendrite diameter analysis:
-a = PrimaryDendriteDiameter(c28);
+a = DendriteDiameter(c28);
 a.plot();
 % Here's an 2nd example with the dendritic field convex hull analysis:
 a = DendriticFieldHull(c4568);
