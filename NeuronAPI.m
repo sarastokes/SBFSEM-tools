@@ -54,7 +54,7 @@ classdef (Abstract) NeuronAPI < handle
     % Cell annotation methods
     methods
     	function offEdges = get.offEdges(obj)
-    		if isfield(obj.nodes, 'OffEdge')
+    		if ismember('OffEdge', obj.nodes.Properties.VariableNames)
     			rows = obj.nodes.OffEdge == 1;
     			offEdges = obj.nodes(rows, :).ID;
     		else
@@ -63,7 +63,7 @@ classdef (Abstract) NeuronAPI < handle
     	end 
 
     	function terminals = get.terminals(obj)
-    		if isfield(obj.nodes, 'Terminal')
+    		if ismember('Terminal', obj.nodes.Properties.VariableNames)
     			rows = obj.nodes.Terminal == 1;
     			terminals = obj.nodes(rows, :).ID;
     		else

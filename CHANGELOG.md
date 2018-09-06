@@ -1,5 +1,8 @@
 # Changelog
 
+### 6Sept2018
+- Fixed bug in returning OffEdge and Terminal nodes from `NeuronAPI.m`.
+
 ### 5Sept2018
 - Improved `views/ImageStackApp.m` to output cropped images.
 - Wrote `tutorial_DendriteDiameter.m` and finished edits to `sbfsem.analysis.DendriteDiameter.m`
