@@ -1,6 +1,9 @@
 classdef ImageStackApp < handle
-% IMAGESTACKAPP
-    
+% IMAGESTACKAPP  View a stack of EM screenshots
+% Inputs:
+%       images      ImageStack or filepath to images
+%       Provide a 2nd input to reverse the stack
+
     properties (Transient = true)
         currentNode
         handles
@@ -137,10 +140,27 @@ classdef ImageStackApp < handle
 
         function onToolbarCrop(obj, ~, ~)
             obj.imageBounds = round(rect2pts(getrect(obj.handles.ax)));
+            disp(obj.imageBounds);
         end
 
         function onToolbarFullSize(obj, ~, ~)
             obj.imageBounds = [];
+        end
+        
+        function onToolbarExport(obj, ~, ~)
+            im = findobj(obj.handles.ax, 'Type', 'Image');
+            im = im.CData;
+            if ~isempty(obj.imageBounds)
+                im = im(obj.imageBounds(1):obj.imageBounds(3), ...
+                        obj.imageBounds(2):obj.imageBounds(4));
+            end
+            [fName, fPath] = uiputfile('*.png', obj.currentNode.name);
+            if isequal(fName, 0) || isequal(fPath, 0)
+                return
+            else
+                fprintf('Saving as %s\n', [fPath, filesep, fName]);
+                imwrite(im, [fPath, filesep, fName], 'png', 'BitDepth', 16);
+            end
         end
     end
 end

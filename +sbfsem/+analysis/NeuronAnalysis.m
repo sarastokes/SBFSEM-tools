@@ -16,6 +16,7 @@ classdef (Abstract) NeuronAnalysis < handle
     %       visualize(obj)          Display analysis results
     %
     % 25Aug2017 - SSP
+    % 5Sept2018 - SSP - small updates and optimization
 
     properties (SetAccess = protected)
         data
@@ -26,7 +27,7 @@ classdef (Abstract) NeuronAnalysis < handle
         actions
     end
 
-    properties (Transient = true)
+    properties (Transient = true, Hidden = true)
         target        
     end
     

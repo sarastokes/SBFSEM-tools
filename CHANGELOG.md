@@ -1,5 +1,21 @@
 # Changelog
 
+### 5Sept2018
+- Improved `views/ImageStackApp.m` to output cropped images.
+- Wrote `tutorial_DendriteDiameter.m` and finished edits to `sbfsem.analysis.DendriteDiameter.m`
+- Added external function for creating shaded error bars (`lib/shadedErrorBar.m`).
+
+### 4Sept2018
+- Implemented change to `NeuronAPI.m` parent class. All validation of class in `Neuron` functions should now check for a `NeuronAPI` object instead.
+
+### 28Aug2018
+- Working version of `sbfsem.io.JSON.m` without metadata exports.
+- Added in working `NeuronAPI.m` parent class and two subclasses, `Neuron.m` which imports from OData and `NeuronJSON.m` which imports from existing .json files. The goal is for the different `NeuronAPI` subclasses to be used interchangeably.
+- Removed printed file name from `util/registration/omitSections.m`.
+
+### 2Aug2018
+- Renamed `PrimaryDendriteDiameter.m` to `DendriteDiameter.m` and made function more user friendly.
+
 ### 31Jul2018
 - Implemented `util/registration/omitSections.m` and moved code setting the `omittedIDs` property of `Neuron` objects to the `Neuron.pull()` method, to keep omitted IDs in sync with updates.
 - Fixed bug in `Neuron.getSynapseNodes()`
