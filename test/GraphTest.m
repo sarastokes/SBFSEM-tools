@@ -23,7 +23,7 @@ classdef GraphTest < matlab.unittest.TestCase
             [testCase.segments, testCase.segmentTable, testCase.nodeIDs,...
                 testCase.startNode] = dendriteSegmentation(testCase.neuron);
             % Create base SWC conversion
-            testCase.SWC = sbfsem.io.SWC3(c943, 'startNode', 186);
+            testCase.SWC = sbfsem.io.SWC(testCase.neuron, 'startNode', 186);
             testCase.SWC.go();
         end
     end

@@ -1,5 +1,6 @@
 classdef Primitives < handle
-
+% 7Sept2018 - SSP - updated namespace
+    
 	properties (Constant = true, Hidden = true)
 		SPHERE_DIV = 10;
 		CYLINDER_DIV = 8;
@@ -12,10 +13,6 @@ classdef Primitives < handle
 		end
 	end
 
-	methods % Class methods
-
-	end
-
 	methods (Static)
 		function [pointOrder, pointList] = Cuboid()
 			pointOrder = 0:7;
@@ -26,11 +23,11 @@ classdef Primitives < handle
 
 		function [cellList, pointList] = Cylinder(div, topFaceDiam)
 			if nargin < 2
-				topFaceDiam = Primitives.TOPFACEDIAM;
+				topFaceDiam =sbfsem.render.Primitives.TOPFACEDIAM;
 			end
 
 			if nargin < 1
-				div = Primitives.CYLINDER_DIV;
+				div =sbfsem.render.Primitives.CYLINDER_DIV;
 			end
 
 			pointList = [];
@@ -67,11 +64,11 @@ classdef Primitives < handle
 
 		function [cellList, pointList] = Cylinder3Cell(div, topFaceDiam)
 			if nargin < 2
-				topFaceDiam = Primitives.TOPFACEDIAM;
+				topFaceDiam =sbfsem.render.Primitives.TOPFACEDIAM;
 			end
 
 			if nargin < 1
-				div = Primitives.CYLINDER_DIV;
+				div =sbfsem.render.Primitives.CYLINDER_DIV;
 			end
 
 			cellList = [];
@@ -113,7 +110,7 @@ classdef Primitives < handle
 
 		function [cellList, pointList] = BaseSphere(div)
 			if nargin < 1
-				div = Primitives.SPHERE_DIV;
+				div = sbfsem.render.Primitives.SPHERE_DIV;
 			end
 
 			cellList = [];
@@ -161,7 +158,7 @@ classdef Primitives < handle
             parse(ip, varargin{:});
             position = ip.Results.pos;
 
-			[cells, pointList] = Primitives.BaseSphere();
+			[cells, pointList] = sbfsem.render.Primitives.BaseSphere();
 
 			for i = 1:numel(cells)
 				cells(i).points = bsxfun(@plus,...
@@ -177,7 +174,7 @@ classdef Primitives < handle
 
 		function [cellList, pointList] = Hemisphere(div)
 			if nargin < 1
-				div = Primitives.SPHERE_DIV;
+				div =sbfsem.render.Primitives.SPHERE_DIV;
 			end
 
 			cellList = [];
@@ -214,7 +211,7 @@ classdef Primitives < handle
 
         	ip = inputParser();
         	ip.CaseSensitive = false;
-        	addParameter(ip, 'div', Primitives.CYLINDER_DIV, @isnumeric);
+        	addParameter(ip, 'div',sbfsem.render.Primitives.CYLINDER_DIV, @isnumeric);
         	addParameter(ip, 'topFaceDiam', 1, @isnumeric);
         	addParameter(ip, 'Height', 1, @isnumeric);
         	addParameter(ip, 'Radius', 1, @isnumeric);
@@ -253,7 +250,7 @@ classdef Primitives < handle
         	end
 
         	% Cylinder point list
-        	points = [];
+        	point_list = [];
         	for i = 0:div-1
         		theta = i / div * 2 * pi;
         		point_list = cat(1, point_list,...

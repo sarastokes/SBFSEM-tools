@@ -226,7 +226,7 @@ classdef DendriteDiameter < sbfsem.analysis.NeuronAnalysis
                     '--b', 'LineWidth', 1.5);
             end
 
-            % Plot the mean and error
+            % Plot the mean and err
             shadedErrorBar(obj.data.binCenters(ind:end), obj.data.avg(ind:end),...
                 errorMetric, 'lineprops', {'-k', 'LineWidth', 2});
 
