@@ -50,7 +50,9 @@ classdef Neuron < NeuronAPI
             % Required inputs:
             %   ID                  Cell ID number in Viking
             %   source              Volume ('i', 't', 'r')
+            % Optional inputs:
             %   includeSynapses     Import synapses (default=false)
+            %   transform           Which XY transform (default=Viking)
             %
             % Use:
             %   % Import c127 in NeitzInferiorMonkey
@@ -59,9 +61,19 @@ classdef Neuron < NeuronAPI
             obj@NeuronAPI();
 
             % By default, synapses are not imported
-            obj.includeSynapses = false;
+            if nargin < 3
+                obj.includeSynapses = false;
+            else
+                assert(islogical(includeSynapses),...
+                    'includeSynapses must be true or false');
+                obj.includeSynapses = includeSynapses;
+            end
             % Default transform is local sbfsem-tools XY offset
-            obj.transform = sbfsem.core.Transforms.SBFSEMTools;
+            if nargin < 4
+                obj.transform = sbfsem.core.Transforms.Viking;
+            else
+                obj.transform = sbfsem.core.Transforms.fromStr(transform);
+            end
 
             % NeuronCache inputs a single cell, cmd line as 2-3 arguments
             if nargin == 1 && iscell(ID)

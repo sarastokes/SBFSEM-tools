@@ -8,20 +8,20 @@ classdef PrimitivesTest < matlab.unittest.TestCase
     
     methods (TestClassSetup)
         function createPrimitives(testCase)
-            [testCase.baseCells, testCase.basePoints] = Primitives.BaseSphere();
+            [testCase.baseCells, testCase.basePoints] = sbfsem.render.Primitives.BaseSphere();
         end
     end
     
     methods (Test)
         function testSphere_pointStart(testCase)
             
-            [sphereCells, ~] = Primitives.Sphere();
+            [sphereCells, ~] = sbfsem.render.Primitives.Sphere();
             testCase.verifyEqual(...
                 sphereCells(1).points,...
                 testCase.baseCells(1).points,...
                 'Sphere and BaseSphere points do not match');
             
-            [sphereCells, ~] = Primitives.Sphere('PointStart', 2);
+            [sphereCells, ~] = sbfsem.render.Primitives.Sphere('PointStart', 2);
             testCase.verifyEqual(...
                 sphereCells(1).points-2,...
                 testCase.baseCells(1).points,...
@@ -30,7 +30,7 @@ classdef PrimitivesTest < matlab.unittest.TestCase
         
         function testSphere_points(testCase)
             % Default Sphere points should be equal to the BaseSphere
-            [~, spherePoints] = Primitives.Sphere();
+            [~, spherePoints] = sbfsem.render.Primitives.Sphere();
             
             testCase.verifyEqual(...
                 spherePoints, testCase.basePoints,...
@@ -39,7 +39,7 @@ classdef PrimitivesTest < matlab.unittest.TestCase
         
         function testSphere_translation(testCase)
             
-            [~, spherePoints] = Primitives.Sphere('pos', [5, 0, 0]);
+            [~, spherePoints] = sbfsem.render.Primitives.Sphere('pos', [5, 0, 0]);
             testCase.verifyEqual(...
                 testCase.basePoints(:, 2:3),...
                 spherePoints(:, 2:3),...
@@ -52,7 +52,7 @@ classdef PrimitivesTest < matlab.unittest.TestCase
         end
         
         function testSphere_scale(testCase)
-            [~, spherePoints] = Primitives.Sphere('size', 5);
+            [~, spherePoints] = sbfsem.render.Primitives.Sphere('size', 5);
             
             testCase.verifyEqual(...
                 testCase.basePoints,...
@@ -61,7 +61,7 @@ classdef PrimitivesTest < matlab.unittest.TestCase
         end
         
         function testLine_defaults(testCase)
-            [lineCell, linePoints] = Primitives.Line();
+            [lineCell, linePoints] = sbfsem.render.Primitives.Line();
             
             testCase.verifyEqual(...
                 lineCell.type, 3,...

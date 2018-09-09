@@ -1,4 +1,5 @@
 classdef (Abstract) NeuronAPI < handle
+% NEURONAPI  Parent class for all Neuron object classes
 
 	properties (SetAccess = protected, GetAccess = public)
         % Cell ID in Viking
@@ -51,6 +52,28 @@ classdef (Abstract) NeuronAPI < handle
         end
     end
 
+    methods (Access = protected)
+
+        function getXYZbyParent(obj, parentID, useMicrons)
+            if nargin < 3
+                useMicrons = true;
+            end
+            
+            row = obj.nodes.ParentID == parentID;
+
+            if useMicrons
+                xyz = obj.nodes{row, 'XYZum'};
+            else
+                xyz = obj.nodes{row, {'X', 'Y', 'Z'}};
+            end
+        end
+
+        function getNodesByParent(obj, parentID)
+            row = obj.nodes.ParentID == obj.ID;
+            cellNodes = obj.nodes(row, :);
+        end
+    end
+
     % Cell annotation methods
     methods
     	function offEdges = get.offEdges(obj)
@@ -80,36 +103,35 @@ classdef (Abstract) NeuronAPI < handle
                 useMicrons = true;
             end
 
-            row = obj.nodes.ParentID == obj.ID;
-            if useMicrons
-                xyz = obj.nodes{row, 'XYZum'};
-            else
-                xyz = obj.nodes{row, {'X', 'Y','Z'}};
-            end
+            xyz = obj.getXYZbyParent(obj.ID, useMicrons);
         end
 
         function cellNodes = getCellNodes(obj)
             % GETCELLNODES  Return only cell body nodes
 
-            row = obj.nodes.ParentID == obj.ID;
-            cellNodes = obj.nodes(row, :);
+            cellNodes = obj.getNodesByParent(obj, parentID);
         end
  	end
 
     % Soma methods
     methods
-    	function checkSynapses(obj)
-    		% Should be specified by subclasses
-    	end
-
-    	function checkGeometries(obj)
-    		% Should be specified by subclasses
-    	end
-    	
         function somaRow = get.somaRow(obj)
             % This is the row associated with the largest annotation
             somaRow = find(obj.nodes.Radius == max(obj.nodes.Radius));
         end
+
+        function checkSynapses(obj)
+            % CHECKSYNAPSES  
+            %   If synapses are missing but exist, import them
+            %   Should be specified by subclasses
+        end
+
+        function checkGeometries(obj)
+            % CHECKGEOMETRIES  
+            %   If geometries are missing but exist, import them
+            %   Should be specified by subclasses
+        end
+        
 
         function id = getSomaID(obj, toClipboard)
             % GETSOMAID  Get location ID for current "soma" node
@@ -267,7 +289,6 @@ classdef (Abstract) NeuronAPI < handle
             end
         end
 
-
         function synapseNodes = getSynapseNodes(obj, onlyUnique)
             % GETSYNAPSENODES  Returns a table of only synapse annotations
             % Inputs:
@@ -370,6 +391,22 @@ classdef (Abstract) NeuronAPI < handle
 
 	% RENDERING METHODS
 	methods
+
+        function xyz = getDAspect(obj, ax)
+            % GETDASPECT
+            %   Scales a plot by x,y,z dimensions
+            % Optional inputs:
+            %   ax      axesHandle to apply daspect
+            % ----------------------------------------------------------
+            % xyz = obj.volumeScale/max(abs(obj.volumeScale));
+            xyz = max(obj.volumeScale)./obj.volumeScale;
+            if nargin == 2
+                assert(isa(ax, 'matlab.graphics.axis.Axes'),...
+                    'Input an axes handle');
+                daspect(ax, xyz);
+            end
+        end
+
         function model = build(obj, renderType, varargin)
             % BUILD  Quick access to render methods
             %
@@ -449,21 +486,6 @@ classdef (Abstract) NeuronAPI < handle
                 end
             else
                 warning('No model - use BUILD function first');
-            end
-        end
-
-        function xyz = getDAspect(obj, ax)
-            % GETDASPECT
-            %   Scales a plot by x,y,z dimensions
-            % Optional inputs:
-            %   ax      axesHandle to apply daspect
-            % ----------------------------------------------------------
-            % xyz = obj.volumeScale/max(abs(obj.volumeScale));
-            xyz = max(obj.volumeScale)./obj.volumeScale;
-            if nargin == 2
-                assert(isa(ax, 'matlab.graphics.axis.Axes'),...
-                    'Input an axes handle');
-                daspect(ax, xyz);
             end
         end
     end

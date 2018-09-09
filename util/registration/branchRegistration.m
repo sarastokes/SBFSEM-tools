@@ -1,24 +1,42 @@
-function [xyOffset, offsetList] = branchRegistration(source, sections, writeToLog, visualize)
-	% BRANCHREGISTRATION
+function [xyOffset, offsetList] = branchRegistration(source, sections, varargin)
+    % BRANCHREGISTRATION
     %
     % Description:
-    % 
+    %   Align vitread slice with sclerad slice based on median offset of
+    %   all annotations linked between the two sections.
+    %
     % Syntax:
     %	XY = branchRegistration(SOURCE, SECTIONS, WRITETOLOG, VISUALIZE);
     %
+    % Inputs:
+    %   source      Volume name or abbreviation
+    %   sections    Two adjacent sections to align
+    % Optional key/value inputs:
+    %   View            Plot output (default = true)
+    %   Save            Write to XY_OFFSET file (default = false)
+    %   ShiftVitread    Align sclerad to vitread slice (default = false)
+    %
     % Example:
-    %   branchRegistration('i', [1121 1122], false, true);
-	% 
-	% History:
-	%	22Jan2018 - SSP
+    %   branchRegistration('i', [1121 1122]);
+    %   branchRegistration('i', [1121 1122], 'Save', true);
+    %   branchRegistration('i', [1121 1122], 'ShiftVitread', true);
+    %
+    % History:
+    %	22Jan2018 - SSP
+    %   7Sept2018 - SSP - input parsing, vitread shift, plotting zero lines
     % ---------------------------------------------------------------------
 
-    if nargin < 3
-        writeToLog = false;
-    end
-    if nargin < 4
-    	visualize = false;
-    end
+    source = validateSource(source);
+    
+    ip = inputParser();
+    ip.CaseSensitive = false;
+    addParameter(ip, 'Save', false, @islogical);
+    addParameter(ip, 'View', true, @islogical);
+    addParameter(ip, 'ShiftVitread', false, @islogical);
+    parse(ip, varargin{:});
+    writeToLog = ip.Results.Save;
+    visualize = ip.Results.View;
+    shiftVitread = ip.Results.ShiftVitread;
 
 	source = validateSource(source);
 	template = ['/Locations?$filter=Z eq %u and TypeCode eq 1',...
@@ -57,58 +75,64 @@ function [xyOffset, offsetList] = branchRegistration(source, sections, writeToLo
 		'Locations(%u)?$select=ID&$expand=LocationLinksA',...
 		'($select=A,B)'];
 
-	% Calculate offsets: SCLERAD - VITREAD
-	offsetList = [];
-	for i = 1:height(sclerad)
-		data = readOData(sprintf(linkQuery, sclerad.ID(i)));
+    % Calculate offsets: SCLERAD - VITREAD
+    offsetList = [];
+    for i = 1:height(sclerad)
+        data = readOData(sprintf(linkQuery, sclerad.ID(i)));
         locationLinksA = cat(1, data.LocationLinksA{:});
-		for j = 1:numel(locationLinksA)
-			linkedID = locationLinksA(j).B;
-			linkedLoc = vitread{find(vitread.ID == linkedID),{'X', 'Y'}};
-			if ~isempty(linkedLoc)
-				xyOffset = sclerad{i, {'X', 'Y'}} - linkedLoc;
-				offsetList = [offsetList; xyOffset]; %#ok
-			end
-		end
+        for j = 1:numel(locationLinksA)
+            % Get the vitread location ID and 
+            linkedID = locationLinksA(j).B;
+            linkedLoc = vitread{vitread.ID == linkedID,{'X', 'Y'}};
+            if ~isempty(linkedLoc)
+                if shiftVitread
+                    xyOffset = linkedLoc - sclerad{i, {'X', 'Y'}};
+                else
+                    xyOffset = sclerad{i, {'X', 'Y'}} - linkedLoc;
+                end
+                offsetList = [offsetList; xyOffset]; %#ok
+            end
+        end
     end
 
     printStat(offsetList(:,1)');
     printStat(offsetList(:,2)');
+
     % Take the median (horizontally branching neurons will register as
     % large outliers, which influence the mean more than the median)
-	xyOffset = median(offsetList);
+    xyOffset = median(offsetList);
 
-	if visualize
-		figure(); hold on;
-		plot(offsetList(:,1), offsetList(:,2),...
-			'.b', 'MarkerSize', 10);
-		plot(xyOffset(1), xyOffset(2),...
-			'or', 'MarkerFaceColor', 'r');
-		title(sprintf('X = %.3g and Y = %.3g', xyOffset));
-	end
-	
-	if writeToLog
-		fPath = [fileparts(fileparts(fileparts(mfilename('fullpath')))),... 
+    if visualize
+        ax = axes('Parent', figure());
+        hold(ax, 'on');
+        plot(ax, offsetList(:,1), offsetList(:,2),...
+            '.b', 'MarkerSize', 10);
+        plot(ax, xyOffset(1), xyOffset(2),...
+            'or', 'MarkerFaceColor', 'r');
+        title(ax, sprintf('X = %.3g and Y = %.3g', xyOffset));
+        x = get(ax, 'XLim'); y = get(ax, 'YLim');
+        plot(ax, [x(1), x(2)], [0, 0], '--', 'Color', [0.5, 0.5, 0.5]);
+        plot(ax, [0, 0], [y(1), y(2)], '--', 'Color', [0.5, 0.5, 0.5]);
+    end
+
+    if writeToLog
+        fPath = [fileparts(fileparts(fileparts(mfilename('fullpath')))),...
             '\data\XY_OFFSET_NEITZINFERIORMONKEY.txt'];
-		data = dlmread(fPath);
-		% data = dlmread([fileparts(fileparts(mfilename('fullpath'))),...
-		% 	'\data\XY_OFFSET_NEITZINFERIORMONKEY.txt']);
-		Z = min(sections);
-	   	data(1:Z, 2) = data(1:Z, 2) + xyOffset(1);
-    	data(1:Z, 3) = data(1:Z, 3) + xyOffset(2);
-
-    	dlmwrite(fPath, data);
-
-		% fprintf('%s - branch registration\n', datestr(now));
-		% fprintf('\tScleradZ VitreadZ Locations Neurons XOffset YOffset XSEM YSEM\n');
-		% fprintf('\t%u %u %u %u %u %u %.3g %.3g\n\n',...
-		% 	min(sections), max(sections),...
-		% 	height(sclerad), numel(scleradIDs)-numel(invalid),...
-		% 	median(offsetList), sem(offsetList));
-	end
+        data = dlmread(fPath);
+        if shiftVitread
+            Z = max(sections);
+            data(Z:end, 2) = data(Z:end, 2) + xyOffset(1);
+            data(Z:end, 3) = data(Z:end, 3) + xyOffset(2);
+        else
+            Z = min(sections);
+            data(1:Z, 2) = data(1:Z, 2) + xyOffset(1);
+            data(1:Z, 3) = data(1:Z, 3) + xyOffset(2);
+        end
+        dlmwrite(fPath, data);
+    end
 end
 
-function T = catchFalse(T)	
-	% CATCHFALSE  Remove annotations with X/Y = 0
-	T(T.X == 0 | T.Y == 0, :) = [];
+function T = catchFalse(T)
+    % CATCHFALSE  Remove annotations with X/Y = 0
+    T(T.X == 0 | T.Y == 0, :) = [];
 end
