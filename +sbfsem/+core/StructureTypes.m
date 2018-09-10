@@ -249,7 +249,7 @@ classdef StructureTypes
                 case VikingStructureTypes.NuclearFilament
                     obj = StructureTypes.NuclearFilament;
                 case VikingStructureTypes.Nucleolus
-                    obj = StructureTypes.Nucleoulus;
+                    obj = StructureTypes.Nucleolus;
                 case VikingStructureTypes.NeuroglialAdherens
                     obj = StructureTypes.NeuroglialAdherens;
                 case VikingStructureTypes.OrganizedSER

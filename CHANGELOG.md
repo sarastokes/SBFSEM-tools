@@ -1,5 +1,8 @@
 # Changelog
 
+### 10Sept2018
+- Fixed typo in Nucleolus structure tag in `sbfsem.core.StructureTypes.m`
+
 ### 9Sept2018
 - Important change to default Transform used in NeitzInferiorMonkey. For now on, the default Transform (Viking) will be used. To work with the S-OFF midget dataset, pass `transform='SBFSEM-tools'` to `Neuron.m`. 
 - Added input parsing and vitread shift option to `util/registration/branchRegistration.m`. Updated `data/NeitzInferiorMonkeyRegistration.m` to reflect updates in input parsing.
