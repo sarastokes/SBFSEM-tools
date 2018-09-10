@@ -1,6 +1,7 @@
 # Changelog
 
 ### 10Sept2018
+- Computer vision tutorial `tutorial_DiscToClosedCurveAI.m`
 - Fixed typo in Nucleolus structure tag in `sbfsem.core.StructureTypes.m`
 
 ### 9Sept2018
