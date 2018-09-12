@@ -54,7 +54,7 @@ classdef (Abstract) NeuronAPI < handle
 
     methods (Access = protected)
 
-        function getXYZbyParent(obj, parentID, useMicrons)
+        function xyz = getXYZbyParent(obj, parentID, useMicrons)
             if nargin < 3
                 useMicrons = true;
             end
