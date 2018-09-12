@@ -68,8 +68,8 @@ classdef (Abstract) NeuronAPI < handle
             end
         end
 
-        function getNodesByParent(obj, parentID)
-            row = obj.nodes.ParentID == obj.ID;
+        function cellNodes = getNodesByParent(obj, parentID)
+            row = obj.nodes.ParentID == parentID;
             cellNodes = obj.nodes(row, :);
         end
     end
@@ -94,6 +94,14 @@ classdef (Abstract) NeuronAPI < handle
     		end
     	end
 
+        function edgeIDs = getEdgeNodes(obj)
+            if isempty(obj.terminals) || isempty(obj.offEdges)
+                edgeIDs = [];
+            else
+                edgeIDs = intersect(obj.terminals, obj.offEdges);
+            end
+        end
+
         function xyz = getCellXYZ(obj, useMicrons)
             % GETCELLXYZ  Returns cell body coordinates
             %
@@ -109,7 +117,7 @@ classdef (Abstract) NeuronAPI < handle
         function cellNodes = getCellNodes(obj)
             % GETCELLNODES  Return only cell body nodes
 
-            cellNodes = obj.getNodesByParent(obj, parentID);
+            cellNodes = obj.getNodesByParent(obj.ID);
         end
  	end
 
