@@ -12,7 +12,7 @@ classdef Transforms
             import sbfsem.core.Transforms;
 
             switch lower(str)
-                case 'sbfsemtools'
+                case {'sbfsemtools', 'sbfsem-tools'}
                     obj = Transforms.SBFSEMTools;
                 case 'viking'
                     obj = Transforms.Viking;

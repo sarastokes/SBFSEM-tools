@@ -1,4 +1,4 @@
-function [linkedIDs, synapseIDs] = getLinkedNeurons(neuron, synapseType)
+function [linkedIDs, synapseIDs] = getLinkedNeurons(neuron, synapseType, includeUnlinked)
 % GETLINKEDNEURONS
 %
 % Description:
@@ -8,12 +8,14 @@ function [linkedIDs, synapseIDs] = getLinkedNeurons(neuron, synapseType)
 %	[linkedIDs, synapseIDs] = getLinkedNeurons(neuron, synapseType);
 %
 % Inputs:
-%	neuron  		Neuron object
-%	synapseType 	Synapse name (char or StructureType)
+%	neuron              Neuron object
+%	synapseType         Synapse name (char or StructureType)
+% Optional inputs:
+%   includeUnlinked     Show unlinked synapse IDs (default = true) 
 %
 % Outputs:
-%	linkedIDs 		Structure IDs of linked cells (vector)
-%   synapseIDs      Synapse IDs linked to above structure IDs (vector)
+%	linkedIDs           Structure IDs of linked cells (vector)
+%   synapseIDs          Synapse IDs linked to above structure IDs (vector)
 %
 % Todo:
 %   The colormap calculation required to plot the graph doesn't
@@ -26,11 +28,17 @@ function [linkedIDs, synapseIDs] = getLinkedNeurons(neuron, synapseType)
 %	26Feb2018 - SSP
 %   2Jun2018 - SSP - updated JSON decoding, added synapseID output
 %   4Jun2018 - SSP - revised to new function, getLinkedNeurons
+%   11Sept2018 - SSP - added argument to include/omit unlinked synapses
 % -------------------------------------------------------------------------
 
 assert(isa(neuron, 'NeuronAPI'), 'Input neuron object');
 if ischar(synapseType)
     synapseType = sbfsem.core.StructureTypes(synapseType);
+end
+if nargin < 3
+    includeUnlinked = true;
+else
+    assert(islogical(includeUnlinked), 'IncludeUnlinked must be t/f');
 end
 
 % Find synapses
@@ -52,7 +60,7 @@ if synapseType.isPre()
 elseif synapseType.isPost()
     url = [url, postTemplate];
 else
-    error('Bidirectional synapses are not yet implemented');
+    url = [url, preTemplate];
 end
 
 % A list of pre/post-synaptic neurons
@@ -71,4 +79,9 @@ for i = 1:numel(synapseIDs)
     catch
         linkedIDs = cat(1, linkedIDs, NaN);
     end
+end
+
+if ~includeUnlinked
+    synapseIDs = synapseIDs(~isnan(linkedIDs));
+    linkedIDs = linkedIDs(~isnan(linkedIDs));
 end
