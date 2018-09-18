@@ -1,5 +1,10 @@
 # Changelog
 
+### 18Sept2018
+- New analysis `sbfsem.analysis.AnnotationSizes.m` for creating histograms of annotation sizes. 
+- Removed unused class `sbfsem.core.Transform.m`
+- Wrote minimal tutorial on boundary surfaces `tutorial_BoundarySurfaces.m`
+
 ### 10Sept2018
 - Computer vision tutorial `tutorial_DiscToClosedCurveAI.m`
 - Fixed typo in Nucleolus structure tag in `sbfsem.core.StructureTypes.m`
