@@ -18,7 +18,7 @@ classdef GraphApp < handle
     %   RENDERAPP, NODEVIEW
     % ---------------------------------------------------------------------
     
-    properties
+    properties (Access = private)
         neuron
         source
         ax
@@ -35,8 +35,9 @@ classdef GraphApp < handle
         showSegments
         showSurface
         showSynapses
-        showOffEdges
+        showUnfinished
         showTerminals
+        showOffEdges
     end
     
     properties (Access = private, Transient = true)
@@ -55,30 +56,7 @@ classdef GraphApp < handle
     methods
         function obj = GraphApp(neuron, source)
             % GRAPHAPP
-            if nargin == 2
-                obj.source = validateSource(source);
-                obj.neuron = Neuron(neuron, obj.source);
-            elseif nargin == 1
-                obj.neuron = neuron;
-                obj.source = neuron.source;
-            elseif nargin == 0
-                [selection, selectedSource] = listdlg(...
-                    'PromptString', 'Select a source:',...
-                    'Name', 'RenderApp Source Selection',...
-                    'SelectionMode', 'single',...
-                    'ListString', obj.SOURCES);
-                if selectedSource
-                    obj.source = obj.SOURCES{selection};
-                    fprintf('Running with %s\n', obj.source);
-                else
-                    warning('No source selected... exiting');
-                    return;
-                end
-            end
-            
-            import sbfsem.render.*;
-            obj.segments = sbfsem.render.Segment(obj.neuron);
-            obj.createUi();
+            obj@GraphAppParent(neuron, source);
         end
     end
     
@@ -88,34 +66,24 @@ classdef GraphApp < handle
             hasSynapses = ~isempty(obj.neuron.synapses);
         end
         
-        function cmap = get.cmap(obj)
-            h = findobj(obj.figureHandle, 'Tag', 'CMapMenu');
-            cmap = h.String{h.Value};
-        end
-        
-        function showSegments = get.showSegments(obj)
-            h = findall(obj.figureHandle, 'Tag', 'ShowSegments');
-            showSegments = logical(h.Value);
-        end
-        
-        function showSurface = get.showSurface(obj)
-            h = findall(obj.figureHandle, 'Tag', 'ShowSurface');
-            showSurface = logical(h.Value);
-        end
-        
         function showSynapses = get.showSynapses(obj)
             h = findall(obj.figureHandle, 'Tag', 'ShowSynapses');
             showSynapses = logical(h.Value);
         end
         
-        function showOffEdges = get.showOffEdges(obj)
-            h = findobj(obj.figureHandle, 'Tag', 'ShowOffEdges');
-            showOffEdges = logical(h.Value);
+        function showUnfinished = get.showUnfinished(obj)
+            h = findobj(obj.figureHandle, 'Tag', 'ShowUnfinished');
+            showUnfinished = logical(h.Value);
         end
         
         function showTerminals = get.showTerminals(obj)
             h = findobj(obj.figureHandle, 'Tag', 'ShowTerminals');
             showTerminals = logical(h.Value);
+        end
+
+        function showOffEdges = get.showOffEdges(obj)
+            h = findobj(obj.figureHandle, 'Tag', 'ShowOffEdges');
+            showOffEdges = logical(h.Value);
         end
     end
     
@@ -137,14 +105,6 @@ classdef GraphApp < handle
                 set(findall(obj.ax, 'Tag', tags{i}),...
                     'Color', cdata(ind(i),:,:));
             end
-        end
-        
-        function locID = id2xyz(obj, xyz, segmentID)
-            % GETIDFROMXYZ
-            T = obj.segments.segmentTable(segmentID, :);
-            IDs = cell2mat(T.ID);
-            [~, ind] = ismember(xyz, cell2mat(T.XYZum), 'rows', 'legacy');
-            locID = obj.segments.nodeIDs(IDs(ind));
         end
         
         function plotSegments(obj)
@@ -205,11 +165,11 @@ classdef GraphApp < handle
             end
         end
         
-        function plotOffEdges(obj)
-            % OFFEDGEPLOT  Plot nodes marked as unfinished
+        function plotUnfinished(obj)
+            % PLOTUNFINISHED  Plot nodes marked as unfinished
             
             % Delete any existing off edge nodes
-            delete(findall(obj.figureHandle, 'Tag', 'OffEdge'));
+            delete(findall(obj.figureHandle, 'Tag', 'Unfinished'));
             % Get OffEdge node IDs
             offEdgeIDs = obj.neuron.offEdges;
             % Return if no off edges in neuron
@@ -223,10 +183,28 @@ classdef GraphApp < handle
                 'MarkerFaceColor', 'r',...
                 'MarkerEdgeColor', 'r',...
                 'LineStyle', 'none',...
-                'Tag', 'OffEdge');
-            if ~obj.showOffEdges
+                'Tag', 'Unfinished');
+            if ~obj.showUnfinished
                 set(h, 'Visible', 'off');
             end
+        end
+
+        function plotOffEdges(obj)
+            % PLOTOFFEDGES  Plot nodes marked as terminal + offedge
+            delete(findall(obj.figureHandle, 'Tag', 'OffEdge'));
+            % Get OffEdge and Terminal IDs
+            IDs = obj.neuron.getEdgeNodes();
+            if isempty(IDs)
+                return
+            end
+
+            xyz = obj.neuron.id2xyz(IDs);
+            h = line(obj.ax, xyz(:, 1), xyz(:, 2), xyz(:, 3),...
+                'Marker', '.', 'MarkerSize', 12,...
+                'MarkerFaceColor', [0, 0, 0.5],...
+                'MarkerEdgeColor', [0, 0, 0.5],...
+                'LineStyle', 'none',...
+                'Tag', 'OffEdge');
         end
         
         function plotTerminals(obj)
@@ -270,8 +248,9 @@ classdef GraphApp < handle
             if obj.doSurface
                 obj.plotCylinders();
             end
-            obj.plotOffEdges();
+            obj.plotUnfinished();
             obj.plotTerminals();
+            obj.plotOffEdges();
             obj.plotSynapses();
         end
         
@@ -297,11 +276,16 @@ classdef GraphApp < handle
             % ONUPDATECURSOR  Custom data tip display callback
             pos = get(evt,'Position');
             switch evt.Target.Tag
-                case 'OffEdge'
+                case 'Unfinished'
                     xyz = obj.neuron.id2xyz(obj.neuron.offEdges);
                     ind = find(sum(pos, 2) == sum(xyz, 2));
                     locID = obj.neuron.offEdges(ind); %#ok
+                case 'Terminal'
+                    xyz = obj.neuron.id2xyz(obj.neuron.terminals);
+                    ind = find(sum(pos, 2) == sum(xyz, 2));
+                    locIDs = obj.neuron.terminals(ind); %#ok
                 case 'Synapse'
+                    % Not yet implemented
                 otherwise
                     locID = obj.id2xyz(pos, str2double(evt.Target.Tag));
             end
@@ -420,21 +404,30 @@ classdef GraphApp < handle
             end
         end
         
-        function onShowOffEdges(obj, src, ~)
-            % ONSHOWOFFEDGES  Toggle unfinished branch markers
+        function onShowUnfinished(obj, src, ~)
+            % ONSHOWUNFINISHED  Toggle unfinished branch markers
             if src.Value == 1
-                set(findall(obj.ax, 'Tag', 'OffEdge'), 'Visible', 'on');
+                set(findall(obj.ax, 'Tag', 'Unfinished'), 'Visible', 'on');
             else
-                set(findall(obj.ax, 'Tag', 'OffEdge'), 'Visible', 'off');
+                set(findall(obj.ax, 'Tag', 'Unfinished'), 'Visible', 'off');
             end
         end
         
         function onShowTerminals(obj, src, ~)
-            % ONSHOWOFFEDGES  Toggle terminal branch markers
+            % ONSHOWTERMINALS  Toggle terminal branch markers
             if src.Value == 1
                 set(findall(obj.ax, 'Tag', 'Terminal'), 'Visible', 'on');
             else
                 set(findall(obj.ax, 'Tag', 'Terminal'), 'Visible', 'off');
+            end
+        end
+
+        function onShowOffEdges(obj, src, ~)
+            % ONSHOWOFFEDGES  Toggle edge markers
+            if src.Value == 1
+                set(findall(obj.ax, 'Tag', 'OffEdge'), 'Visible', 'on');
+            else
+                set(findall(obj.ax, 'Tag', 'OffEdge'), 'Visible', 'off');
             end
         end
         
@@ -525,9 +518,9 @@ classdef GraphApp < handle
                 'Style', 'checkbox',...
                 'String', 'Show Unfinished',...
                 'Value', 0,...
-                'Tag', 'ShowOffEdges',...
+                'Tag', 'ShowUnfinished',...
                 'TooltipString', 'Show nodes marked as unfinished',...
-                'Callback', @obj.onShowOffEdges);
+                'Callback', @obj.onShowUnfinished);
             uicontrol(uiLayout,...
                 'Style', 'checkbox',...
                 'String', 'Show Terminals',...
@@ -582,8 +575,9 @@ classdef GraphApp < handle
                     'Enable', 'off');
                 warning('Upgrade Matlab version to enable surface plots');
             end
-            obj.plotOffEdges();
+            obj.plotUnfinished();
             obj.plotTerminals();
+            obj.plotOffEdges();
             obj.plotSynapses();
             
             axis(obj.ax, 'equal', 'tight');
@@ -604,7 +598,7 @@ classdef GraphApp < handle
         end
     end
     
-    methods (Static)
+    methods (Static, Access = protected)
         function str = getInstructions()
             % GETINSTRUCTIONS  Return instructions as multiline string
             str = sprintf(['NAVIGATION CONTROLS:\n',...

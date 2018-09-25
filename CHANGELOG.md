@@ -1,5 +1,8 @@
 # Changelog
 
+### 25Sept2018
+- Extended `sbfsem.analysis.AnnotationsSizes.m` to include CDF and normalization for plotting.
+
 ### 18Sept2018
 - New analysis `sbfsem.analysis.AnnotationSizes.m` for creating histograms of annotation sizes. 
 - Removed unused class `sbfsem.core.Transform.m`

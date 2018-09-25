@@ -115,7 +115,7 @@ classdef Segment < handle
             end
 
             % Print status to command line
-            disp(['Found ' num2str(numel(segmentList)), ' segments']);
+            disp(['Found ' num2str(numel(segmentList)), ' branches']);
             if ~isempty(extraStartNodes)
                 disp(extraStartNodes)
             end
