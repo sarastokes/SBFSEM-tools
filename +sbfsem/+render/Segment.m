@@ -46,18 +46,20 @@ classdef Segment < handle
             segments = obj.segmentTable.ID;
         end
         
-        function fh = plot(obj)
+        function ax = plot(obj, ax)
             % PLOT
-            fh = figure('Name', 'Dendrite Segmentation');
-            ax = axes('Parent', fh);
+            if nargin < 2
+                ax = axes('Parent', figure('Name', 'Dendrite Segmentation'));
+            end
             hold(ax, 'on');
             co = pmkmp(height(obj.segmentTable), 'CubicL');
             for i = 1:height(obj.segmentTable)
                 xyz = cell2mat(obj.segmentTable(i,:).XYZum);
                 plot3(xyz(:,1), xyz(:,2), xyz(:,3),...
-                    'Color', co(i,:), 'LineWidth', 1);            
+                    'Color', co(rem(i, size(co, 1)+1),:), 'LineWidth', 1);            
             end
-            axis(ax, 'equal'); axis (ax, 'tight');
+            axis(ax, 'equal', 'tight');
+            grid(ax, 'on');
             view(ax, 3);
         end
     end

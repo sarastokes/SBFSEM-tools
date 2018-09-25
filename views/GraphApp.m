@@ -56,12 +56,49 @@ classdef GraphApp < handle
     methods
         function obj = GraphApp(neuron, source)
             % GRAPHAPP
-            obj@GraphAppParent(neuron, source);
+    		if nargin == 2
+    			obj.source = validateSource(source);
+    			obj.neuron = Neuron(neuron, obj.source);
+    		elseif nargin == 1
+    			obj.neuron = neuron;
+    			obj.source = neuron.source;
+    		else
+    			[selection, selectedSource] = listdlg(...
+    				'PromptString', 'Select a source:',...
+    				'Name', 'GraphApp Source Selection',...
+    				'SelectionMode', 'single',...
+    				'ListString', obj.SOURCES);
+    			if selectedSource
+    				obj.sources = obj.SOURCES{selection};
+    				fprintf('Running with %s\n', obj.source);
+    			else
+    				warning('No source selected... exiting');
+    				return;
+    			end
+    		end
+
+    		obj.segments = sbfsem.render.Segment(obj.neuron);
+    		obj.createUi();
         end
     end
     
     % Dependent set/get methods
     methods
+        function cmap = get.cmap(obj)
+            h = findobj(obj.figureHandle, 'Tag', 'CMapMenu');
+            cmap = h.String{h.Value};
+        end
+
+        function showSegments = get.showSegments(obj)
+            h = findall(obj.figureHandle, 'Tag', 'ShowSegments');
+            showSegments = logical(h.Value);
+        end
+        
+        function showSurface = get.showSurface(obj)
+            h = findall(obj.figureHandle, 'Tag', 'ShowSurface');
+            showSurface = logical(h.Value);
+        end
+        
         function hasSynapses = get.hasSynapses(obj)
             hasSynapses = ~isempty(obj.neuron.synapses);
         end
@@ -468,24 +505,22 @@ classdef GraphApp < handle
             
             tabLayout = uitabgroup('Parent', obj.figureHandle);
             graphTab = uitab(tabLayout, 'Title', 'Graph');
-            tableTab = uitab(tabLayout, 'Title', 'Table');
-            helpTab = uitab(tabLayout, 'Title', 'Help');
             
-            helpLayout = uix.VBox('Parent', helpTab,...
-                'BackgroundColor', 'w');
-            uicontrol('Parent', helpLayout,...
-                'Style', 'text',...
-                'String', obj.getInstructions());
-            uix.Empty('Parent', helpLayout);
-            set(helpLayout, 'Heights', [-1 -0.1]);
+            obj.createTableTab(tabLayout);
+            obj.createHelpTab(tabLayout);
             
+            % The graph layout consists of a UI column and the plot
             mainLayout = uix.HBoxFlex('Parent', graphTab,...
                 'BackgroundColor', 'w');
-            tablePanel = uipanel('Parent', tableTab);
-            
-            % Create the user interface panel
             uiLayout = uix.VBox('Parent', mainLayout,...
                 'BackgroundColor', 'w');
+            % Data cursor mode requires parent with pixel property
+            % Use Matlab's uipanel between axes and HBoxFlex
+            hp = uipanel('Parent', mainLayout,...
+                'BackgroundColor', 'w');
+            obj.ax = axes('Parent', hp);
+       
+            % Create the user interface panel
             uicontrol(uiLayout, 'Style', 'text', 'String', obj.source);
             uicontrol(uiLayout,...
                 'Style', 'push',...
@@ -547,19 +582,11 @@ classdef GraphApp < handle
                 'TooltipString', 'Update underlying neuron data',...
                 'Callback', @obj.onUpdateNeuron);
             
-            set(uiLayout, 'Heights',...
-                [-0.5, -1, -0.5, -0.5, -0.5, -0.5, -0.5, -1, -1, -1]);
-            
-            % Data cursor mode requires parent with pixel property
-            % Use Matlab's uipanel between axes and HBoxFlex
-            hp = uipanel('Parent', mainLayout,...
-                'BackgroundColor', 'w');
-            obj.ax = axes('Parent', hp);
             obj.createPlot();
             
-            % Setup the table view
-            obj.createTable(tablePanel);
-            
+            set(uiLayout, 'Heights',...
+                [-0.5, -1, -0.5, -0.5, -0.5, -0.5, -0.5, -1, -1, -1]);
+        
             set(mainLayout, 'Widths', [-1 -3.5]);
         end
         
@@ -585,16 +612,32 @@ classdef GraphApp < handle
             grid(obj.ax, 'on');
         end
         
-        function createTable(obj, parentHandle)
+        function createTableTab(obj, parentHandle)
             % CREATETABLE  Initialize annotation table
+            tableTab = uitab(parentHandle, 'Title', 'Table');
+
+            tablePanel = uipanel('Parent', tableTab);
+
             pos = get(obj.figureHandle, 'Position');
-            locTable = uitable('Parent', parentHandle,...
+            locTable = uitable('Parent', tablePanel,...
                 'Data', table2cell(obj.neuron.nodes(:, {'ID', 'ParentID',...
                 'VolumeX', 'VolumeY', 'Z', 'Radius', 'OffEdge', 'Terminal'})),...
                 'ColumnName', {'ID', 'ParentID', 'X', 'Y', 'Z',...
                 'Radius', 'OffEdge', 'Terminal'});
             set(locTable, 'Position', [obj.MARGIN, obj.MARGIN, ...
                 pos(3)-obj.MARGIN*2, pos(4)-obj.MARGIN*2]);
+        end
+
+        function createHelpTab(obj, parentHandle)
+            helpTab = uitab(parentHandle, 'Title', 'Help');
+
+            helpLayout = uix.VBox('Parent', helpTab,...
+                'BackgroundColor', 'w');
+            uicontrol('Parent', helpLayout,...
+                'Style', 'text',...
+                'String', obj.getInstructions());
+            uix.Empty('Parent', helpLayout);
+            set(helpLayout, 'Heights', [-1 -0.1]);
         end
     end
     
@@ -625,21 +668,16 @@ classdef GraphApp < handle
             end
             
             switch lower(cmapName)
-                % Matlab builtin
                 case 'parula'
                     cmap = parula(N);
                 case 'hsv'
                     cmap = hsv(N);
-                    % Python matplotlib
                 case 'viridis'
                     cmap = viridis(N);
-                    % Perceptually distinct
                 case 'cubicl'
                     cmap = pmkmp(N, 'CubicL');
-                    % Bathymetry
                 case 'haxby'
                     cmap = haxby(N);
-                    % Light-Bertlein
                 case 'redblue'
                     cmap = lbmap(N, 'RedBlue');
             end
