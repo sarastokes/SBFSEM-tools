@@ -37,7 +37,7 @@ classdef COLLADA < handle
             % COLLADA  Constructor
             
             switch class(hObj)
-                case {'NeuronAPI', 'matlab.graphics.axis.Axes'}
+                case {'sbfsem.core.StructureAPI', 'matlab.graphics.axis.Axes'}
                     obj.hObj = hObj;
                 otherwise
                     error('SBFSEM:IO:COLLADA:InvalidInput',...
@@ -63,7 +63,7 @@ classdef COLLADA < handle
             end
             
             switch class(obj.hObj)
-                case 'NeuronAPI'
+                case 'sbfsem.core.StructureAPI'
                     if isempty(obj.hObj.model)
                         error('SBFSEM:IO:COLLADA:InvalidInput',...
                             'No model - use Neuron\build first');

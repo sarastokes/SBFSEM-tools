@@ -1,9 +1,16 @@
 # Changelog
 
+### 26Sept2018
+- Major class changes. Added `StructureAPI.m` above `NeuronAPI.m` so StructureTypes that can be treated mostly like Neurons (such as blood vessels) don't have to replicate code.
+- New `sbfsem.core.BloodVessel.m` class for Blood Vessel annotations
+- Added status bar to `views/GraphApp.m` and improved plotting of updated neurons
+- Added public methods to `sbfsem.render.Segment.m` for converting between location IDs in Viking and node IDs in the graph representation.
+
 ### 25Sept2018
 - Extended `sbfsem.analysis.AnnotationsSizes.m` to include CDF and normalization for plotting.
 - Convinience functions for tortuosity analysis: `euclideanDist2.m`, `euclideanDist3.m`, `plotXYZ.m` in utils folder.
 - Small optimizations for `GraphApp.m`
+- Removed `save` method from `Neuron.m`
 
 ### 18Sept2018
 - New analysis `sbfsem.analysis.AnnotationSizes.m` for creating histograms of annotation sizes. 
@@ -136,7 +143,7 @@
 
 ### 10Apr2018
 - New closed curve render function. Works standalone but hasn't been incorporated into closed curve objects yet.
-- Fixed error in Neuron\getDAspect()
+- Fixed error in `Neuron\getDAspect`
 - Shadow function contains.m for older Matlab versions was causing problems, renamed to `mycontains.m`
 - Option to specify the number of spline points for `catmullRomSpline.m` as 100 points was excessive for ClosedCurve renders
 - Option to resize volume before rendering (`volumeRender.m`)

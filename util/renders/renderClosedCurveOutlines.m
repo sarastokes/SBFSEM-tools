@@ -3,7 +3,12 @@ function vol = renderClosedCurveOutlines(neuron, splinePts)
     % History:
     %   9Apr2018 - first working version
 
-    assert(isa(neuron, 'NeuronAPI'), 'Input Neuron object');
+    if nargin < 2
+        splinePts = 20;
+    end
+
+    assert(isa(neuron, 'sbfsem.core.StructureAPI'),...
+        'Input StructureAPI subclass object');
     
     % TODO: add return for non-cc objects (prob in setGeometries)
     if isempty(neuron.geometries)

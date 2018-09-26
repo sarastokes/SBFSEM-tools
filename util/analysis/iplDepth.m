@@ -22,7 +22,8 @@ function [iplPercent, stats] = iplDepth(Neuron, INL, GCL, numBins)
     %   19Feb2018 - SSP - Added numBins input
 	% ---------------------------------------------------------------------
 
-	assert(isa(Neuron, 'NeuronAPI'), 'Input a Neuron object');
+	assert(isa(Neuron, 'sbfsem.core.StructureAPI'),...
+		'Input a StructureAPI object');
     if nargin < 4
         numBins = 20;
     end

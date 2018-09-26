@@ -29,7 +29,7 @@ function [linkedIDs, synapseIDs] = getLinkedNeurons(neuron, synapseType)
 %   4Jun2018 - SSP - revised to new function, getLinkedNeurons
 % -------------------------------------------------------------------------
 
-assert(isa(neuron, 'NeuronAPI'), 'Input neuron object');
+assert(isa(neuron, 'sbfsem.core.NeuronAPI'), 'Input neuron object');
 if ischar(synapseType)
     synapseType = sbfsem.core.StructureTypes(synapseType);
 end

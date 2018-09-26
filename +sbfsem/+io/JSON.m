@@ -42,7 +42,7 @@ classdef JSON < handle
             %   neuron      Neuron object
             % -------------------------------------------------------------
             
-            assert(isa(neuron, 'NeuronAPI'), 'Input a Neuron!'); 
+            assert(isa(neuron, 'sbfsem.core.NeuronAPI'), 'Input a Neuron!'); 
             
             fName = sprintf('%s%u.json',... 
                 getVolumeAbbrev(obj.source), neuron.ID);

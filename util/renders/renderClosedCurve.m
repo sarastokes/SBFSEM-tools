@@ -29,7 +29,7 @@ function [binaryMatrix, hiso, boundingBox] = renderClosedCurve(neuron, varargin)
     %   9Nov2017 - SSP
     % ---------------------------------------------------------------------
 
-    assert(isa(neuron, 'NeuronAPI'), 'Input Neuron object');
+    assert(isa(neuron, 'sbfsem.core.StructureAPI'), 'Input Neuron object');
 
     % Parse additional inputs
     ip = inputParser();

@@ -31,7 +31,7 @@ function [linkedIDs, synapseIDs] = getLinkedNeurons(neuron, synapseType, include
 %   11Sept2018 - SSP - added argument to include/omit unlinked synapses
 % -------------------------------------------------------------------------
 
-assert(isa(neuron, 'NeuronAPI'), 'Input neuron object');
+assert(isa(neuron, 'sbfsem.core.NeuronAPI'), 'Input neuron object');
 if ischar(synapseType)
     synapseType = sbfsem.core.StructureTypes(synapseType);
 end

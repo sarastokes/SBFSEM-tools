@@ -67,7 +67,8 @@ classdef Cylinder < handle
     
     methods
         function obj = Cylinder(neuron, varargin)
-            assert(isa(neuron, 'NeuronAPI'), 'Input a Neuron object');
+            assert(isa(neuron, 'sbfsem.core.StructureAPI'),...
+                'Input a StructureAPI object');
             
             ip = inputParser();
             addParameter(ip, 'method', 1, @(x) ismember(x, [1 2]));

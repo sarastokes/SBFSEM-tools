@@ -17,7 +17,7 @@ function fh = colorByStrata(neuron, numDimensions)
     %
     %----------------------------------------------------------------------
 	
-	assert(isa(neuron, 'NeuronAPI'), 'Input Neuron object');
+	assert(isa(neuron, 'sbfsem.core.NeuronAPI'), 'Input Neuron object');
 	if nargin < 2
 		numDimensions = 2;
 	else

@@ -52,7 +52,8 @@ classdef NeuronGraph < handle
 
 	methods
 		function obj = NeuronGraph(neuron, isDirected)
-			assert(isa(neuron, 'NeuronAPI'), 'Input neuron object');
+			assert(isa(neuron, 'sbfsem.core.StructureAPI'),...
+                'Input a StructureAPI object');
 			if nargin < 2
 				obj.isDirected = true;
 			else

@@ -27,7 +27,7 @@ classdef AnnotationSizes < sbfsem.analysis.NeuronAnalysis
     
     methods
         function obj = AnnotationSizes(neuron, varargin)
-            validateattributes(neuron, {'NeuronAPI'}, {});
+            validateattributes(neuron, {'sbfsem.core.NeuronAPI'}, {});
             obj@sbfsem.analysis.NeuronAnalysis(neuron);
             
             obj.data.sizes = neuron.nodes.Rum;

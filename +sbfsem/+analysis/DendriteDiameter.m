@@ -53,7 +53,7 @@ classdef DendriteDiameter < sbfsem.analysis.NeuronAnalysis
     
     methods
         function obj = DendriteDiameter(neuron, varargin)
-            validateattributes(neuron, {'NeuronAPI'}, {});
+            validateattributes(neuron, {'sbfsem.core.NeuronAPI'}, {});
             obj@sbfsem.analysis.NeuronAnalysis(neuron);
             
             obj.doAnalysis(varargin{:});

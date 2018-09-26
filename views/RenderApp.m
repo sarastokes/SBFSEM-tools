@@ -129,14 +129,14 @@ classdef RenderApp < handle
             % Import the new neuron(s)
             for i = 1:numel(str)
                 newID = str2double(str{i});
-                obj.statusUpdate(sprintf('Adding c%u', newID));
+                obj.updateStatus(sprintf('Adding c%u', newID));
                 obj.addNeuron(newID);
 
                 newColor = findall(obj.ax, 'Tag', obj.id2tag(newID));
                 newColor = get(newColor(1), 'FaceColor');
 
                 obj.addNeuronNode(newID, newColor);
-                obj.statusUpdate();
+                obj.updateStatus();
                 % Update the plot after each neuron imports
                 drawnow;
             end
@@ -426,7 +426,7 @@ classdef RenderApp < handle
             %   STRATIFICATIONVIEW, SOMADISTANCEVIEW, NODEVIEW
 
             neuron = obj.neurons(num2str(obj.tag2id(evt.Source.Tag)));
-            obj.statusUpdate('Opening view');
+            obj.updateStatus('Opening view');
 
             switch src.Label
                 case 'Node View'
@@ -438,13 +438,13 @@ classdef RenderApp < handle
                 case 'GraphApp'
                     GraphApp(neuron);
             end
-            obj.statusUpdate('');
+            obj.updateStatus('');
         end
 
         function onImportCones(obj, src, ~)
             % ONIMPORTCONES
             % See also: SBFSEM.CONEMOSAIC, SBFSEM.CORE.CLOSEDCURVE
-            obj.statusUpdate('Adding mosaic');
+            obj.updateStatus('Adding mosaic');
             if isempty(obj.mosaic)
                 obj.mosaic = sbfsem.ConeMosaic('i');
             end
@@ -470,9 +470,9 @@ classdef RenderApp < handle
             neuron = obj.neurons(num2str(ID));
 
             % Update the OData and the 3D model
-            obj.statusUpdate('Updating OData');
+            obj.updateStatus('Updating OData');
             neuron.update();
-            obj.statusUpdate('Updating model');
+            obj.updateStatus('Updating model');
             neuron.build();
             % Find the old render and save properties
             patches = findall(obj.ax, 'Tag', evt.Source.Tag);
@@ -480,12 +480,12 @@ classdef RenderApp < handle
             oldAlpha = get(patches, 'FaceAlpha');
             % Delete the old one and render a new one
             delete(patches);
-            obj.statusUpdate('Updating render');
+            obj.updateStatus('Updating render');
             neuron.render('ax', obj.ax, 'FaceColor', oldColor,...
                 'FaceAlpha', oldAlpha);
             % Return to the original view azimuth and elevation
             view(obj.ax, az, el);
-            obj.statusUpdate('');
+            obj.updateStatus('');
         end
 
         function onNodeChecked(obj, ~, evt)
@@ -597,24 +597,24 @@ classdef RenderApp < handle
 
             if ~isempty(strfind(varargin{1}, 'gcl'))
                 if isempty(obj.iplBound.gcl)
-                    obj.statusUpdate('Importing IPL-GCL');
+                    obj.updateStatus('Importing IPL-GCL');
                     obj.iplBound.gcl = sbfsem.builtin.GCLBoundary(obj.source);
                 end
-                obj.statusUpdate('Creating surface');
+                obj.updateStatus('Creating surface');
                 obj.iplBound.gcl.doAnalysis();
                 obj.iplBound.gcl.plot('ax', obj.ax);
             end
 
             if ~isempty(strfind(varargin{1}, 'inl'))
                 if isempty(obj.iplBound.inl)
-                    obj.statusUpdate('Importing IPL-INL');
+                    obj.updateStatus('Importing IPL-INL');
                     obj.iplBound.inl = sbfsem.builtin.INLBoundary(obj.source);
                 end
-                obj.statusUpdate('Creating surface');
+                obj.updateStatus('Creating surface');
                 obj.iplBound.inl.doAnalysis();
                 obj.iplBound.inl.plot('ax', obj.ax);
             end
-            obj.statusUpdate('');
+            obj.updateStatus('');
         end
     end
 
@@ -626,7 +626,7 @@ classdef RenderApp < handle
             neuron = Neuron(newID, obj.source, obj.SYNAPSES);
 
             % Build the 3D model
-            obj.statusUpdate(sprintf('Rendering c%u', newID));
+            obj.updateStatus(sprintf('Rendering c%u', newID));
             neuron.build();
 
             % Render the neuron
@@ -649,8 +649,8 @@ classdef RenderApp < handle
             delete(findall(obj.ax, 'Tag', obj.id2tag(ID)));
         end
 
-        function statusUpdate(obj, str)
-            % STATUSUPDATE  Update status text
+        function updateStatus(obj, str)
+            % UPDATESTATUS  Update status text
             if nargin < 2
                 str = '';
             else

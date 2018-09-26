@@ -1,5 +1,5 @@
 classdef Segment < handle
-    % SEGMENTS
+    % SEGMENT
     %
     % Constructor:
     %   obj = Segments(neuron, startNode)
@@ -10,6 +10,7 @@ classdef Segment < handle
     %
     % History:
     %   9Jun2018 - SSP - wrote from dendriteSegmentation
+    %   26Sept2018 - SSP - added public functions for node -> location ID
     % ---------------------------------------------------------------------
     
     properties (SetAccess = private)
@@ -46,6 +47,16 @@ classdef Segment < handle
             segments = obj.segmentTable.ID;
         end
         
+        function nodeID = node2loc(obj, locationID)
+            % NODE2LOC  Convert node ID in graph to location ID in Viking
+            nodeID = find(obj.nodeIDs == locationID);
+        end
+        
+        function locationID = loc2node(obj, nodeID)
+            % LOC2NODE  Convert node ID in graph to location ID in Viking
+            locationID = obj.nodeIDs(nodeID);
+        end
+        
         function ax = plot(obj, ax)
             % PLOT
             if nargin < 2
@@ -64,8 +75,7 @@ classdef Segment < handle
         end
     end
     
-    methods (Access = private)
-        
+    methods (Access = private)      
         function performSegmentation(obj, neuron)
             % Run a depth-first search on the graph. T is a table of
             % events: when each node is first and last encountered.

@@ -1,4 +1,4 @@
-classdef Neuron < NeuronAPI
+classdef Neuron < sbfsem.core.NeuronAPI
 % NEURON
 %
 % Description:
@@ -17,7 +17,7 @@ classdef Neuron < NeuronAPI
 %
 % Methods:
 %   For a complete list, see the docs or type 'methods('Neuron')'.
-%   or 'methods('NeuronAPI')'.
+%   or 'methods('sbfsem.core.NeuronAPI')'.
 %
 % Methods moved to external functions:
 %   util/analysis/addAnalysis.m
@@ -58,7 +58,7 @@ classdef Neuron < NeuronAPI
             %   % Import c127 in NeitzInferiorMonkey
             %   c127 = Neuron(127, 'i');
             % -------------------------------------------------------------
-            obj@NeuronAPI();
+            obj@sbfsem.core.NeuronAPI();
 
             % By default, synapses are not imported
             if nargin < 3
@@ -156,13 +156,6 @@ classdef Neuron < NeuronAPI
             obj.lastModified = datestr(now);
         end
 
-        function save(obj)
-            % SAVE  Save changes to neuron
-            % ----------------------------------------------------------
-            uisave(obj, sprintf('c%u', obj.ID));
-            fprintf('Saved!\n');
-        end
-
         function checkSynapses(obj)
             % SYNAPSECHECK  Try to import synapses, if missing
 
@@ -200,8 +193,7 @@ classdef Neuron < NeuronAPI
                 fprintf('     %u closed curve geometries\n',...
                     height(obj.geometries));
             end
-            
-            
+                        
             % Search for omitted nodes by location ID and section number
             obj.omittedIDs = omitLocations(obj.ID, obj.source);
             omittedSections = omitSections(obj.source);

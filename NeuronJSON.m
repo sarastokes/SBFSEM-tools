@@ -1,4 +1,4 @@
-classdef NeuronJSON < NeuronAPI
+classdef NeuronJSON < sbfsem.core.NeuronAPI
 	% NEURONJSON
 	%
 	% Description:

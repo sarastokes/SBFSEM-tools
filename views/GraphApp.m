@@ -69,7 +69,7 @@ classdef GraphApp < handle
     				'SelectionMode', 'single',...
     				'ListString', obj.SOURCES);
     			if selectedSource
-    				obj.sources = obj.SOURCES{selection};
+    				obj.source = obj.SOURCES{selection};
     				fprintf('Running with %s\n', obj.source);
     			else
     				warning('No source selected... exiting');
@@ -100,7 +100,7 @@ classdef GraphApp < handle
         end
         
         function hasSynapses = get.hasSynapses(obj)
-            hasSynapses = ~isempty(obj.neuron.synapses);
+            hasSynapses = isprop(obj.neuron, 'synapses') && ~isempty(obj.neuron.synapses);
         end
         
         function showSynapses = get.showSynapses(obj)
@@ -126,6 +126,26 @@ classdef GraphApp < handle
     
     % Helper functions
     methods (Access = private)
+
+        function locID = id2xyz(obj, xyz, segmentID)
+            % GETIDFROMXYZ
+            T = obj.segments.segmentTable(segmentID, :);
+            IDs = cell2mat(T.ID);
+            [~, ind] = ismember(xyz, cell2mat(T.XYZum), 'rows', 'legacy');
+            locID = obj.segments.nodeIDs(IDs(ind));
+        end 
+
+        function updateStatus(obj, str)
+            % UPDATESTATUS  Update status text
+            if nargin < 2
+                str = '';
+            else
+                assert(ischar(str), 'Status updates must be char');
+            end
+            set(findobj(obj.figureHandle, 'Tag', 'Status'), 'String', str);
+            drawnow;
+        end
+           
         function colorSegments(obj)
             % COLORSEGMENTS  Assign each segment a different color
             
@@ -272,15 +292,19 @@ classdef GraphApp < handle
     methods (Access = private)
         function onUpdateNeuron(obj, ~, ~)
             % ONUPDATENEURON
-            
-            % Update the neuron OData
+            obj.updateStatus('Updating OData...');
+
+            % Update the neuron OData and segmentation
             obj.neuron.update();
+            obj.updateStatus('Segmenting...');
+            obj.segments = sbfsem.render.Segment(obj.neuron);
             
             % Delete the old plot components
             delete(findall(obj.figureHandle, 'Type', 'surface'));
             delete(findall(obj.figureHandle, 'Type', 'line'));
             
             % Recreate plot components
+            obj.updateStatus('Plotting...')
             obj.plotSegments();
             if obj.doSurface
                 obj.plotCylinders();
@@ -289,6 +313,7 @@ classdef GraphApp < handle
             obj.plotTerminals();
             obj.plotOffEdges();
             obj.plotSynapses();
+            obj.updateStatus();
         end
         
         function onClickMode(obj, ~, ~)
@@ -581,13 +606,21 @@ classdef GraphApp < handle
                 'Tag', 'Update underlying annotation data',...
                 'TooltipString', 'Update underlying neuron data',...
                 'Callback', @obj.onUpdateNeuron);
+            uicontrol(uiLayout,...
+                'Style', 'text',...
+                'String', '',...
+                'FontAngle', 'italic',...
+                'Tag', 'Status');
+            obj.updateStatus('Building...');
             
             obj.createPlot();
             
             set(uiLayout, 'Heights',...
-                [-0.5, -1, -0.5, -0.5, -0.5, -0.5, -0.5, -1, -1, -1]);
+                [-0.5, -1, -0.5, -0.5, -0.5, -0.5, -0.5, -1, -1, -1, -0.5]);
         
             set(mainLayout, 'Widths', [-1 -3.5]);
+
+            obj.updateStatus();
         end
         
         function createPlot(obj)

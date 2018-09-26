@@ -62,7 +62,7 @@ classdef (Abstract) RenderView < sbfsem.ui.FigureView
             %
             % 10Nov2017 - SSP
             
-            assert(isa(neuron, 'NeuronAPI'), 'Input neuron object');
+            assert(isa(neuron, 'sbfsem.core.StructureAPI'), 'Input neuron object');
             
             obj@sbfsem.ui.FigureView(1);
             obj.ID = neuron.ID;

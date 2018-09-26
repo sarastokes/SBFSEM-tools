@@ -30,7 +30,7 @@ classdef DendriticFieldHull < sbfsem.analysis.NeuronAnalysis
 
     methods
         function obj = DendriticFieldHull(neuron, xyz)
-            validateattributes(neuron, {'NeuronAPI'}, {});
+            validateattributes(neuron, {'sbfsem.core.NeuronAPI'}, {});
             obj@sbfsem.analysis.NeuronAnalysis(neuron);
             if nargin < 2
                 T = obj.target.getCellNodes;

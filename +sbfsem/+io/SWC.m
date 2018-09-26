@@ -66,7 +66,7 @@ classdef SWC < handle
 	methods
 		function obj = SWC(neuron, varargin)
 			% Parse the inputs
-			assert(isa(neuron, 'NeuronAPI'), 'Input a Neuron object');
+			assert(isa(neuron, 'sbfsem.core.StructureAPI'), 'Input a Neuron object');
             obj.neuron = neuron;
             obj.ID = neuron.ID;
 

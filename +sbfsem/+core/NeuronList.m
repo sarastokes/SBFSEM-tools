@@ -151,7 +151,7 @@ classdef NeuronList < List
     
     methods (Access = private)
         function [neurons, source] = parseInput(obj, elts)
-            if isa(elts, 'NeuronAPI')
+            if isa(elts, 'sbfsem.core.StructureAPI')
                 neurons = elts;
                 source = elts.source;
             elseif isa(elts, 'sbfsem.NeuronGroup')

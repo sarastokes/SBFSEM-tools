@@ -10,7 +10,7 @@ classdef NodeView < sbfsem.ui.TogglePartsView
             % Setup from superclass
             obj@sbfsem.ui.TogglePartsView();
             
-            assert(isa(neuron, 'NeuronAPI'), 'Input a neuron object');
+            assert(isa(neuron, 'sbfsem.core.StructureAPI'), 'Input a neuron object');
 
             obj.neuron = neuron;
             obj.partNames = neuron.synapseNames;

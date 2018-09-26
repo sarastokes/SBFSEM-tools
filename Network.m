@@ -32,6 +32,13 @@ classdef Network < handle
 
 	methods
 		function obj = Network(ID, source)
+            % NETWORK
+            %
+            % Inputs:
+            %   ID      Structure ID
+            %   source  Volume name or abbreviation
+            % -------------------------------------------------------------
+            
             obj.source = validateSource(source);
             obj.ID = ID;
 
@@ -39,7 +46,13 @@ classdef Network < handle
 		end
 
 		function G = synapseGraph(obj, synapseName, isDirected)
-
+            % SYNAPSEGRAPH  
+            % 
+            % Inputs:
+            %   synapseName         Synapse name 
+            %   isDirected          Directed or undirected (default = true)
+            % -------------------------------------------------------------
+            
 			if nargin < 3
 				isDirected = true;
 			end

@@ -31,7 +31,7 @@ function [linkedIDs, synapseIDs, G] = getStructureLinks(neuron, synapseType)
 %	26Feb2018 - SSP
 %   2Jun2018 - SSP - updated JSON decoding, added synapseID output
 % -------------------------------------------------------------------------
-assert(isa(neuron, 'NeuronAPI'), 'Input neuron object');
+assert(isa(neuron, 'sbfsem.core.NeuronAPI'), 'Input neuron object');
 
 url = [getServiceRoot(neuron.source), 'StructureLinks?$filter='];
 

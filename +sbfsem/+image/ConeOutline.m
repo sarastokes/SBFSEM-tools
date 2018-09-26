@@ -20,7 +20,7 @@ classdef ConeOutline < handle
                 % Only NeitzInferiorMonkey would have cone outlines
                 neuron = Neuron(neuron, 'i');
             end
-            if isa(neuron, 'NeuronAPI')
+            if isa(neuron, 'sbfsem.core.StructureAPI')
                 if isempty(neuron.geometries)
                     neuron.getGeometries();
                 end

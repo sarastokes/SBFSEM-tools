@@ -28,7 +28,8 @@ classdef Transforms
 
         function tf = hasViking(neuron)
 
-            assert(isa(neuron, 'NeuronAPI'), 'Input a neuron object');
+            assert(isa(neuron, 'sbfsem.core.StructureAPI'),...
+                'Input a StructureAPI object');
 
             if neuron.nodes.VolumeX == neuron.nodes.X ...
                     && neuron.nodes.VolumeY == neuron.nodes.Y
