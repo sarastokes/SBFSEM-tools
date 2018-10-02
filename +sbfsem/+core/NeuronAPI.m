@@ -1,9 +1,15 @@
 classdef (Abstract) NeuronAPI < sbfsem.core.StructureAPI
-% NEURONAPI  Parent class for all Neuron object classes
+% NEURONAPI  
+%
+% Description:
+%   Parent class for all Neuron object classes
+%
+% See also:
+%   Neuron, sbfsem.core.StructureAPI
 %
 % History:
-%   ? - SSP
-%   25Sept2018 - SSP - subclass from sbfsem.core.StructureAPI
+%   20Aug2018 - SSP
+%   25Sept2018 - SSP - split into NeuronAPI and parent StructureAPI
 
 	properties (SetAccess = protected, GetAccess = public)
         % Attributes of each synapse
@@ -19,8 +25,9 @@ classdef (Abstract) NeuronAPI < sbfsem.core.StructureAPI
  	end
 
 	methods
-		function obj = NeuronAPI()
+		function obj = NeuronAPI(ID, source)
 			% Maybe add link to Neuron factory later
+            obj@sbfsem.core.StructureAPI(ID, source);
 		end
     end
 

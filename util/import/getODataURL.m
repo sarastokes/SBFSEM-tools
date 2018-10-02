@@ -17,7 +17,6 @@ function endpoint = getODataURL(cellNum, source, urlType)
 			endpoint = [baseURL 'Structures(' num2str(cellNum) ')/'];
 		case 'location'
 			endpoint = [baseURL 'Structures(' num2str(cellNum), ')/Locations/'];
-			%	')/Locations/?$select=ID,ParentID,VolumeX,VolumeY,Z,Radius,X,Y,Tags,OffEdge'];
 		case 'link'
 			endpoint = [baseURL 'Structures(' num2str(cellNum)... 
 				')/LocationLinks/?$select=A,B'];

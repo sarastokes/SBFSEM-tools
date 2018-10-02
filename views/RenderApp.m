@@ -420,24 +420,14 @@ classdef RenderApp < handle
             end
         end
 
-        function onOpenView(obj, src, evt)
+        function onOpenGraphApp(obj, src, evt)
             % ONOPENVIEW  Open a single neuron analysis view
             % See also:
-            %   STRATIFICATIONVIEW, SOMADISTANCEVIEW, NODEVIEW
+            %   GRAPHAPP
 
             neuron = obj.neurons(num2str(obj.tag2id(evt.Source.Tag)));
             obj.updateStatus('Opening view');
-
-            switch src.Label
-                case 'Node View'
-                    NodeView(neuron);
-                case 'Stratification View'
-                    StratificationView(neuron);
-                case 'Soma Distance View'
-                    SomaDistanceView(neuron);
-                case 'GraphApp'
-                    GraphApp(neuron);
-            end
+            GraphApp(neuron);
             obj.updateStatus('');
         end
 
@@ -708,31 +698,21 @@ classdef RenderApp < handle
                     'Tag', obj.id2tag(ID),...
                     'Callback', @obj.onSetTransparency)
             end
-            v = uimenu(c, 'Label', 'Open view');
-            uimenu(v, 'Label', 'GraphApp',...
+            uimenu(c, 'Label', 'Open GraphApp',...
                 'Tag', obj.id2tag(ID),...
-                'Callback', @obj.onOpenView);
-            uimenu(v, 'Label', 'Node View',...
-                'Tag', obj.id2tag(ID),...
-                'Callback', @obj.onOpenView);
-            uimenu(v, 'Label', 'Stratification View',...
-                'Tag', obj.id2tag(ID),...
-                'Callback', @obj.onOpenView);
-            uimenu(v, 'Label', 'Soma Distance View',...
-                'Tag', obj.id2tag(ID),...
-                'Callback', @obj.onOpenView);
+                'Callback', @obj.onOpenGraphApp);
 
-            if ~hasSynapses
-                uimenu(c, 'Label', 'Get Synapses',...
-                    'Tag', obj.id2tag(ID),...
-                    'Callback', @obj.onGetSynapses);
-            else
-                neuron = obj.neurons(ID);
-                synapseNames = neuron.synapseNames;
-                for i = 1:numel(synapseNames)
-                    obj.addSynapseNode(newNode, synapseNames{i});
-                end
-            end
+            % if ~hasSynapses
+            %     uimenu(c, 'Label', 'Get Synapses',...
+            %         'Tag', obj.id2tag(ID),...
+            %         'Callback', @obj.onGetSynapses);
+            % else
+            %     neuron = obj.neurons(ID);
+            %     synapseNames = neuron.synapseNames;
+            %     for i = 1:numel(synapseNames)
+            %         obj.addSynapseNode(newNode, synapseNames{i});
+            %     end
+            % end
             set(newNode, 'UIContextMenu', c);
         end
 

@@ -1,5 +1,13 @@
 # Changelog
 
+### 2Oct2018
+- New startup dialog for `GraphApp.m` and user interface improvements
+
+### 29Sept2018
+- Fixes to `sbfsem.core.BoundaryMarker` and subclasses
+- Fixed bugs introduced by `sbfsem.core.StructureAPI.m`
+- Added `sbfsem.core.VesselAdjacency.m`
+
 ### 26Sept2018
 - Major class changes. Added `StructureAPI.m` above `NeuronAPI.m` so StructureTypes that can be treated mostly like Neurons (such as blood vessels) don't have to replicate code.
 - New `sbfsem.core.BloodVessel.m` class for Blood Vessel annotations

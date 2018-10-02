@@ -75,6 +75,12 @@ classdef GraphApp < handle
     				warning('No source selected... exiting');
     				return;
     			end
+                answer = inputdlg('Input cell ID', 'Neuron Dialog', 1, {''});
+                if isempty(answer)
+                    return;
+                end
+                ID = str2double(answer{1});
+                obj.neuron = Neuron(ID, obj.source);
     		end
 
     		obj.segments = sbfsem.render.Segment(obj.neuron);
@@ -316,21 +322,28 @@ classdef GraphApp < handle
             obj.updateStatus();
         end
         
-        function onClickMode(obj, ~, ~)
+        function onClickMode(obj, src, ~)
             % ONCLICKMODE  Enable or disable data tips
+
+            % Only register if box isn't already selected
+            if src.BackgroundColor == [0.7, 0.7, 0.7]
+                return;
+            end
             
             switch obj.dataCursor.Enable
-                case 'on'
+                case 'on'  % Turn on View mode
                     obj.dataCursor.removeAllDataCursors();
                     set(obj.dataCursor, 'Enable', 'off');
                     set(findobj(obj.figureHandle, 'Tag', 'DCBox'),...
-                        'BackgroundColor', 'w',...
-                        'TooltipString', 'Select individual nodes');
-                case 'off'
+                        'BackgroundColor', 'w');
+                    set(findobj(obj.figureHandle, 'Tag', 'ViewBox'),...
+                        'BackgroundColor', [0.7, 0.7, 0.7]);
+                case 'off'  % Turn on Select mode
                     set(obj.dataCursor, 'Enable', 'on');
                     set(findobj(obj.figureHandle, 'Tag', 'DCBox'),...
-                        'BackgroundColor', [0.65, 0.65, 0.65],...
-                        'TooltipString', 'Turn Data Cursor mode off');
+                        'BackgroundColor', [0.7, 0.7, 0.7]);
+                    set(findobj(obj.figureHandle, 'Tag', 'ViewBox'),...
+                        'BackgroundColor', 'w');
             end
         end
         
@@ -345,9 +358,12 @@ classdef GraphApp < handle
                 case 'Terminal'
                     xyz = obj.neuron.id2xyz(obj.neuron.terminals);
                     ind = find(sum(pos, 2) == sum(xyz, 2));
-                    locIDs = obj.neuron.terminals(ind); %#ok
+                    locID = obj.neuron.terminals(ind); %#ok
                 case 'Synapse'
-                    % Not yet implemented
+                    T = obj.neuron.getSynapseNodes();
+                    xyz = T.XYZum;
+                    ind = find(sum(pos,2) == sum(xyz, 2));
+                    locID = T{ind(1), 'ID'};
                 otherwise
                     locID = obj.id2xyz(pos, str2double(evt.Target.Tag));
             end
@@ -380,9 +396,7 @@ classdef GraphApp < handle
             if h.Value == 1
                 obj.colorSegments();
             end
-            set(obj.figureHandle, 'Colormap', obj.cmap);
-            
-            % TODO: add colormap to surface
+            colormap(obj.ax, obj.getColormap(obj.cmap, 256));
         end
         
         function onKeyPress(obj, ~, eventdata)
@@ -455,8 +469,10 @@ classdef GraphApp < handle
                     % Toggle visibility
                     set(findall(obj.ax, 'Tag', 'Synapse'), 'Visible', 'on');
                 else
+                    obj.updateStatus('Importing synapse data...');
                     obj.neuron.getSynapses();
                     obj.plotSynapses();
+                    obj.updateStatus('');
                 end
             else
                 names = obj.neuron.synapseNames;
@@ -547,12 +563,23 @@ classdef GraphApp < handle
        
             % Create the user interface panel
             uicontrol(uiLayout, 'Style', 'text', 'String', obj.source);
-            uicontrol(uiLayout,...
+            modeLayout = uix.VBox('Parent', uiLayout,...
+                'BackgroundColor', 'w');
+            LayoutManager.verticalBoxWithLabel(modeLayout, 'Mode:',...
+                'Style', 'Push',...
+                'String', 'View',...
+                'Tag', 'ViewBox',...
+                'BackgroundColor', [0.7, 0.7, 0.7],...
+                'TooltipString', 'Rotate zoom and pan view',...
+                'Callback', @obj.onClickMode);
+            uicontrol(modeLayout,...
                 'Style', 'push',...
                 'String', 'Data Cursor',...
                 'Tag', 'DCBox',...
                 'Tooltip', 'Select individual nodes',...
                 'Callback', @obj.onClickMode);
+            set(modeLayout, 'Heights', [-2, -1]);
+            uix.Empty('Parent', uiLayout);
             uicontrol(uiLayout,...
                 'Style', 'checkbox',...
                 'String', 'Show synapses',...
@@ -588,6 +615,7 @@ classdef GraphApp < handle
                 'Tag', 'ShowTerminals',...
                 'TooltipString', 'Show nodes marked as terminals',...
                 'Callback', @obj.onShowTerminals);
+            uix.Empty('Parent', uiLayout);
             LayoutManager.verticalBoxWithLabel(uiLayout, 'Marker Size:',...
                 'Style', 'popup',...
                 'String', {'Minimal', 'Medium', 'Large'},...
@@ -604,7 +632,7 @@ classdef GraphApp < handle
                 'Style', 'push',...
                 'String', 'Update Neuron',...
                 'Tag', 'Update underlying annotation data',...
-                'TooltipString', 'Update underlying neuron data',...
+                'TooltipString', 'Update to load most recent annotations',...
                 'Callback', @obj.onUpdateNeuron);
             uicontrol(uiLayout,...
                 'Style', 'text',...
@@ -616,7 +644,7 @@ classdef GraphApp < handle
             obj.createPlot();
             
             set(uiLayout, 'Heights',...
-                [-0.5, -1, -0.5, -0.5, -0.5, -0.5, -0.5, -1, -1, -1, -0.5]);
+                [-0.5, -1.2, -0.3, -0.5, -0.5, -0.5, -0.5, -0.5, -0.3, -1, -1, -0.8, -0.5]);
         
             set(mainLayout, 'Widths', [-1 -3.5]);
 

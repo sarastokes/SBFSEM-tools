@@ -33,25 +33,44 @@ classdef (Abstract) StructureAPI < handle
         terminals   % Branch endings
  	end
 
+    properties (Access = private, Transient = true, Hidden = true)
+        ODataClient
+        GeometryClient
+    end
+
 	methods
-		function obj = StructureAPI()
-			% Maybe add link to Neuron factory later
+		function obj = StructureAPI(ID, source)
+            if nargin == 1
+                source = ID{2};
+                ID = ID{1};
+            end
+            validateattributes(ID, {'numeric'}, {'numel', 1});
+            obj.ID = ID;
+            obj.source = validateSource(source);
+            
+            obj.ODataClient = sbfsem.io.NeuronOData(obj.ID, obj.source);
+
+            % XYZ volume dimensions in nm/pix, nm/pix, nm/sections
+            obj.volumeScale = getODataScale(obj.source);
+
+            % Track when the object was created
+            obj.lastModified = datestr(now);
 		end
+
+        function update(obj)
+            % UPDATE  Updates existing OData
+            % Modify in subclasses to include child structures
+            obj.pull();
+            obj.lastModified = datestr(now);
+        end
 
         function xyz = id2xyz(obj, IDs)
             row = ismember(obj.nodes.ID, IDs);
             xyz = obj.nodes{row, 'XYZum'};
         end
-
-        function checkGeometries(obj)
-            % CHECKGEOMETRIES  
-            %   If geometries are missing but exist, import them
-            %   Should be specified by subclasses
-        end
     end
 
     methods (Access = protected)
-
         function xyz = getXYZbyParent(obj, parentID, useMicrons)
             if nargin < 3
                 useMicrons = true;
@@ -69,6 +88,24 @@ classdef (Abstract) StructureAPI < handle
         function cellNodes = getNodesByParent(obj, parentID)
             row = obj.nodes.ParentID == parentID;
             cellNodes = obj.nodes(row, :);
+        end
+    end
+
+    % Closed curve methods
+    methods
+        function getGeometries(obj)
+            % GETGEOMETRIES  Import ClosedCurve-related OData
+            if isempty(obj.GeometryClient)
+                obj.GeometryClient = sbfsem.io.GeometryOData(obj.ID, obj.source);
+            end
+            obj.geometries = obj.GeometryClient.pull();
+        end
+
+        function checkGeometries(obj)
+            % CHECKGEOMETRIES   Try to import geometries, if missing
+            if isempty(obj.geometries)
+                obj.getGeometries();
+            end
         end
     end
 
@@ -258,20 +295,78 @@ classdef (Abstract) StructureAPI < handle
             %   RENDERCLOSEDCURVE, SBFSEM.RENDER.CYLINDER
             % -------------------------------------------------------------
 
-            if ~isempty(obj.model)
-                if isa(obj.model, 'sbfsem.builtin.ClosedCurve')
-                    obj.model.trace(varargin{:});
-                elseif isnumeric(obj.model) % Closed curve volume
-                    volumeRender(obj.model,...
-                        'Tag', ['c', num2str(obj.ID)],...
-                        varargin{:});
-                else
-                    obj.model.render(varargin{:});
-                    view(3);
-                end
-            else
-                warning('No model - use BUILD function first');
+            if isempty(obj.model)
+                obj.build();  % Assumes disc annotations
             end
+            if isa(obj.model, 'sbfsem.builtin.ClosedCurve')
+                obj.model.trace(varargin{:});
+            elseif isnumeric(obj.model) % Closed curve volume
+                volumeRender(obj.model,...
+                    'Tag', ['c', num2str(obj.ID)],...
+                    varargin{:});
+            else
+                obj.model.render(varargin{:});
+                view(3);
+            end
+        end
+    end
+
+    % Post-import processing methods
+    methods (Access = protected)
+        function pull(obj)
+            % PULL  Fetch and parse OData
+            
+            % Get the relevant data with OData queries
+            [obj.viking, obj.nodes, obj.edges] = obj.ODataClient.pull();
+
+            % XY transform and then convert data to microns
+            obj.nodes = obj.setXYZum(obj.nodes);
+
+            % Handle closed curve geometries, if necessary
+            if nnz(obj.nodes.Geometry == 6)
+                obj.getGeometries();
+                fprintf('   %u closed curves in c%u\n',...
+                    obj.ID, height(obj.geometries));
+            end
+
+            % Search for omitted nodes by location ID and section number
+            obj.omittedIDs = omitLocations(obj.ID, obj.source);
+            omittedSections = omitSections(obj.source);
+            if ~isempty(omittedSections)
+                for i = 1:numel(omittedSections)
+                    row = obj.nodes.Z == omittedSections(i);
+                    obj.omittedIDs = [obj.omittedIDs; obj.nodes(row,:).ID];
+                end
+            end
+        end
+
+        function nodes = setXYZum(obj, nodes)
+            % SETXYZUM  Convert Viking pixels to microns
+            % if nnz(nodes.X) + nnz(nodes.Y) > 2
+            %    disp('Estimating synapse locations...');
+            %    nodes = estimateSynapseXY(obj, nodes);
+            % end
+            
+            % Apply transforms to NeitzInferiorMonkey
+            if obj.transform == sbfsem.core.Transforms.SBFSEMTools
+                xyDir = [fileparts(mfilename('fullpath')), '\data'];
+                xydata = dlmread([xyDir,...
+                    '\XY_OFFSET_NEITZINFERIORMONKEY.txt']);
+                volX = nodes.X + xydata(nodes.Z,2);
+                volY = nodes.Y + xydata(nodes.Z,3);
+            else
+                volX = nodes.VolumeX;
+                volY = nodes.VolumeY;
+            end
+
+            % Create an XYZ in microns column
+            nodes.XYZum = zeros(height(nodes), 3);
+            % TODO: There's an assumption about the units in here...
+            nodes.XYZum = bsxfun(@times,...
+                [volX, volY, nodes.Z],...
+                (obj.volumeScale./1e3));
+            % Create a column for radius in microns
+            nodes.Rum = nodes.Radius * obj.volumeScale(1)./1000;
         end
     end
 end

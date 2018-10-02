@@ -59,7 +59,7 @@ classdef NeuronOData < sbfsem.io.OData
             
             vikingData = readOData(getODataURL(ID, source, 'neuron'));            
             
-            if ~ismember(vikingData.TypeID, [1, 3])
+            if ~ismember(vikingData.TypeID, [1, 3, 254])
                 error('SBFSEM:NeuronOData:invalidTypeID',...
                     'Structure ID was not valid');
             else

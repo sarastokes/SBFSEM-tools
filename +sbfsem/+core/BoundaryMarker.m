@@ -22,19 +22,22 @@ classdef (Abstract) BoundaryMarker < handle
     % 7Feb2018 - SSP - better plotting, add and remove from scene methods
     % ---------------------------------------------------------------------
 	
-	properties (SetAccess = private, GetAccess = public)
+	properties (Hidden, Access = private)
 		source
 		baseURL
 	end
 
-	properties (Access = public)
+	properties (SetAccess = private)
         queryDate
-        TYPEID
         units = 'microns'
         interpolatedSurface = []
     end
     
-    properties (Access = public, Transient = true)
+    properties (SetAccess = protected)
+        TYPEID
+    end
+    
+    properties (SetAccess = private, Transient = true)
         markerLocations = []
         newXPts
         newYPts
@@ -139,7 +142,6 @@ classdef (Abstract) BoundaryMarker < handle
                     'Tag', 'BoundaryMarker');
             end
             view(ax, 3);
-            %grid(fh.ax, 'on');
             axis(ax, 'equal');
             if isa(fh, 'matlab.ui.Figure')
                 set(fh, 'Renderer', 'painters');
@@ -203,14 +205,6 @@ classdef (Abstract) BoundaryMarker < handle
                     'Structures(', num2str(markerIDs(i)), ')',...
                     '/Locations?$select=X,Y,Z']);
                 xyz = cat(1, xyz, data.value{:});
-                %if numel(data.value) == 1
-                    %xyz = cat(1, xyz, struct2array(data.value));
-                    
-                %else
-                    %for j = 1:numel(data.value)
-                    %    xyz = cat(1, xyz, struct2array(data.value(j)));
-                    %end
-                %end
             end
             obj.markerLocations = [...
                 vertcat(xyz.X),...

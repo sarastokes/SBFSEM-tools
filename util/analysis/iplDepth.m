@@ -56,7 +56,7 @@ function [iplPercent, stats] = iplDepth(Neuron, INL, GCL, numBins)
 
 	figure();
 	hist(iplPercent, numBins);
-	xlim([0 1]);
+	xlim([-1, 1]);
     title(sprintf('IPL depth estimates for c%u', Neuron.ID));
 	ylabel('Number of annotations');
 	xlabel('Percent IPL Depth');

@@ -9,20 +9,24 @@ classdef BloodVessel < sbfsem.core.StructureAPI
 %
 % History:
 %	25Sept2018 - SSP
+%	1Oct2018 - SSP - Added vessel adjacencies
 % -------------------------------------------------------------------------
 
-	properties
-		ODataClient
-		GeometryClient
+	properties (SetAccess = private)
+		vesselAdjacencies = [];
+	end
+
+	properties (Dependent = true, Hidden = true)
+		hasAdjacencies
+	end
+	
+	properties (Constant = true, Hidden = true)
+		STRUCTURE = 'Blood Vessel';
 	end
 
 	methods
 		function obj = BloodVessel(ID, source, transform)
-			obj@sbfsem.core.StructureAPI();
-
-			validateattributes(ID, {'numeric'}, {'numel', 1});
-			obj.ID = ID;
-			obj.source = validateSource(source);
+			obj@sbfsem.core.StructureAPI(ID, source);
 
             if nargin < 3
                 obj.transform = sbfsem.core.Transforms.Viking;
@@ -30,99 +34,40 @@ classdef BloodVessel < sbfsem.core.StructureAPI
                 obj.transform = sbfsem.core.Transforms.fromStr(transform);
             end
 
-            % XYZ volume dimensions in nm/pix, nm/pix, nm/sections
-            obj.volumeScale = getODataScale(obj.source);
-
         	% Instantiate OData clients
-            obj.ODataClient = sbfsem.io.NeuronOData(obj.ID, obj.source);
             obj.GeometryClient = [];
 
             % Fetch neuron OData and parse
             obj.pull();
-
-            % Track when the Neuron object was created
-            obj.lastModified = datestr(now);
 		end
 
-        function update(obj)
-            % UPDATE  Updates existing OData
-            % If you haven't imported synapses the update will skip them
-            fprintf('NEURON: Updating OData for c%u\n', obj.ID);
-            obj.pull();
-            obj.lastModified = datestr(now);
-        end
-	end
-
-	% Closed curve methods
-	methods
-        function getGeometries(obj)
-            % GETGEOMETRIES  Import ClosedCurve-related OData
-            if isempty(obj.GeometryClient)
-                obj.GeometryClient = sbfsem.io.GeometryOData(obj.ID, obj.source);
-            end
-            obj.geometries = obj.GeometryClient.pull();
-        end
-
-        function checkGeometries(obj)
-            % CHECKGEOMETRIES   Try to import geometries, if missing
-            if isempty(obj.geometries)
-                obj.getGeometries();
-            end
-        end
-	end
-
-	methods (Access = private)
-		function pull(obj)
-			% PULL  Fetch and parse OData
-
-            % Get the relevant data with OData queries
-            [obj.viking, obj.nodes, obj.edges] = obj.ODataClient.pull();
-            % XY transform and then convert data to microns
-            obj.nodes = obj.setXYZum(obj.nodes);
-
-            if nnz(obj.nodes.Geometry == 6)
-                obj.getGeometries();
-                fprintf('     %u closed curve geometries\n',...
-                    height(obj.geometries));
-            end
-
-            % Search for omitted nodes by location ID and section number
-            obj.omittedIDs = omitLocations(obj.ID, obj.source);
-            omittedSections = omitSections(obj.source);
-            if ~isempty(omittedSections)
-                for i = 1:numel(omittedSections)
-                    row = obj.nodes.Z == omittedSections(i);
-                    obj.omittedIDs = [obj.omittedIDs; obj.nodes(row,:).ID];
-                end
-            end
+		function hasAdjacencies = get.hasAdjacencies(obj)
+			hasAdjacencies = ~isempty(obj.vesselAdjacencies);
 		end
 
-        function nodes = setXYZum(obj, nodes)
-            % SETXYZUM  Convert Viking pixels to microns
-            if nnz(nodes.X) + nnz(nodes.Y) > 2
-                nodes = estimateSynapseXY(obj, nodes);
-            end
-            
-            % Apply transforms to NeitzInferiorMonkey
-            if obj.transform == sbfsem.core.Transforms.SBFSEMTools
-                xyDir = [fileparts(mfilename('fullpath')), '\data'];
-                xydata = dlmread([xyDir,...
-                    '\XY_OFFSET_NEITZINFERIORMONKEY.txt']);
-                volX = nodes.X + xydata(nodes.Z,2);
-                volY = nodes.Y + xydata(nodes.Z,3);
-            else
-                volX = nodes.VolumeX;
-                volY = nodes.VolumeY;
-            end
+		function getAdjacencies(obj)
+			data = readOData(getODataURL(obj.ID, obj.source, 'child'));
+			data = cat(1, data.value{:});
 
-            % Create an XYZ in microns column
-            nodes.XYZum = zeros(height(nodes), 3);
-            % TODO: There's an assumption about the units in here...
-            nodes.XYZum = bsxfun(@times,...
-                [volX, volY, nodes.Z],...
-                (obj.volumeScale./1e3));
-            % Create a column for radius in microns
-            nodes.Rum = nodes.Radius * obj.volumeScale(1)./1000;
+			childIDs = [];
+			obj.vesselAdjacencies = [];
+
+			for i = 1:numel(data)
+				childIDs = cat(1, childIDs, data(i).ID);
+				obj.vesselAdjacencies = cat(1, obj.vesselAdjacencies,...
+					sbfsem.core.VesselAdacency(childIDs(end), obj.source));
+			end
+		end
+
+        function render(obj, varargin)
+        	render@sbfsem.core.StructureAPI(obj, varargin{:});
+
+        	if obj.hasAdjacencies
+        		for i = 1:numel(obj.vesselAdjacencies)
+        			obj.vesselAdjacencies(i).render('ax', gca,...
+        				'FaceColor', [0.7, 0.7, 0.7])
+        		end
+        	end
         end
 	end
 end
