@@ -1,5 +1,10 @@
 # Changelog
 
+### 3Oct2018
+- Changed Data Cursor output from XYZ to Section number in `GraphApp.m`
+- Automatic import of OData for `sbfsem.builtin.GCLBoundary` and `sbfsem.builtin.INLBoundary`. Updated tutorial to include information on how to cache the results of the OData query with `cachedcall.m`.
+- Added analysis function and tutorial for parasol paper: `util\analysis\tortuosity.m` and `tutorials\tutorial_Tortuosity.m`.
+
 ### 2Oct2018
 - New startup dialog for `GraphApp.m` and user interface improvements
 

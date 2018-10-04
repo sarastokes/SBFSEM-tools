@@ -48,7 +48,7 @@ classdef GraphApp < handle
     end
     
     properties (Constant = true, Hidden = true)
-        COLORMAPS = {'parula', 'hsv', 'cubicl', 'viridis', 'redblue', 'haxby'};
+        COLORMAPS = {'parula', 'winter', 'hsv', 'cubicl', 'viridis', 'redblue', 'haxby'};
         SOURCES = {'NeitzTemporalMonkey','NeitzInferiorMonkey','MarcRC1'};
         MARGIN = 40;
     end
@@ -133,12 +133,16 @@ classdef GraphApp < handle
     % Helper functions
     methods (Access = private)
 
-        function locID = id2xyz(obj, xyz, segmentID)
+        function [locID, sectionID] = id2xyz(obj, xyz, segmentID)
             % GETIDFROMXYZ
             T = obj.segments.segmentTable(segmentID, :);
             IDs = cell2mat(T.ID);
-            [~, ind] = ismember(xyz, cell2mat(T.XYZum), 'rows', 'legacy');
+            [~, ind] = ismember(xyz, cell2mat(T.XYZum),...
+                'rows', 'legacy');
             locID = obj.segments.nodeIDs(IDs(ind));
+            % For speed, appending a 2nd output...
+            Zs = cell2mat(T.Z);
+            sectionID = Zs(ind);
         end 
 
         function updateStatus(obj, str)
@@ -355,22 +359,23 @@ classdef GraphApp < handle
                     xyz = obj.neuron.id2xyz(obj.neuron.offEdges);
                     ind = find(sum(pos, 2) == sum(xyz, 2));
                     locID = obj.neuron.offEdges(ind); %#ok
+                    row = obj.neuron.nodes{obj.neuron.nodes.ID == locID, 'Z'}
                 case 'Terminal'
                     xyz = obj.neuron.id2xyz(obj.neuron.terminals);
                     ind = find(sum(pos, 2) == sum(xyz, 2));
                     locID = obj.neuron.terminals(ind); %#ok
+                    Z = obj.neuron.nodes{obj.neuron.nodes.ID == locID, 'Z'}
                 case 'Synapse'
                     T = obj.neuron.getSynapseNodes();
                     xyz = T.XYZum;
                     ind = find(sum(pos,2) == sum(xyz, 2));
                     locID = T{ind(1), 'ID'};
+                    Z = T{ind(1), 'Z'};
                 otherwise
-                    locID = obj.id2xyz(pos, str2double(evt.Target.Tag));
+                    [locID, Z] = obj.id2xyz(pos, str2double(evt.Target.Tag));
             end
             txt = {['ID: ' num2str(locID)],...
-                ['X: ', num2str(pos(1))],...
-                ['Y: ', num2str(pos(2))],...
-                ['Z: ', num2str(pos(3))]};
+                ['Section: ', num2str(Z)]};
         end
         
         function onSelectedMarkerType(obj, src, ~)
@@ -469,7 +474,7 @@ classdef GraphApp < handle
                     % Toggle visibility
                     set(findall(obj.ax, 'Tag', 'Synapse'), 'Visible', 'on');
                 else
-                    obj.updateStatus('Importing synapse data...');
+                    obj.updateStatus('Importing synapses...');
                     obj.neuron.getSynapses();
                     obj.plotSynapses();
                     obj.updateStatus('');
@@ -589,7 +594,7 @@ classdef GraphApp < handle
                 'Callback', @obj.onShowSynapses);
             uicontrol(uiLayout,...
                 'Style', 'checkbox',...
-                'String', 'Show Surface',...
+                'String', 'Show surface',...
                 'Value', 1,...
                 'Tag', 'ShowSurface',...
                 'TooltipString', 'Show 3D structure',...
@@ -603,14 +608,14 @@ classdef GraphApp < handle
                 'Callback', @obj.onCheckedColorSegments);
             uicontrol(uiLayout,...
                 'Style', 'checkbox',...
-                'String', 'Show Unfinished',...
+                'String', 'Show unfinished',...
                 'Value', 0,...
                 'Tag', 'ShowUnfinished',...
                 'TooltipString', 'Show nodes marked as unfinished',...
                 'Callback', @obj.onShowUnfinished);
             uicontrol(uiLayout,...
                 'Style', 'checkbox',...
-                'String', 'Show Terminals',...
+                'String', 'Show terminals',...
                 'Value', 0,...
                 'Tag', 'ShowTerminals',...
                 'TooltipString', 'Show nodes marked as terminals',...
@@ -731,6 +736,8 @@ classdef GraphApp < handle
             switch lower(cmapName)
                 case 'parula'
                     cmap = parula(N);
+                case 'winter'
+                    cmap = winter(N);
                 case 'hsv'
                     cmap = hsv(N);
                 case 'viridis'
