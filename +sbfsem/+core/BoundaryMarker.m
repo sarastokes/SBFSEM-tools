@@ -37,7 +37,7 @@ classdef (Abstract) BoundaryMarker < handle
         TYPEID
     end
     
-    properties (SetAccess = private, Transient = true)
+    properties (SetAccess = private)
         markerLocations = []
         newXPts
         newYPts
@@ -55,7 +55,6 @@ classdef (Abstract) BoundaryMarker < handle
         
         function setUnits(obj, unitName)
             obj.units = validatestring(unitName, {'microns', 'pixels'});
-            obj.pull();
         end
    
         function update(obj)

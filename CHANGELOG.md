@@ -1,5 +1,9 @@
 # Changelog
 
+### 4Oct2018
+- Working version of `IPLDepthApp.m`
+- Small changes to import of Boundary Markers and added cached boundaries to `data\`
+
 ### 3Oct2018
 - Changed Data Cursor output from XYZ to Section number in `GraphApp.m`
 - Automatic import of OData for `sbfsem.builtin.GCLBoundary` and `sbfsem.builtin.INLBoundary`. Updated tutorial to include information on how to cache the results of the OData query with `cachedcall.m`.

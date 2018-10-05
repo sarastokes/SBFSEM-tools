@@ -7,6 +7,7 @@ classdef GCLBoundary < sbfsem.core.BoundaryMarker
 			obj.TYPEID = 235;
             
             obj.update();
+            obj.doAnalysis(200);
 		end
 	end
 end

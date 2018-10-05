@@ -6,6 +6,7 @@ classdef INLBoundary < sbfsem.core.BoundaryMarker
 			obj.TYPEID = 224;
             
             obj.update();
+            obj.doAnalysis(200);
 		end
 	end
 end
