@@ -269,7 +269,31 @@ classdef StructureTypes
                 case VikingStructureTypes.VesselAdjacency
                     obj = StructureTypes.VesselAdjacency;
 			end
-		end
+        end
+        
+        function obj = fromStr(str)
+            % FROMSTR  Quick access to StructureTypes for cmd line use
+            
+            import sbfsem.core.StructureTypes;
+            
+            switch lower(str)
+                case 'convpre'
+                    obj = StructureTypes.ConvPre;
+                case 'convpost'
+                    obj = StructureTypes.ConvPost;
+                case 'ribbonpre'
+                    obj = StructureTypes.RibbonPre;
+                case 'ribbonpost'
+                    obj = StructureTypes.RibbonPost;
+                case 'gapjunction'
+                    obj = StructureTypes.GapJunction;
+                case 'unknown'
+                    obj = StructureTypes.Unknown;
+                otherwise
+                    warning('fromStr function does not support %s', str);
+                    obj = [];
+            end
+        end
 	end
 end
 
