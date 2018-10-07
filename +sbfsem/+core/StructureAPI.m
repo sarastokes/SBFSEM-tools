@@ -28,7 +28,7 @@ classdef (Abstract) StructureAPI < handle
         transform = [];
 	end
 
-	properties (Dependent = true, Transient = true, Hidden = true)
+	properties (Dependent = true, Hidden = true)
         offEdges    % Unfinished branches
         terminals   % Branch endings
  	end

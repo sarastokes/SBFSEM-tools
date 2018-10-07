@@ -18,7 +18,7 @@ classdef GraphApp < handle
     %   RENDERAPP, NODEVIEW
     % ---------------------------------------------------------------------
     
-    properties (Access = private)
+    properties (Access = public)
         neuron
         source
         ax

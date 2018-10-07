@@ -329,7 +329,8 @@ classdef RenderApp < handle
                     set(obj.ax, 'YLim',...
                         [0, obj.zoomFac*diff(y)] + y(1)...
                         + (1-obj.zoomFac) * diff(y)/2);
-                case 'm' % Return to original dimensions
+                case 'm' % Return to original dimensions and view
+                    view(obj.ax, 3);
                     axis(obj.ax, 'tight');
                 case 'c' % Copy the last click location
                     % Don't copy position if no neurons are plotted
@@ -464,7 +465,7 @@ classdef RenderApp < handle
             neuron.update();
             obj.updateStatus('Updating model');
             neuron.build();
-            % Find the old render and save properties
+            % Save the properties of existing render and axes
             patches = findall(obj.ax, 'Tag', evt.Source.Tag);
             oldColor = get(patches, 'FaceColor');
             oldAlpha = get(patches, 'FaceAlpha');
@@ -588,7 +589,11 @@ classdef RenderApp < handle
             if ~isempty(strfind(varargin{1}, 'gcl'))
                 if isempty(obj.iplBound.gcl)
                     obj.updateStatus('Importing IPL-GCL');
-                    obj.iplBound.gcl = sbfsem.builtin.GCLBoundary(obj.source);
+                    dataDir = [fileparts(fileparts(mfilename('fullname'))),...
+                        filesep, 'data', filesep];
+                    obj.iplBound.gcl = cachedcall(...
+                        @sbfsem.builtin.GCLBoundary, obj.source,...
+                        'CacheFolder', dataDir);
                 end
                 obj.updateStatus('Creating surface');
                 obj.iplBound.gcl.doAnalysis();
@@ -598,7 +603,11 @@ classdef RenderApp < handle
             if ~isempty(strfind(varargin{1}, 'inl'))
                 if isempty(obj.iplBound.inl)
                     obj.updateStatus('Importing IPL-INL');
-                    obj.iplBound.inl = sbfsem.builtin.INLBoundary(obj.source);
+                    dataDir = [fileparts(fileparts(mfilename('fullname'))),...
+                        filesep, 'data', filesep];
+                    obj.iplBound.gcl = cachedcall(...
+                        @sbfsem.builtin.GCLBoundary, obj.source,...
+                        'CacheFolder', dataDir);
                 end
                 obj.updateStatus('Creating surface');
                 obj.iplBound.inl.doAnalysis();
@@ -623,6 +632,8 @@ classdef RenderApp < handle
             neuron.render('ax', obj.ax,...
                 'FaceColor', obj.ui.nextColor.BackgroundColor,...
                 'FaceAlpha', obj.DEFAULTALPHA);
+            view(obj.ax, obj.azel(1), obj.azel(2));
+            
             obj.neurons(num2str(newID)) = neuron;
             obj.IDs = cat(2, obj.IDs, newID);
         end
@@ -667,6 +678,7 @@ classdef RenderApp < handle
 
             % Match the plot modifiers
             set([newAxes, newAxes.Parent], 'Color', obj.ax.Color);
+            obj.setLimits(newAxes, obj.getLimits(obj.ax));
         end
 
         function newNode = addNeuronNode(obj, ID, ~, hasSynapses)
@@ -943,6 +955,14 @@ classdef RenderApp < handle
     end
 
     methods (Static = true)
+        function lim = getLimits(ax)
+            lim = [get(ax, 'XLim'); get(ax, 'YLim'); get(ax, 'ZLim')];
+        end
+        
+        function setLimits(ax, lim)
+            set(ax, 'XLim', lim(1,:), 'YLim', lim(2,:), 'ZLim', lim(3,:));
+        end
+        
         function newNode = addSynapseNode(parentNode, synapseName)
             % ADDSYNAPSENODE
             newNode = uiextras.jTree.CheckboxTreeNode(...
