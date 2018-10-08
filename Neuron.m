@@ -71,8 +71,10 @@ classdef Neuron < sbfsem.core.NeuronAPI
             % Default transform is local sbfsem-tools XY offset
             if nargin < 4
                 obj.transform = sbfsem.core.Transforms.Viking;
-            else
+            elseif ischar(transform)
                 obj.transform = sbfsem.core.Transforms.fromStr(transform);
+            elseif isa(transform, 'sbfsem.core.Transforms')
+                obj.transform = transform;
             end
 
             source = validateSource(source);

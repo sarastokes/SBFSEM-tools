@@ -2,7 +2,12 @@ classdef ConeMosaic < handle
     % CONEMOSAIC
     %
     % Constructor:
-    %   obj = sbfsem.ConeMosaic('source');
+    %   obj = sbfsem.builtin.ConeMosaic(source, importCones);
+    %
+    % Inputs:
+    %   source          Volume name or abbreviation
+    % Optional inputs:
+    %   importCones     Auto import all cones (default = true)
     %
     % Properties:
     %   sCones      S-cone traces
@@ -37,6 +42,7 @@ classdef ConeMosaic < handle
     %   5Jan2018 - SSP - preliminary, messy version
     %   8Feb2018 - SSP - added option for undefined (U) cone type
     %   16Feb2018 - SSP - update() now checks for defaults, uID bug fix
+    %   7Oct2018 - SSP - added load from cache option
     % ---------------------------------------------------------------------
     
     properties (SetAccess = private)
@@ -60,7 +66,7 @@ classdef ConeMosaic < handle
     end
     
     methods
-        function obj = ConeMosaic(source)
+        function obj = ConeMosaic(source, importCones)
             % CONEMOSAIC  Constructor
             % Input:
             %   source      volume name or abbreviation (char)
@@ -70,8 +76,15 @@ classdef ConeMosaic < handle
                 warning('Only for NeitzInferiorMonkey');
                 return;
             end
+
+            if nargin < 2
+                importCones = true;
+            end
             
             obj.ConeClient = sbfsem.io.ConeOData(source);
+            if importCones
+                obj.getAll();
+            end
         end
         
         function info(obj)
@@ -280,6 +293,19 @@ classdef ConeMosaic < handle
                 otherwise
                     warning('CONEMOSAIC: Unknown coneType - %s', coneType);
             end
+        end
+    end
+
+    methods (Static)
+        function obj = fromCache(source)
+            source = validateSource(source);
+
+            cachedMosaic = load([...
+                fileparts(fileparts(fileparts(mfilename('fullpath')))),...
+                filesep, 'data', filesep,...
+                upper(source), '_ConeMosaic.mat']);
+            
+            obj = cachedMosaic.coneMosaic;
         end
     end
 end

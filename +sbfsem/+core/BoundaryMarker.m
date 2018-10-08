@@ -23,27 +23,27 @@ classdef (Abstract) BoundaryMarker < handle
     % ---------------------------------------------------------------------
 	
 	properties (Hidden, Access = private)
-		source
-		baseURL
-	end
+        baseURL
+    end
 
-	properties (SetAccess = private)
-        queryDate
-        units = 'microns'
+    properties (Hidden, SetAccess = private)
         interpolatedSurface = []
-    end
-    
-    properties (SetAccess = protected)
-        TYPEID
-    end
-    
-    properties (SetAccess = private)
         markerLocations = []
         newXPts
         newYPts
     end
+    
+    properties (Hidden, SetAccess = protected)
+        TYPEID
+    end
+    
+    properties (SetAccess = private)
+		source
+        queryDate
+        units = 'microns'
+    end
 
-    properties (Constant = true)
+    properties (Hidden, Constant = true)
         SMOOTHFAC = 0.005;
     end
 
@@ -55,6 +55,10 @@ classdef (Abstract) BoundaryMarker < handle
         
         function setUnits(obj, unitName)
             obj.units = validatestring(unitName, {'microns', 'pixels'});
+        end
+
+        function setLocations(obj, locations)
+            obj.markerLocations = locations;
         end
    
         function update(obj)
@@ -210,7 +214,7 @@ classdef (Abstract) BoundaryMarker < handle
                 vertcat(xyz.Y),...
                 vertcat(xyz.Z)];
 			obj.queryDate = datestr(now);
-        end   
+        end
     end
     
     methods (Static)

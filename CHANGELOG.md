@@ -1,5 +1,18 @@
 # Changelog
 
+### 8Oct2018
+- New approach for caching
+- Major `RenderApp.m` improvements (context panel)
+
+### 7Oct2018
+- Added `util\network` folder containing queries and functions for created directed graphs representing a neuron network.
+- Added static method to `sbfsem.core.StructureTypes` to get StructureTypes objects from string inputs. Meant for quick command line usage and is limited to the most common StructureTypes, for now.
+- Created `+deprecated` folder for objects like `NeuronGroup.m`
+- Added a `fromCache` method to `sbfsem.builtin.ConeMosaic.m`
+
+### 6Oct2018
+- Changed `sbfsem.core.StructureAPI` properties `offedge` and `terminals` to not Transient. This will fix some the issues displaying these properties in `GraphApp.m` after updating a neuron.
+
 ### 4Oct2018
 - Working version of `IPLDepthApp.m`
 - Small changes to import of Boundary Markers and added cached boundaries to `data\`

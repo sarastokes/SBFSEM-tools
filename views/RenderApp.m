@@ -17,13 +17,14 @@ classdef RenderApp < handle
     %   - Add neuron input validation
     %
     % See also:
-    %   GRAPHAPP, IMAGESTACKAPP
+    %   GRAPHAPP, IMAGESTACKAPP, IPLDEPTHAPP, NEURON
     %
     % History:
     %   5Jan2018 - SSP
     %   19Jan2018 - SSP - menubar, replaced table with checkbox tree
     %   12Feb2018 - SSP - IPL boundaries and scale bars
     %   26Apr2018 - SSP - Added NeuronCache option to Import menu
+    %   7Oct2018 - SSP - New context tab for importing markers, cones
     % ---------------------------------------------------------------------
 
     properties (SetAccess = private)
@@ -55,12 +56,16 @@ classdef RenderApp < handle
 
         % XY offset applied to volume on neuron import
         xyOffset = [];      % Loaded on first use
+
+        % Transformation to XY offsets
+        transform = sbfsem.core.Transforms.Viking;
     end
 
     properties (Constant = true, Hidden = true)
         DEFAULTALPHA = 0.6;
         SYNAPSES = false;
         SOURCES = {'NeitzTemporalMonkey','NeitzInferiorMonkey','MarcRC1'};
+        CACHE = [fileparts(fileparts(mfilename('fullname'))), filesep, 'data'];
     end
 
     methods
@@ -130,7 +135,11 @@ classdef RenderApp < handle
             for i = 1:numel(str)
                 newID = str2double(str{i});
                 obj.updateStatus(sprintf('Adding c%u', newID));
-                obj.addNeuron(newID);
+                success = obj.addNeuron(newID);
+                if ~success
+                    fprintf('Skipped c%u\n', newID);
+                    continue;
+                end
 
                 newColor = findall(obj.ax, 'Tag', obj.id2tag(newID));
                 newColor = get(newColor(1), 'FaceColor');
@@ -183,6 +192,23 @@ classdef RenderApp < handle
                     view(obj.ax, 0, 0);
                 case '3D'
                     view(obj.ax, 3);
+            end
+        end
+
+        function toggleSurface(obj, name, value)
+            if value             
+                switch name
+                    case 'GCL'
+                        obj.iplBound.gcl.plot('ax', obj.ax);
+                    case 'INL'
+                        obj.iplBound.inl.plot('ax', obj.ax);
+                end
+            else
+                obj.iplBound.inl.deleteFromScene(obj.ax);
+                set(findobj(obj.figureHandle, 'Tag', 'IPL'),...
+                    'Value', 0);
+                set(findobj(obj.figureHandle, 'Tag', 'GCL'),...
+                    'Value', 0);
             end
         end
 
@@ -421,7 +447,7 @@ classdef RenderApp < handle
             end
         end
 
-        function onOpenGraphApp(obj, src, evt)
+        function onOpenGraphApp(obj, ~, evt)
             % ONOPENVIEW  Open a single neuron analysis view
             % See also:
             %   GRAPHAPP
@@ -432,21 +458,22 @@ classdef RenderApp < handle
             obj.updateStatus('');
         end
 
-        function onImportCones(obj, src, ~)
+        function onAddCones(obj, src, ~)
             % ONIMPORTCONES
-            % See also: SBFSEM.CONEMOSAIC, SBFSEM.CORE.CLOSEDCURVE
-            obj.updateStatus('Adding mosaic');
+            % See also: SBFSEM.BUILTIN.CONEMOSAIC, SBFSEM.CORE.CLOSEDCURVE
             if isempty(obj.mosaic)
-                obj.mosaic = sbfsem.ConeMosaic('i');
+                obj.updateStatus('Adding mosaic');
+                obj.mosaic = sbfsem.builtin.ConeMosaic.fromCache('i');
             end
-            switch src.Label
-                case 'All cones'
-                    obj.mosaic.plot('LM', obj.ax, 'LM');
-                    obj.mosaic.plot('S', obj.ax, 'S');
-                case 'LM-cones'
-                    obj.mosaic.plot('LM', obj.ax, 'LM');
-                case 'S-cones'
-                    obj.mosaic.plot('S', obj.ax, 'S');
+
+            obj.toggleCones(src.Tag(4:end), src.Value);
+        end
+
+        function toggleCones(obj, coneType, value)
+            if value
+                obj.mosaic.plot(coneType, obj.ax, coneType);
+            else
+                delete(findall(gcf, 'Tag', coneType));
             end
         end
 
@@ -539,6 +566,10 @@ classdef RenderApp < handle
                 newAlpha = str2double(src.String{src.Value});
                 set(findall(obj.ax, 'Type', 'patch'),...
                     'FaceAlpha', newAlpha);
+            elseif strcmp(src.Tag, 'SurfAlpha')
+                newAlpha = str2double(src.String{src.Value});
+                set(findall(obj.ax, 'Type', 'surface'),...
+                    'FaceAlpha', newAlpha);
             else
                 % Apply to a single neuron
                 newAlpha = str2double(src.Label);
@@ -581,48 +612,57 @@ classdef RenderApp < handle
             end
         end
 
-        function onImportBoundary(obj, varargin)
-            % ONIMPORTBOUNDARY
-            % See also: SBFSEM.CORE.BOUNDARYMARKER, SBFSEM.CORE.GCLBOUNDARY,
-            %   SBFSEM.CORE.INLBOUNDARY
+        function onAddBoundary(obj, src, ~)
+            if isempty(obj.iplBound.gcl)
+                obj.updateStatus('Importing boundaries');
 
-            if ~isempty(strfind(varargin{1}, 'gcl'))
-                if isempty(obj.iplBound.gcl)
-                    obj.updateStatus('Importing IPL-GCL');
-                    dataDir = [fileparts(fileparts(mfilename('fullname'))),...
-                        filesep, 'data', filesep];
-                    obj.iplBound.gcl = cachedcall(...
-                        @sbfsem.builtin.GCLBoundary, obj.source,...
-                        'CacheFolder', dataDir);
-                end
-                obj.updateStatus('Creating surface');
-                obj.iplBound.gcl.doAnalysis();
-                obj.iplBound.gcl.plot('ax', obj.ax);
+                obj.iplBound.gcl = sbfsem.builtin.GCLBoundary(obj.source, true);
+                obj.iplBound.inl = sbfsem.builtin.INLBoundary(obj.source, true);
             end
+            obj.toggleSurface(src.Tag, src.Value);
+        end
 
-            if ~isempty(strfind(varargin{1}, 'inl'))
-                if isempty(obj.iplBound.inl)
-                    obj.updateStatus('Importing IPL-INL');
-                    dataDir = [fileparts(fileparts(mfilename('fullname'))),...
-                        filesep, 'data', filesep];
-                    obj.iplBound.gcl = cachedcall(...
-                        @sbfsem.builtin.GCLBoundary, obj.source,...
-                        'CacheFolder', dataDir);
-                end
-                obj.updateStatus('Creating surface');
-                obj.iplBound.inl.doAnalysis();
-                obj.iplBound.inl.plot('ax', obj.ax);
+        function onSetTransform(obj, src, ~)
+            if ~isempty(obj.neurons)
+                warndlg('Changing the Transform with existing neurons is not recommended.');
             end
-            obj.updateStatus('');
+            switch src.String{src.Value}
+                case 'Viking'
+                    obj.transform = sbfsem.core.Transforms.Viking;
+                case 'Local'
+                    obj.transform = sbfsem.core.Transforms.SBFSEMTools;
+            end
+        end
+        
+        function onAddGap(obj, src, ~)
+            if src.Value
+                x = get(obj.ax, 'XLim');
+                y = get(obj.ax, 'YLim');
+                z = obj.volumeScale(3) * 1e-3 * 922;
+                hold(obj.ax, 'on');
+                patch(obj.ax, 'XData', [x; x], 'YData', [y; y]',...
+                    'ZData', z+zeros(2,2), 'FaceAlpha', 0.3,...
+                    'FaceColor', [0.7, 0.7, 0.7], 'Tag', 'Gap');     
+            else
+                delete(findall(obj.ax, 'Tag', 'Gap'));
+            end
         end
     end
 
     methods (Access = private)
-        function addNeuron(obj, newID)
+        function tf = addNeuron(obj, newID)
             % ADDNEURON  Add a new neuron and render
             % See also: NEURON
-
-            neuron = Neuron(newID, obj.source, obj.SYNAPSES);
+            
+            try
+                neuron = Neuron(newID, obj.source, obj.SYNAPSES, obj.transform);
+            catch ME
+                if strcmp(ME.identifier, 'MATLAB:webservices:HTTP404StatusCodeError')
+                    obj.updateStatus(sprintf('c%u not found!', newID));
+                    tf = false;
+                    return;
+                end
+            end
 
             % Build the 3D model
             obj.updateStatus(sprintf('Rendering c%u', newID));
@@ -636,6 +676,7 @@ classdef RenderApp < handle
             
             obj.neurons(num2str(newID)) = neuron;
             obj.IDs = cat(2, obj.IDs, newID);
+            tf = true;
         end
 
         function removeNeuron(obj, ID, node)
@@ -679,14 +720,12 @@ classdef RenderApp < handle
             % Match the plot modifiers
             set([newAxes, newAxes.Parent], 'Color', obj.ax.Color);
             obj.setLimits(newAxes, obj.getLimits(obj.ax));
+            set(newAxes.Parent, 'InvertHardcopy', 'off');
         end
 
-        function newNode = addNeuronNode(obj, ID, ~, hasSynapses)
+        function newNode = addNeuronNode(obj, ID, ~, ~)
             % ADDNEURONNODE  Add new neuron node to checkbox tree
-
-            if nargin < 4
-                hasSynapses = false;
-            end
+            % Argument four was 'hasSynapses'
 
             newNode = uiextras.jTree.CheckboxTreeNode(...
                 'Parent', obj.neuronTree,...
@@ -713,18 +752,6 @@ classdef RenderApp < handle
             uimenu(c, 'Label', 'Open GraphApp',...
                 'Tag', obj.id2tag(ID),...
                 'Callback', @obj.onOpenGraphApp);
-
-            % if ~hasSynapses
-            %     uimenu(c, 'Label', 'Get Synapses',...
-            %         'Tag', obj.id2tag(ID),...
-            %         'Callback', @obj.onGetSynapses);
-            % else
-            %     neuron = obj.neurons(ID);
-            %     synapseNames = neuron.synapseNames;
-            %     for i = 1:numel(synapseNames)
-            %         obj.addSynapseNode(newNode, synapseNames{i});
-            %     end
-            % end
             set(newNode, 'UIContextMenu', c);
         end
 
@@ -750,18 +777,24 @@ classdef RenderApp < handle
             % Create the user interface panel
             h = uitabgroup('Parent', mainLayout);
             t1 = uitab(h, 'Title', 'Neurons');
-            t2 = uitab(h, 'Title', 'Info');
+            t2 = uitab(h, 'Title', 'Context');
+            t3 = uitab(h, 'Title', 'Plot');
 
             obj.ui.root = uix.VBox('Parent', t1,...
                 'BackgroundColor', [1 1 1],...
                 'Spacing', 5, 'Padding', 5);
 
-            obj.ctrl = uix.VBox('Parent', t2,...
-            	'BackgroundColor', 'w',...
-            	'Spacing', 5, 'Padding', 5);
+            obj.ctrl = uix.VBox('Parent', t3,...
+                'BackgroundColor', 'w',...
+                'Spacing', 5, 'Padding', 5);
+            
+            contextLayout = uix.VBox('Parent', t2,...
+                'BackgroundColor', 'w',...
+                'Spacing', 0, 'Padding', 5);
 
             obj.createNeuronTab();
-            obj.createInfoTab();
+            obj.createContextTab(contextLayout);
+            obj.createPlotTab();
 
             % Rotation/zoom/pan modes require container with pixels prop
             % Using Matlab's uipanel between render axes and HBoxFlex
@@ -838,39 +871,95 @@ classdef RenderApp < handle
             set(obj.ui.root, 'Heights', [-.5 -5 -1.5 -.5]);
         end
 
-      	function createInfoTab(obj)
+        function createContextTab(obj, contextLayout)
+            if strcmp(obj.source, 'MarcRC1')
+                uicontrol(obj.ctrl, 'Style', 'text',...
+                    'String', 'No markers or cones for RC1');
+                return;
+            end
+            uicontrol(contextLayout,...
+                'Style', 'text', 'String', 'Boundary Markers:',...
+                'FontWeight', 'bold');
+            uicontrol(contextLayout,...
+                'Style', 'check', 'String', 'INL Boundary',...
+                'Tag', 'INL',...
+                'TooltipString', 'Add INL Boundary',...
+                'Callback', @obj.onAddBoundary);
+            uicontrol(contextLayout,...
+                'Style', 'check', 'String', 'GCL Boundary',...
+                'TooltipString', 'Add GCL Boundary',...
+                'Tag', 'GCL',...
+                'Callback', @obj.onAddBoundary);
+            uicontrol(contextLayout,...
+                'Style', 'check',...
+                'String', '915 Gap',...
+                'TooltipString', 'Add 915-936 gap',...
+                'Callback', @obj.onAddGap);
+            uix.Empty('Parent', contextLayout);
+            if strcmp(obj.source, 'NeitzTemporalMonkey')
+                uicontrol(obj.ctrl, 'Style', 'text',...
+                    'String', 'No cones for TemporalMonkey');
+                return;
+            end
+            uicontrol(contextLayout,...
+                'Style', 'text', 'String', 'Cone Mosaic:',...
+                'FontWeight', 'bold');
+            uicontrol(contextLayout,...
+                'Style', 'check', 'String', 'S-cones',...
+                'Tag', 'addS',...
+                'Callback', @obj.onAddCones);
+            uicontrol(contextLayout,...
+                'Style', 'check', 'String', 'L/M-cones',...
+                'Tag', 'addLM',...
+                'Callback', @obj.onAddCones);
+            uicontrol(contextLayout,...
+                'Style', 'check', 'String', 'Unknown',...
+                'Tag', 'addU',...
+                'TooltipString', 'Add cones of unknown type',...
+                'Callback', @obj.onAddCones);
+            uicontrol(contextLayout,...
+                'Style', 'text', 'String', 'Transform: ');
+            uicontrol(contextLayout,...
+                'Style', 'popup',...
+                'String', {'Viking', 'Local'},...
+                'Callback', @obj.onSetTransform);
+            set(contextLayout, 'Heights', [-0.5, -1, -1, -1, -1, -0.5, -1, -1, -1 -0.5, -1]);
+        end
+
+        function createPlotTab(obj)
             uicontrol(obj.ctrl,...
                 'Style', 'text', 'String', 'Display options:',...
                 'FontWeight', 'bold');
             g = uix.Grid('Parent', obj.ctrl,...
                 'BackgroundColor', 'w',...
                 'Spacing', 5);
-      		uicontrol(g,...
-      			'Style', 'check',...
-      			'String', 'Invert',...
-      			'Callback', @obj.onToggleInvert);
-      		uicontrol(g,...
-      			'Style', 'check',...
-      			'String', 'Grid',...
-      			'Value', 1,...
+            uicontrol(g,...
+                'Style', 'check',...
+                'String', 'Invert',...
+                'Callback', @obj.onToggleInvert);
+            uicontrol(g,...
+                'Style', 'check',...
+                'String', 'Grid',...
+                'Value', 1,...
                 'TooltipString', 'Show/hide grid',...
-      			'Callback', @obj.onToggleGrid);
-      		uicontrol(g,...
-      			'Style', 'check',...
-      			'String', 'Axes',...
-      			'Value', 1,...
+                'Callback', @obj.onToggleGrid);
+            uicontrol(g,...
+                'Style', 'check',...
+                'String', 'Axes',...
+                'Value', 1,...
                 'TooltipString', 'Show/hide axes',...
-      			'Callback', @obj.onToggleAxes);
-      		uicontrol(g,...
-      			'Style', 'check',...
-      			'String', '2D',...
+                'Callback', @obj.onToggleAxes);
+            uicontrol(g,...
+                'Style', 'check',...
+                'String', '2D',...
                 'TooltipString', 'Toggle b/w 3D and flat 2D',...
-      			'Callback', @obj.onToggleLights);
+                'Callback', @obj.onToggleLights);
 
             set(g, 'Heights', [-1 -1], 'Widths', [-1, -1]);
-      		uicontrol(obj.ctrl,...
-      			'Style', 'text',...
-      			'String', 'Axis rotation:');
+            uicontrol(obj.ctrl,...
+                'Style', 'text',...
+                'String', 'Axis rotation:',...
+                'Tag', 'AxTheta');
             uicontrol(obj.ctrl,...
                 'Style', 'text', 'String', 'Transparency:')
             uicontrol(obj.ctrl,...
@@ -884,16 +973,16 @@ classdef RenderApp < handle
             uicontrol(obj.ctrl,...
                 'Style', 'text', 'String', 'Axis options:',...
                 'FontWeight', 'bold');
-      		rotLayout = uix.HBox('Parent', obj.ctrl,...
-      			'BackgroundColor', 'w');
-      		rotations = {'XY1', 'XY2', 'XZ', 'YZ', '3D'};
-      		for i = 1:numel(rotations)
-      			uicontrol(rotLayout,...
-      				'Style', 'push',...
-      				'String', rotations{i},...
-      				'Tag', rotations{i},...
-      				'Callback', @obj.onSetRotation);
-      		end
+            rotLayout = uix.HBox('Parent', obj.ctrl,...
+                'BackgroundColor', 'w');
+            rotations = {'XY1', 'XY2', 'XZ', 'YZ', '3D'};
+            for i = 1:numel(rotations)
+                uicontrol(rotLayout,...
+                    'Style', 'push',...
+                    'String', rotations{i},...
+                    'Tag', rotations{i},...
+                    'Callback', @obj.onSetRotation);
+            end
             uicontrol(obj.ctrl,...
                 'Style', 'text', 'String', 'Axis Limits');
             uitable(obj.ctrl,...
@@ -910,25 +999,9 @@ classdef RenderApp < handle
 
             set(obj.ctrl, 'Heights',...
                 [-0.5, -2, -0.5, -1, -0.5, -0.5, -0.5, -1, -0.5, -2.5, -0.75]);
-      	end
+        end
 
         function createToolbar(obj)
-            mh.import = uimenu(obj.figureHandle, 'Label', 'Import');
-            mh.cone = uimenu(mh.import, 'Label', 'Cone Mosaic');
-            uimenu(mh.cone, 'Label', 'All cones',...
-                'Callback', @obj.onImportCones);
-            uimenu(mh.cone, 'Label', 'LM-cones',...
-                'Callback', @obj.onImportCones);
-            uimenu(mh.cone, 'Label', 'S-cones',...
-                'Callback', @obj.onImportCones);
-            uimenu(mh.cone, 'Label', 'Unidentified cones',...
-                'Callback', @obj.onImportCones);
-            mh.ipl = uimenu(mh.import, 'Label', 'Boundary');
-            uimenu(mh.ipl, 'Label', 'INL Boundary',...
-                'Callback', @(o,e)obj.onImportBoundary('inl'));
-            uimenu(mh.ipl, 'Label', 'GCL Boundary',...
-                'Callback', @(o,e)obj.onImportBoundary('gcl'));
-
             mh.export = uimenu(obj.figureHandle, 'Label', 'Export');
             uimenu(mh.export, 'Label', 'Open in new figure window',...
                 'Callback', @obj.onExportFigure);
