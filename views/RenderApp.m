@@ -462,8 +462,9 @@ classdef RenderApp < handle
             % ONIMPORTCONES
             % See also: SBFSEM.BUILTIN.CONEMOSAIC, SBFSEM.CORE.CLOSEDCURVE
             if isempty(obj.mosaic)
-                obj.updateStatus('Adding mosaic');
+                obj.updateStatus('Loading mosaic...');
                 obj.mosaic = sbfsem.builtin.ConeMosaic.fromCache('i');
+                obj.updateStatus('');
             end
 
             obj.toggleCones(src.Tag(4:end), src.Value);

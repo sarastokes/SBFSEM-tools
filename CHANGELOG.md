@@ -1,5 +1,9 @@
 # Changelog
 
+### 9Oct2018
+- Updated cached call to IPL boundaries in `IPLDepthApp.m`
+- Set `InvertHardcopy` of default rendering figures to `off`
+
 ### 8Oct2018
 - New approach for caching
 - Major `RenderApp.m` improvements (context panel)

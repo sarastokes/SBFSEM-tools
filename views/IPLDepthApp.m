@@ -7,7 +7,7 @@ classdef IPLDepthApp < handle
     
     properties (SetAccess = private)
         source
-        volumeScale
+        volumeScale         % Converted to microns
         iplPercent
         INL
         GCL
@@ -42,17 +42,8 @@ classdef IPLDepthApp < handle
         function getData(obj)
             obj.volumeScale = getODataScale(obj.source)./1e3;
             
-            dataDir = [fileparts(fileparts(mfilename('fullname'))),...
-                filesep, 'data', filesep];
-            fprintf('Loading INL...\n');
-            obj.INL = cachedcall(@sbfsem.builtin.INLBoundary, obj.source,...
-                'CacheFolder', dataDir);
-            obj.INL.doAnalysis(500);
-            
-            fprintf('Loading GCL...\n');
-            obj.GCL = cachedcall(@sbfsem.builtin.GCLBoundary, obj.source,...
-                'CacheFolder', dataDir);
-            obj.GCL.doAnalysis(500);
+            obj.GCL = sbfsem.builtin.GCLBoundary(obj.source, true);
+            obj.INL = sbfsem.builtin.INLBoundary(obj.source, true);
         end
         
         function createUI(obj)
@@ -113,6 +104,7 @@ classdef IPLDepthApp < handle
                 obj.setOutput('Invalid Location ID!', true);
                 return;
             end
+            obj.setOutput('Querying...');
             
             try
                 url = [getServiceRoot(obj.source), 'Locations(', ID, ')'];
@@ -136,7 +128,6 @@ classdef IPLDepthApp < handle
             obj.iplPercent = (1-(XYZ(3) - vGCL)/((vINL - vGCL)+eps)) * 100;
             obj.setOutput(sprintf('%u%%', round(obj.iplPercent)));
             %fprintf('XYZ = %.2g, vINL = %.2g, vGCL = %.2g\n', XYZ(3), vINL, vGCL);
-        end
-        
+        end        
     end
 end
