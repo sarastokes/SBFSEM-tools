@@ -1,5 +1,8 @@
 # Changelog
 
+### 14Oct2018
+- Added `util.analysis.surfaceArea.m`
+
 ### 9Oct2018
 - Updated cached call to IPL boundaries in `IPLDepthApp.m`
 - Set `InvertHardcopy` of default rendering figures to `off`
