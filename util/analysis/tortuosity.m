@@ -85,11 +85,11 @@ function d = tortuosity(neuron, locationA, locationB, varargin)
         axis(ax, 'equal', 'tight');
         grid(ax, 'on');
         if ndim == 2
-	        title(ax, sprintf('c%u - %.3g', neuron.ID, d));
-	        view(ax, 0, 90);
-	    else
-	    	title(ax, sprintf('c%u - %.3g', neuron.ID, d));
-	    	zlabel(ax, 'Z');
-	    	view(ax, 3);
-	    end
+            title(ax, sprintf('c%u - %.3g', neuron.ID, d));
+            view(ax, 0, 90);
+        else
+            title(ax, sprintf('c%u - %.3g', neuron.ID, d));
+            zlabel(ax, 'Z');
+            view(ax, 3);
+        end
     end
