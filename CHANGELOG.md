@@ -2,6 +2,7 @@
 
 ### 14Oct2018
 - Added `util.analysis.surfaceArea.m`
+- Added `meshgrid` function to `sbfsem.core.BoundaryMarker.m`
 
 ### 9Oct2018
 - Updated cached call to IPL boundaries in `IPLDepthApp.m`

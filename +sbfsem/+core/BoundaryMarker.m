@@ -52,6 +52,10 @@ classdef (Abstract) BoundaryMarker < handle
 			obj.source = validateSource(source);
 			obj.baseURL = [getServerName(), obj.source, '/OData/'];
         end
+
+        function [X, Y] = meshgrid(obj)
+            [X, Y] = meshgrid(obj.newXPts, obj.newYPts);
+        end
         
         function setUnits(obj, unitName)
             obj.units = validatestring(unitName, {'microns', 'pixels'});
