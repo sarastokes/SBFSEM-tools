@@ -1,5 +1,9 @@
 # Changelog
 
+### 18Oct2018
+- Fixed issue with `RenderApp.m` UI layout for NeitzTemporalMonkey and MarcRC1
+- Added StructureID to synapse data cursor window in `GraphApp.m`
+
 ### 14Oct2018
 - Added `util.analysis.surfaceArea.m`
 - Added `meshgrid` function to `sbfsem.core.BoundaryMarker.m`

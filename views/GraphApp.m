@@ -354,28 +354,31 @@ classdef GraphApp < handle
         function txt = onUpdateCursor(obj, ~, evt)
             % ONUPDATECURSOR  Custom data tip display callback
             pos = get(evt,'Position');
+            txt = [];
             switch evt.Target.Tag
                 case 'Unfinished'
                     xyz = obj.neuron.id2xyz(obj.neuron.offEdges);
                     ind = find(sum(pos, 2) == sum(xyz, 2));
                     locID = obj.neuron.offEdges(ind); %#ok
-                    row = obj.neuron.nodes{obj.neuron.nodes.ID == locID, 'Z'}
+                    Z = obj.neuron.nodes{obj.neuron.nodes.ID == locID, 'Z'};
                 case 'Terminal'
                     xyz = obj.neuron.id2xyz(obj.neuron.terminals);
                     ind = find(sum(pos, 2) == sum(xyz, 2));
                     locID = obj.neuron.terminals(ind); %#ok
-                    Z = obj.neuron.nodes{obj.neuron.nodes.ID == locID, 'Z'}
+                    Z = obj.neuron.nodes{obj.neuron.nodes.ID == locID, 'Z'};
                 case 'Synapse'
                     T = obj.neuron.getSynapseNodes();
                     xyz = T.XYZum;
                     ind = find(sum(pos,2) == sum(xyz, 2));
                     locID = T{ind(1), 'ID'};
-                    Z = T{ind(1), 'Z'};
+                    Z = T{ind(1), 'Z'};     
+                    
+                    txt = {['SynapseID: ', num2str(T{ind(1), 'ParentID'})]};
                 otherwise
                     [locID, Z] = obj.id2xyz(pos, str2double(evt.Target.Tag));
             end
-            txt = {['ID: ' num2str(locID)],...
-                ['Section: ', num2str(Z)]};
+            txt = cat(2, txt, {['ID: ' num2str(locID)],...
+                ['Section: ', num2str(Z)]});
         end
         
         function onSelectedMarkerType(obj, src, ~)

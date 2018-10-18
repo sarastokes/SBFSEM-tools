@@ -158,7 +158,6 @@ classdef Neuron < sbfsem.core.NeuronAPI
 
     methods (Access = private)
 
-
         function setupSynapses(obj)
             % SETUPSYNAPSES
             % TODO: This should be done elsewhere
