@@ -3,6 +3,8 @@
 ### 18Oct2018
 - Fixed issue with `RenderApp.m` UI layout for NeitzTemporalMonkey and MarcRC1
 - Added StructureID to synapse data cursor window in `GraphApp.m`
+- New class for working with all blood vessels as a group (`sbfsem.builtin.Vasculature`)
+- A parent class for groups of structures (`sbfsem.core.StructureGroup.m`)
 
 ### 14Oct2018
 - Added `util.analysis.surfaceArea.m`
