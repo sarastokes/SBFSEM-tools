@@ -34,6 +34,7 @@ classdef RenderApp < handle
         volumeScale         % Volume dimensions (nm/pix)
         mosaic              % Cone mosaic (empty until loaded)
         iplBound            % IPL Boundary structure (empty until loaded)
+        vessels             % Blood vessels (empty until loaded)
     end
 
     properties (Access = private, Hidden = true, Transient = true)
@@ -102,6 +103,7 @@ classdef RenderApp < handle
             obj.iplBound = struct();
             obj.iplBound.gcl = [];
             obj.iplBound.inl = [];
+            obj.vessels = [];
             obj.createUI();
 
             obj.volumeScale = getODataScale(obj.source);
@@ -467,6 +469,26 @@ classdef RenderApp < handle
             end
 
             obj.toggleCones(src.Tag(4:end), src.Value);
+        end
+        
+        function onAddBloodVessels(obj, src, ~)
+            % ONADDBLOODVESSELS
+            % See also: SBFSEM.BUILTIN.VASCULATURE, SBFSEM.CORE.BLOODVESSEL
+            
+            if src.Value
+                if isempty(obj.vessels)
+                    obj.vessels = sbfsem.builtin.Vasculature(obj.source);
+                    if ~isempty(obj.vessels.vessels)
+                        obj.vessels.render('ax', obj.ax);
+                    end
+                else
+                    set(findall(obj.figureHandle, 'Tag', 'BloodVessel'),...
+                        'Visible', 'on');
+                end
+            else
+                set(findall(obj.figureHandle, 'Tag', 'BloodVessel'),...
+                    'Visible', 'off');
+            end
         end
 
         function toggleCones(obj, coneType, value)
@@ -917,12 +939,16 @@ classdef RenderApp < handle
                     'TooltipString', 'Add cones of unknown type',...
                     'Callback', @obj.onAddCones);
                 uicontrol(contextLayout,...
+                    'Style', 'check', 'String', 'Blood Vessels',...
+                    'TooltipString', 'Import blood vessels',...
+                    'Callback', @obj.onAddBloodVessels);
+                uicontrol(contextLayout,...
                     'Style', 'text', 'String', 'Transform: ');
                 uicontrol(contextLayout,...
                     'Style', 'popup',...
                     'String', {'Viking', 'Local'},...
                     'Callback', @obj.onSetTransform);
-                set(contextLayout, 'Heights', [-0.5, -1, -1, -1, -1, -0.5, -1, -1, -1 -0.5, -1]);
+                set(contextLayout, 'Heights', [-0.5, -1, -1, -1, -1, -0.5, -1, -1, -1, -1, -0.5, -1]);
             end
         end
 

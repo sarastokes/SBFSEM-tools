@@ -14,7 +14,11 @@ classdef BloodVessel < sbfsem.core.StructureAPI
 
 	properties (SetAccess = private)
 		vesselAdjacencies = [];
-	end
+    end
+    
+    properties (Hidden, Transient = true)
+        GeometryClient
+    end
 
 	properties (Dependent = true, Hidden = true)
 		hasAdjacencies
