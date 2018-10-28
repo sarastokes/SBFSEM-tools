@@ -2,6 +2,9 @@
 
 ### 28Oct2018
 - Removed unused library toolbox functions (toolbox-graph and most of matGeom)
+- Fixed arrow direction in `util\network\addToNetwork.m` and changed parameter name from `useWeights` to `weighted` in `util\network\plotNetwork.m`
+- Added utility functions: `util\plots\lighten.m`, `util\analysis\helpers\printOffEdges.m`.
+- Fixed `util\analysis\iplDepth.m` for InferiorMonkey
 
 ### 18Oct2018
 - Fixed issue with `RenderApp.m` UI layout for NeitzTemporalMonkey and MarcRC1

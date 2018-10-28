@@ -1,12 +1,24 @@
 function p = plotNetwork(G, varargin)
 	% PLOTNETWORK
+    %
+    % Inputs:
+    %   G           Directed graph from addToNetwork
+    % Optional key/value inputs:
+    %   cmap        User-defined colormap
+    %   useSoma     Center nodes at soma location (default = false)
+    %   weighted  Set linewidth to strength (default = false)
+    %   layout      graph/plot layout (default = auto)
+    %
+    % See also:
+    %   GRAPH/PLOT, ADDTONETWORK
+    %
 	% 1Oct2018 - SSP
 
 	ip = inputParser();
 	ip.CaseSensitive = false;
 	addParameter(ip, 'cmap', []);
 	addParameter(ip, 'useSoma', false, @islogical);
-    addParameter(ip, 'useWeights', false, @islogical);
+    addParameter(ip, 'weighted', false, @islogical);
     addParameter(ip, 'Layout', 'auto', @ischar);
 	parse(ip, varargin{:});
 
@@ -14,9 +26,9 @@ function p = plotNetwork(G, varargin)
 	if ~ismember('X', G.Nodes.Properties.VariableNames)
 		useSoma = false;
 	end
-	useWeights = ip.Results.useWeights;
+	weighted = ip.Results.weighted;
 	if ~ismember('Weight', G.Edges.Properties.VariableNames)
-		useWeights = false;
+		weighted = false;
 	end
 
 	if isempty(ip.Results.cmap)
@@ -36,7 +48,7 @@ function p = plotNetwork(G, varargin)
 		p.YData = G.Nodes.Y;
 	end
 
-	if useWeights
+	if weighted
 		p.LineWidth = G.Edges.Weight;
 	end
 

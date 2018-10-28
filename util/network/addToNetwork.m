@@ -77,7 +77,7 @@ function [G, T] = addToNetwork(G, neuron, synapseName, varargin)
             end
         end
         synapseWeight = numel(find(linkedIDs == nodeIDs(i)));
-        if structureType.isPre
+        if structureType.isPost
             G = G.addedge(num2str(nodeIDs(i)), num2str(neuron.ID), synapseWeight);
         else
             G = G.addedge(num2str(neuron.ID), num2str(nodeIDs(i)), synapseWeight);
