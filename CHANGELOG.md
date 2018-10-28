@@ -1,5 +1,8 @@
 # Changelog
 
+### 28Oct2018
+- Removed unused library toolbox functions (toolbox-graph and most of matGeom)
+
 ### 18Oct2018
 - Fixed issue with `RenderApp.m` UI layout for NeitzTemporalMonkey and MarcRC1
 - Added StructureID to synapse data cursor window in `GraphApp.m`

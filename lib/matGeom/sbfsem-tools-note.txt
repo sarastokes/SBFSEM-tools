@@ -1,0 +1,17 @@
+To save space, only the relevant matGeom functions are included here.
+
+For the full toolbox, see the links in the README.
+
+Functions used (28Oct2018):
+meshes3d\concatenateMeshes.m
+meshes3d\smoothMesh.m
+meshes3d\meshAdjacencyMatrix.m
+meshes3d\trimMesh.m
+meshes3d\private\formatMeshOutput.m
+
+geom3d\cart2sph2.m
+geom3d\createRotationOy.m
+geom3d\createRotationOz.m
+geom3d\createTranslation3d.m
+geom3d\transformPoint3d.m
+geom3d\normalizeVector3d.m
