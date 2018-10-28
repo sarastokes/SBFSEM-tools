@@ -511,7 +511,20 @@ classdef RenderApp < handle
 
             % Update the OData and the 3D model
             obj.updateStatus('Updating OData');
-            neuron.update();
+            try
+                neuron.update();
+            catch ME
+                switch ME.identifier
+                    case 'MATLAB:webservices:HTTP404StatusCodeError'
+                        obj.updateStatus(sprintf('c%u not found', num2str(ID)));
+                    case 'MATLAB:webservices:UnknownHost'
+                        obj.updateStatus('Check Connection');
+                    otherwise
+                        obj.updateStatus('Unknown Error');
+                        disp(ME.identifier);
+                end
+                return
+            end
             obj.updateStatus('Updating model');
             neuron.build();
             % Save the properties of existing render and axes
@@ -679,11 +692,19 @@ classdef RenderApp < handle
             try
                 neuron = Neuron(newID, obj.source, obj.SYNAPSES, obj.transform);
             catch ME
-                if strcmp(ME.identifier, 'MATLAB:webservices:HTTP404StatusCodeError')
-                    obj.updateStatus(sprintf('c%u not found!', newID));
-                    tf = false;
-                    return;
+                switch ME.identifier
+                    case 'SBFSEM:NeuronOData:invalidTypeID'
+                        obj.updateStatus(sprintf('%u not a Cell', newID));
+                    case 'MATLAB:webservices:HTTP404StatusCodeError'
+                        obj.updateStatus(sprintf('c%u not found!', newID));
+                    case 'MATLAB:webservices:UnknownHost'
+                        obj.updateStatus('Check Connection');
+                    otherwise
+                        fprintf('Unidentified error: %s\n', ME.identifier);
+                        obj.updateStatus('Error for c%u', newID);
                 end
+                tf = false;
+                return
             end
 
             % Build the 3D model
