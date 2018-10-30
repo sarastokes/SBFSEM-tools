@@ -37,7 +37,7 @@ classdef RenderApp < handle
         vessels             % Blood vessels (empty until loaded)
     end
 
-    properties (Access = private, Hidden = true, Transient = true)
+    properties (SetAccess = private, Hidden = true, Transient = true)
         % UI handles
         figureHandle        % Parent figure handle
         ui                  % UI panel handles
@@ -112,7 +112,7 @@ classdef RenderApp < handle
         end
     end
 
-    % Callback methods
+    % Neuron callback methods
     methods (Access = private)
         function onAddNeuron(obj, ~, ~)
             % No input detected
@@ -160,6 +160,96 @@ classdef RenderApp < handle
             end
         end
 
+        function onUpdateNeuron(obj, ~, evt)
+            % ONUPDATENEURON  Update the underlying OData and render
+
+            % Save the view azimuth and elevation
+            [az, el] = view(obj.ax);
+
+            % Get the target ID and neuron
+            ID = obj.tag2id(evt.Source.Tag);
+            neuron = obj.neurons(num2str(ID));
+
+            % Update the OData and the 3D model
+            obj.updateStatus('Updating OData');
+            try
+                neuron.update();
+            catch ME
+                switch ME.identifier
+                    case 'MATLAB:webservices:HTTP404StatusCodeError'
+                        obj.updateStatus(sprintf('c%u not found', num2str(ID)));
+                    case 'MATLAB:webservices:UnknownHost'
+                        obj.updateStatus('Check Connection');
+                    otherwise
+                        obj.updateStatus('Unknown Error');
+                        disp(ME.identifier);
+                end
+                return
+            end
+            obj.updateStatus('Updating model');
+            neuron.build();
+            % Save the properties of existing render and axes
+            patches = findall(obj.ax, 'Tag', evt.Source.Tag);
+            oldColor = get(patches, 'FaceColor');
+            oldAlpha = get(patches, 'FaceAlpha');
+            % Delete the old one and render a new one
+            delete(patches);
+            obj.updateStatus('Updating render');
+            neuron.render('ax', obj.ax, 'FaceColor', oldColor,...
+                'FaceAlpha', oldAlpha);
+            % Return to the original view azimuth and elevation
+            view(obj.ax, az, el);
+            obj.updateStatus('');
+        end
+
+
+        function onRemoveNeuron(obj, ~, evt)
+            % ONREMOVENEURON  Callback to trigger neuron removal
+
+            if numel(obj.neuronTree.SelectedNodes) ~= 1
+                warning('More than one node selected');
+                return
+            else
+                node = obj.neuronTree.SelectedNodes;
+            end
+            node.UIContextMenu = [];
+            % Get the neuron ID
+            ID = obj.tag2id(evt.Source.Tag);
+            obj.removeNeuron(ID, node);
+        end
+
+        function onExportNeuron(obj, ~, ~)
+            % ONEXPORTNEURON  Export Neuron objects to base workspace
+
+            tags = obj.neurons.keys;
+            for i = 1:numel(tags)
+                assignin('base', sprintf('c%u', tags{i}),...
+                    obj.neurons(tags{i}));
+            end
+        end
+
+        function onSetTransform(obj, src, ~)
+            if ~isempty(obj.neurons)
+                warndlg('Changing the Transform with existing neurons is not recommended.');
+            end
+            switch src.String{src.Value}
+                case 'Viking'
+                    obj.transform = sbfsem.core.Transforms.Viking;
+                case 'Local'
+                    obj.transform = sbfsem.core.Transforms.SBFSEMTools;
+            end
+        end
+
+        function onGetSynapses(~, ~, ~)
+            % ONGETSYNAPSES  neuron-specific uicontextmenu callback
+            warningdlg('Not yet implemented!');
+            return;
+        end
+    end
+
+    % Plot callback methods
+    methods (Access = private)
+
         function onToggleGrid(obj, src, ~)
             % TOGGLEGRID  Show/hide the grid
             if src.Value == 1
@@ -197,19 +287,16 @@ classdef RenderApp < handle
         end
 
         function toggleSurface(obj, name, value)
-            if value             
-                switch name
-                    case 'GCL'
-                        obj.iplBound.gcl.plot('ax', obj.ax);
-                    case 'INL'
-                        obj.iplBound.inl.plot('ax', obj.ax);
+            name = lower(name);
+            h = obj.iplBound.(name).getSurfaceHandle(obj.ax);
+            if value
+                if isempty(h)
+                    obj.iplBound.(name).plot('ax', obj.ax);
+                else
+                    set(h, 'Visible', 'on');
                 end
             else
-                obj.iplBound.inl.deleteFromScene(obj.ax);
-                set(findobj(obj.figureHandle, 'Tag', 'IPL'),...
-                    'Value', 0);
-                set(findobj(obj.figureHandle, 'Tag', 'GCL'),...
-                    'Value', 0);
+                set(h, 'Visible', 'off');
             end
         end
 
@@ -291,16 +378,6 @@ classdef RenderApp < handle
                 return;
             end
             exportSceneDAE(obj.ax, [fPath, fName]);
-        end
-
-        function onExportNeuron(obj, ~, ~)
-            % ONEXPORTNEURON  Export Neuron objects to base workspace
-
-            tags = obj.neurons.keys;
-            for i = 1:numel(tags)
-                assignin('base', sprintf('c%u', tags{i}),...
-                    obj.neurons(tags{i}));
-            end
         end
 
         function onExportFigure(obj, ~, ~)
@@ -499,48 +576,6 @@ classdef RenderApp < handle
             end
         end
 
-        function onUpdateNeuron(obj, ~, evt)
-            % ONUPDATENEURON  Update the underlying OData and render
-
-            % Save the view azimuth and elevation
-            [az, el] = view(obj.ax);
-
-            % Get the target ID and neuron
-            ID = obj.tag2id(evt.Source.Tag);
-            neuron = obj.neurons(num2str(ID));
-
-            % Update the OData and the 3D model
-            obj.updateStatus('Updating OData');
-            try
-                neuron.update();
-            catch ME
-                switch ME.identifier
-                    case 'MATLAB:webservices:HTTP404StatusCodeError'
-                        obj.updateStatus(sprintf('c%u not found', num2str(ID)));
-                    case 'MATLAB:webservices:UnknownHost'
-                        obj.updateStatus('Check Connection');
-                    otherwise
-                        obj.updateStatus('Unknown Error');
-                        disp(ME.identifier);
-                end
-                return
-            end
-            obj.updateStatus('Updating model');
-            neuron.build();
-            % Save the properties of existing render and axes
-            patches = findall(obj.ax, 'Tag', evt.Source.Tag);
-            oldColor = get(patches, 'FaceColor');
-            oldAlpha = get(patches, 'FaceAlpha');
-            % Delete the old one and render a new one
-            delete(patches);
-            obj.updateStatus('Updating render');
-            neuron.render('ax', obj.ax, 'FaceColor', oldColor,...
-                'FaceAlpha', oldAlpha);
-            % Return to the original view azimuth and elevation
-            view(obj.ax, az, el);
-            obj.updateStatus('');
-        end
-
         function onNodeChecked(obj, ~, evt)
             % ONNODECHECKED  Toggles visibility of patches
 
@@ -565,27 +600,6 @@ classdef RenderApp < handle
                         'Visible', 'on');
                 end
             end
-        end
-
-        function onGetSynapses(~, ~, ~)
-            % ONGETSYNAPSES  neuron-specific uicontextmenu callback
-            warningdlg('Not yet implemented!');
-            return;
-        end
-
-        function onRemoveNeuron(obj, ~, evt)
-            % ONREMOVENEURON  Callback to trigger neuron removal
-
-            if numel(obj.neuronTree.SelectedNodes) ~= 1
-                warning('More than one node selected');
-                return
-            else
-                node = obj.neuronTree.SelectedNodes;
-            end
-            node.UIContextMenu = [];
-            % Get the neuron ID
-            ID = obj.tag2id(evt.Source.Tag);
-            obj.removeNeuron(ID, node);
         end
 
         function onSetTransparency(obj, src, evt)
@@ -655,18 +669,6 @@ classdef RenderApp < handle
                 obj.iplBound.inl = sbfsem.builtin.INLBoundary(obj.source, true);
             end
             obj.toggleSurface(src.Tag, src.Value);
-        end
-
-        function onSetTransform(obj, src, ~)
-            if ~isempty(obj.neurons)
-                warndlg('Changing the Transform with existing neurons is not recommended.');
-            end
-            switch src.String{src.Value}
-                case 'Viking'
-                    obj.transform = sbfsem.core.Transforms.Viking;
-                case 'Local'
-                    obj.transform = sbfsem.core.Transforms.SBFSEMTools;
-            end
         end
         
         function onAddGap(obj, src, ~)
@@ -849,9 +851,7 @@ classdef RenderApp < handle
             axis(obj.ax, 'equal', 'tight');
             grid(obj.ax, 'on');
             view(obj.ax, 3);
-            xlabel(obj.ax, 'X');
-            ylabel(obj.ax, 'Y');
-            zlabel(obj.ax, 'Z');
+            xlabel(obj.ax, 'X'); ylabel(obj.ax, 'Y'); zlabel(obj.ax, 'Z');
 
             % Set up the lighting
             obj.lights = [light(obj.ax), light(obj.ax)];

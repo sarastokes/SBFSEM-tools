@@ -110,6 +110,19 @@ classdef (Abstract) BoundaryMarker < handle
                 obj.interpolatedSurface, x, y);            
         end
 
+    end
+    
+    methods  % Plotting methods
+        function h = getSurfaceHandle(obj, ax)
+            assert(ishandle(ax), 'Must input axes handle');
+            h = findall(gcf, 'Tag', ['BoundarySurface', num2str(obj.TYPEID)]);            
+        end
+        
+        function h = getDataHandle(obj, ax)
+            assert(ishandle(ax), 'Must input axes handle');
+            h = findall(gcf, 'Tag', ['BoundaryMarker', num2str(obj.TYPEID)]);
+        end
+
         function [fh, p] = plot(obj, varargin)
             % PLOT  
             % 
@@ -137,7 +150,7 @@ classdef (Abstract) BoundaryMarker < handle
                 'FaceAlpha', 0.8,...
                 'EdgeColor', 'none',...
                 'BackFaceLighting', 'lit',...
-                'Tag', 'BoundarySurface');
+                'Tag', ['BoundarySurface', num2str(obj.TYPEID)]);
             if ip.Results.showData
                 hold(ax, 'on');
                 if strcmp(obj.units, 'microns')
@@ -146,7 +159,7 @@ classdef (Abstract) BoundaryMarker < handle
                     xyz = obj.markerLocations;
                 end
                 scatter3(ax, xyz(:, 1), xyz(:, 2), xyz(:,3), 'fill',...
-                    'Tag', 'BoundaryMarker');
+                    'Tag', ['BoundaryMarker', num2str(obj.TYPEID)]);
             end
             view(ax, 3);
             axis(ax, 'equal');
@@ -154,7 +167,7 @@ classdef (Abstract) BoundaryMarker < handle
                 set(fh, 'Renderer', 'painters');
             end
         end
-
+    
         function addToScene(obj, ax, varargin)
             % ADDTOSCENE
             %
@@ -179,7 +192,21 @@ classdef (Abstract) BoundaryMarker < handle
             hold(ax, 'on');
             scatter3(ax, xyz(:,1), xyz(:,2), xyz(:,3),... 
                 ip.Results.Size, ip.Results.Color, ip.Results.Style,...
-                'Tag', 'BoundaryMarker');
+                'Tag', ['BoundaryMarker', num2str(obj.TYPEID)]);
+        end
+        
+        function deleteFromScene(obj, ax)
+            % DELETEFROMSCENE
+            % 
+            % Description:
+            %   Delete all objects with tag "BoundaryMarker" from axes
+            % Input:
+            %   ax      axes handle
+            % -------------------------------------------------------------
+
+            assert(ishandle(ax), 'Must input an axes handle');
+            delete(obj.getDataHandle(obj.ax));
+            delete(obj.getSurfaceHandle(obj.ax));
         end
     end
     
@@ -218,21 +245,6 @@ classdef (Abstract) BoundaryMarker < handle
                 vertcat(xyz.Y),...
                 vertcat(xyz.Z)];
 			obj.queryDate = datestr(now);
-        end
-    end
-    
-    methods (Static)
-        function deleteFromScene(ax)
-            % DELETEFROMSCENE
-            % 
-            % Description:
-            %   Delete all objects with tag "BoundaryMarker" from axes
-            % Input:
-            %   ax      axes handle
-            % -------------------------------------------------------------
-            assert(ishandle(ax), 'Must input an axes handle');
-            delete(findall(ax, 'Tag', 'BoundarySurface'));
-            delete(findall(ax, 'Tag', 'BoundaryMarker'));
         end
     end
 end

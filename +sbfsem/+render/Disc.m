@@ -1,19 +1,24 @@
 classdef Disc < sbfsem.render.RenderView
-%DISC  Create render based on disc annotations
-% 
-% Constructor: 
-%   obj = Disc(neuron, varargin);
-%   % Specify a subset of the Z sections
-%   obj = Disc(neuron, 'sections', 1:10);
-%   % Change the resize factor (default = 1)
-%   obj = Disc(neuron, 'sampling', 0.8);
-%
-% Properties:
-%   All inherited from RenderView
-%
-%   12Nov2017 - SSP
-%
-% See also SBFSEM.CORE.DISC, SBFSEM.RENDER.RENDERVIEW
+    % DISC  Create render based on disc annotations
+    % 
+    % Constructor: 
+    %   obj = Disc(neuron, varargin);
+    %
+    % Examples:
+    %   % Specify a subset of the Z sections
+    %   obj = Disc(neuron, 'sections', 1:10);
+    %   % Change the resize factor (default = 1)
+    %   obj = Disc(neuron, 'sampling', 0.8);
+    %
+    % Properties:
+    %   All inherited from RenderView
+    %
+    % See also:
+    %   SBFSEM.CORE.DISC, SBFSEM.RENDER.RENDERVIEW
+    %
+    % History:
+    %   12Nov2017 - SSP
+    % ---------------------------------------------------------------------
 	properties (SetAccess = private)
         binaryMatrix
     end

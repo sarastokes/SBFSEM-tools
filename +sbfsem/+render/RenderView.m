@@ -62,7 +62,8 @@ classdef (Abstract) RenderView < sbfsem.ui.FigureView
             %
             % 10Nov2017 - SSP
             
-            assert(isa(neuron, 'sbfsem.core.StructureAPI'), 'Input neuron object');
+            assert(isa(neuron, 'sbfsem.core.StructureAPI'),...
+                'Input Structure object');
             
             obj@sbfsem.ui.FigureView(1);
             obj.ID = neuron.ID;
@@ -77,7 +78,7 @@ classdef (Abstract) RenderView < sbfsem.ui.FigureView
         function update(obj)
             % UPDATE
             neuron = Neuron(obj.ID, obj.source);
-            neuron.setGeometries;
+            neuron.setGeometries();
             obj.doRender(neuron.geometries);
         end
 

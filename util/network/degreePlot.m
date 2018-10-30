@@ -1,14 +1,15 @@
-function p = ConnectivityView(neuron)
+function p = degreePlot(neuron)
     % CONNECTIVITYVIEW
     %
     % Description:
-    %   Plot neuron connectivity
+    %   Plot neuron connectivity with connections 
     %
     % Syntax:
-    %   p = ConnectivityView(neuron)
+    %   p = degreePlot(neuron)
     %
     % History:
     %   8Jul2018 - SSP
+    %   30Oct2018 - SSP - Renamed to degreePlot, moved to utils
     % ---------------------------------------------------------------------
     [G, ~] = neuron.graph();
     figure();

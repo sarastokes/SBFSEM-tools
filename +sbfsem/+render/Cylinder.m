@@ -148,6 +148,7 @@ classdef Cylinder < handle
             addParameter(ip, 'ax', [], @ishandle);
             addParameter(ip, 'useSegments', false, @islogical);
             addParameter(ip, 'reduce', false, @islogical);
+            addParameter(ip, 'Tag', sprintf('c%u', obj.ID), @ischar);
             parse(ip, varargin{:});
             FaceColor = ip.Results.FaceColor;
             FaceAlpha = ip.Results.FaceAlpha;
@@ -177,7 +178,7 @@ classdef Cylinder < handle
                         'FaceColor', FaceColor,...
                         'FaceAlpha', FaceAlpha,...
                         'EdgeColor', 'none',...
-                        'Tag', sprintf('c%u', obj.ID),...
+                        'Tag', ip.Results.Tag,...
                         'Parent', ax);
                     if doReduction
                         reducepatch(p, obj.reduceFac);

@@ -1,4 +1,4 @@
-function [iplPercent, stats] = iplDepth(Neuron, INL, GCL, numBins)
+function [iplPercent, stats] = iplDepth(Neuron, varargin)
 	% IPLDEPTH
     %
     % Description:
@@ -25,18 +25,33 @@ function [iplPercent, stats] = iplDepth(Neuron, INL, GCL, numBins)
 
 	assert(isa(Neuron, 'sbfsem.core.StructureAPI'),...
 		'Input a StructureAPI object');
-    if nargin < 4
-        numBins = 20;
-    end
-    if nargin < 3
-        GCL = sbfsem.builtin.GCLBoundary(Neuron.source, true);
-        INL = sbfsem.builtin.INLBoundary(Neuron.source, true);
-    end
+    
+    GCL = sbfsem.builtin.GCLBoundary(Neuron.source, true);
+    INL = sbfsem.builtin.INLBoundary(Neuron.source, true);
+    
+    ip = inputParser();
+    ip.CaseSensitive = false;
+    addParameter(ip, 'numBins', 20, @isnumeric);
+    addParameter(ip, 'plotVariability', false, @islogical);
+    addParameter(ip, 'includeSoma', false, @islogical);
+    addParameter(ip, 'plotBar', true, @islogical);
+    addParameter(ip, 'ax', [], @ishandle);
+    addParameter(ip, 'omitOutliers', true, @islogical);
+    parse(ip, varargin{:});
+    numBins = ip.Results.numBins;
+    includeSoma = ip.Results.includeSoma;
+    ax = ip.Results.ax;
+    plotBar = ip.Results.plotBar;
+    omitOutliers = ip.Results.omitOutliers;
 
 	nodes = Neuron.getCellNodes;
 	% Soma is anything within 20% of the soma radius
-	somaRadius = Neuron.getSomaSize(false);
-	nodes(nodes.Rum > 0.8*somaRadius, :) = [];
+    if ~includeSoma
+        fprintf('Omitting soma nodes\n');
+    	somaRadius = Neuron.getSomaSize(false);
+        nodes(nodes.Rum > 0.8*somaRadius, :) = [];
+    end
+
 	xyz = nodes.XYZum;
 
 	[X, Y] = meshgrid(GCL.newXPts, GCL.newYPts);
@@ -50,6 +65,11 @@ function [iplPercent, stats] = iplDepth(Neuron, INL, GCL, numBins)
 	% iplPercent = (xyz(:,3) - vGCL)./((vINL - vGCL)+eps);
     iplPercent = (xyz(:, 3) - vINL) ./ ((vGCL - vINL)+eps);
 	iplPercent(isnan(iplPercent)) = [];
+    
+    if omitOutliers
+        iplPercent(iplPercent > 1.25) = [];
+        iplPercent(iplPercent < -0.25) = [];
+    end
     disp('Mean +- SEM microns (n):');
 	printStat(iplPercent');
 
@@ -60,8 +80,22 @@ function [iplPercent, stats] = iplDepth(Neuron, INL, GCL, numBins)
 	stats.n = numel(iplPercent);
 	fprintf('Median IPL Depth = %.3g\n', stats.median);
 
-	ax = axes('Parent', figure());
-	hist(ax, iplPercent, numBins);
+    if isempty(ax)
+        ax = axes('Parent', figure());
+        hold(ax, 'on');
+    end
+    
+    if plotBar
+        hist(ax, iplPercent, numBins);
+    else
+        [a, b] = histcounts(iplPercent, numBins);
+        plot(ax, b(1:end-1)+(b(2)-b(1)), a, 'LineWidth', 1,...
+            'Color', 'k', 'Marker', 'o',...
+            'Display', sprintf('c%u', Neuron.ID));
+    end
+    plot(stats.median, 0.1*max(a), 'Marker', 'p',...
+        'Color', hex2rgb('ff4040'));
+    
 
     x = get(ax, 'XLim');
     if x(1) > 0
@@ -76,8 +110,10 @@ function [iplPercent, stats] = iplDepth(Neuron, INL, GCL, numBins)
 	ylabel(ax, 'Number of annotations');
 	xlabel(ax, 'Percent IPL Depth');
 
-	figure();
-	hist(vINL-vGCL, numBins); hold on;
-	title(sprintf('Variability in total IPL depth for c%u', Neuron.ID));
-	xlabel('IPL depth (microns)');
-	ylabel('Number of annotations');
+    if ip.Results.plotVariability
+    	figure();
+        hist(vINL-vGCL, numBins); hold on;
+        title(sprintf('Variability in total IPL depth for c%u', Neuron.ID));
+        xlabel('IPL depth (microns)');
+        ylabel('Number of annotations');
+    end

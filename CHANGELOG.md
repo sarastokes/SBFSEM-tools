@@ -1,5 +1,9 @@
 # Changelog
 
+### 30Oct2018
+- Fixed toggling IPL boundaries in `views\RenderApp.m`.
+- Made `addToScene` and `deleteFromScene` functions in `sbfsem.core.BoundaryMarker.m` more robust.
+
 ### 28Oct2018
 - Removed unused library toolbox functions (toolbox-graph and most of matGeom)
 - Fixed arrow direction in `util\network\addToNetwork.m` and changed parameter name from `useWeights` to `weighted` in `util\network\plotNetwork.m`
