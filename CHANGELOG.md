@@ -1,5 +1,8 @@
 # Changelog
 
+### 1Nov2018
+- Added `sbfsem.core.Nucleolus` for analysis and rendering of nucleolus child structures.
+
 ### 30Oct2018
 - Fixed toggling IPL boundaries in `views\RenderApp.m`.
 - Made `addToScene` and `deleteFromScene` functions in `sbfsem.core.BoundaryMarker.m` more robust.
