@@ -1,5 +1,9 @@
 # Changelog
 
+### 2Nov2018
+- Debugged 915 gap and set transparency for boundary markers in `RenderApp.m`
+- Added a nice plot to `IPLDepthApp.m`
+
 ### 1Nov2018
 - Added `sbfsem.core.Nucleolus` for analysis and rendering of nucleolus child structures.
 

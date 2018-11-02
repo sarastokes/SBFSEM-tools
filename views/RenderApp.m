@@ -292,6 +292,8 @@ classdef RenderApp < handle
             if value
                 if isempty(h)
                     obj.iplBound.(name).plot('ax', obj.ax);
+                    set(obj.iplBound.(name).getSurfaceHandle(obj.ax),...
+                        'FaceAlpha', 0.3);
                 else
                     set(h, 'Visible', 'on');
                 end
@@ -535,6 +537,13 @@ classdef RenderApp < handle
             GraphApp(neuron);
             obj.updateStatus('');
         end
+        
+        function onGetStratification(obj, ~, evt)
+            neuron = obj.neurons(num2str(obj.tag2id(evt.Source.Tag)));
+            obj.updateStatus('Analyzing...');
+            iplDepth(neuron, 'numBins', 25, 'includeSoma', true, 'plotBar', false);
+            obj.updateStatus('');
+        end
 
         function onAddCones(obj, src, ~)
             % ONIMPORTCONES
@@ -667,6 +676,8 @@ classdef RenderApp < handle
 
                 obj.iplBound.gcl = sbfsem.builtin.GCLBoundary(obj.source, true);
                 obj.iplBound.inl = sbfsem.builtin.INLBoundary(obj.source, true);
+                
+                obj.updateStatus('');
             end
             obj.toggleSurface(src.Tag, src.Value);
         end
@@ -677,9 +688,11 @@ classdef RenderApp < handle
                 y = get(obj.ax, 'YLim');
                 z = obj.volumeScale(3) * 1e-3 * 922;
                 hold(obj.ax, 'on');
-                patch(obj.ax, 'XData', [x; x], 'YData', [y; y]',...
-                    'ZData', z+zeros(2,2), 'FaceAlpha', 0.3,...
-                    'FaceColor', [0.7, 0.7, 0.7], 'Tag', 'Gap');     
+                F = [1:3; 2:4; 3,4,1];
+                V = [x(1), y(1), z; x(2), y(2), z; x(1), y(2), z; x(2), y(1), z];
+                patch(obj.ax, 'Faces', F, 'Vertices', V,...
+                    'FaceAlpha', 0.3, 'EdgeColor', 'none',...
+                    'Tag', 'Gap');  
             else
                 delete(findall(obj.ax, 'Tag', 'Gap'));
             end
@@ -797,6 +810,9 @@ classdef RenderApp < handle
             uimenu(c, 'Label', 'Open GraphApp',...
                 'Tag', obj.id2tag(ID),...
                 'Callback', @obj.onOpenGraphApp);
+            uimenu(c, 'Label', 'Get Stratification',...
+                'Tag', obj.id2tag(ID),...
+                'Callback', @obj.onGetStratification);
             set(newNode, 'UIContextMenu', c);
         end
 

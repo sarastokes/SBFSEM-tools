@@ -12,6 +12,8 @@ classdef IPLDepthApp < handle
         INL
         GCL
         fh
+        axHandle
+        iplMark
     end
 
     methods
@@ -57,7 +59,7 @@ classdef IPLDepthApp < handle
                 'Color', 'w');
             figPos(obj.fh, 0.4, 0.5);
             mainLayout = uix.VBox('Parent', obj.fh,...
-                'BackgroundColor', 'w');
+                'BackgroundColor', 'w', 'Spacing', 10);
             
             uicontrol(mainLayout,...
                 'Style', 'text', 'String', obj.source,...
@@ -71,12 +73,29 @@ classdef IPLDepthApp < handle
             uicontrol(idLayout,...
                 'Style', 'push', 'String', 'Go',...
                 'Callback', @obj.onCalculateDepth);
-            uicontrol(mainLayout,...
+            dataLayout = uix.HBox('Parent', mainLayout,...
+                'BackgroundColor', 'w');
+            
+            obj.axHandle = axes(dataLayout,...
+                'YTick', [0, 25, 50, 75, 100],...
+                'YTickLabel', {'INL', 'on', '', 'off', 'GCL'},...
+                'XColor', 'w',...
+                'Tag', 'Graph');
+            hold(obj.axHandle, 'on');
+            
+            ylim(obj.axHandle, [-25, 125]);
+            xlim(obj.axHandle, [0.8, 1.2]);
+            ylabel(obj.axHandle, 'IPL Depth');
+            grid(obj.axHandle, 'on');
+            
+            uicontrol(dataLayout,...
                 'Style', 'text', 'Tag', 'Output',...
                 'HorizontalAlignment', 'center',...
                 'FontSize', 20,...
                 'FontWeight', 'bold');
-            set(mainLayout, 'heights', [-1, -1, -2, -2])
+            
+            set(dataLayout, 'Widths', [-1, -1.5]);
+            set(mainLayout, 'heights', [-0.8, -0.8, -1.5, -2.5])
         end
         
         function setOutput(obj, str, errorMode)
@@ -127,7 +146,18 @@ classdef IPLDepthApp < handle
             
             obj.iplPercent = (1-(XYZ(3) - vGCL)/((vINL - vGCL)+eps)) * 100;
             obj.setOutput(sprintf('%u%%', round(obj.iplPercent)));
+            if isempty(obj.iplMark)                
+                obj.iplMark = plot(obj.axHandle, 1, obj.iplPercent,...
+                    'Marker', 'p',...
+                    'Color', hex2rgb('ff4040'), 'LineStyle', 'none');
+            else
+                set(obj.iplMark, 'YData', obj.iplPercent);
+            end
+            ylim(obj.axHandle, [-25, 125]);
+            xlim(obj.axHandle, [0.8, 1.2]);
             %fprintf('XYZ = %.2g, vINL = %.2g, vGCL = %.2g\n', XYZ(3), vINL, vGCL);
         end        
+        
+        
     end
 end
