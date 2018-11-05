@@ -1,5 +1,8 @@
 # Changelog
 
+### 3Nov2018
+- Function for setting render color data by stratification (`util\renders\getStrataCData`)
+
 ### 2Nov2018
 - Debugged 915 gap and set transparency for boundary markers in `RenderApp.m`
 - Added a nice plot to `IPLDepthApp.m`

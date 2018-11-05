@@ -38,6 +38,7 @@ function [iplPercent, stats] = iplDepth(Neuron, varargin)
     addParameter(ip, 'ax', [], @ishandle);
     addParameter(ip, 'omitOutliers', true, @islogical);
     parse(ip, varargin{:});
+    
     numBins = ip.Results.numBins;
     includeSoma = ip.Results.includeSoma;
     ax = ip.Results.ax;
@@ -62,13 +63,12 @@ function [iplPercent, stats] = iplDepth(Neuron, varargin)
 	vINL = interp2(X, Y, INL.interpolatedSurface,...
 		xyz(:,1), xyz(:,2));
 
-	% iplPercent = (xyz(:,3) - vGCL)./((vINL - vGCL)+eps);
-    iplPercent = (xyz(:, 3) - vINL) ./ ((vGCL - vINL)+eps);
+	iplPercent = (xyz(:, 3) - vINL) ./ ((vGCL - vINL)+eps);
 	iplPercent(isnan(iplPercent)) = [];
     
     if omitOutliers
-        iplPercent(iplPercent > 1.25) = [];
-        iplPercent(iplPercent < -0.25) = [];
+        iplPercent(iplPercent > 1.2) = [];
+        iplPercent(iplPercent < -0.2) = [];
     end
     disp('Mean +- SEM microns (n):');
 	printStat(iplPercent');
@@ -83,33 +83,37 @@ function [iplPercent, stats] = iplDepth(Neuron, varargin)
     if isempty(ax)
         ax = axes('Parent', figure());
         hold(ax, 'on');
+        figPos(gcf, 0.7, 0.6);
     end
     
     if plotBar
         hist(ax, iplPercent, numBins);
     else
         [a, b] = histcounts(iplPercent, numBins);
-        plot(ax, b(1:end-1)+(b(2)-b(1)), a, 'LineWidth', 1,...
+        plot(ax, b(1:end-1)+(b(2)-b(1)), a,...
             'Color', 'k', 'Marker', 'o',...
+            'MarkerSize', 4.5, 'LineWidth', 1,...
             'Display', sprintf('c%u', Neuron.ID));
     end
-    plot(stats.median, 0.1*max(a), 'Marker', 'p',...
-        'Color', hex2rgb('ff4040'));
-    
+    plot(stats.median, 0.1*max(a), 'Marker', '^',...
+        'LineWidth', 1,...
+        'Color', hex2rgb('ff4040'),...
+        'Tag', sprintf('Median %.1f', stats.median));
+    plot(stats.avg, 0.1*max(a), 'Marker', '^',...
+        'LineWidth', 1,...
+        'Color', hex2rgb('334de6'),...
+        'Tag', sprintf('Mean %.1f', stats.avg));
 
-    x = get(ax, 'XLim');
-    if x(1) > 0
-        x(1) = 0;
-    end
-    if x(2) < 1
-        x(2) = 1;
-    end
-    xlim(ax, x);
+    xlim(ax, [-0.25, 1.25]);
+    grid(ax, 'on'); hold(ax, 'on');
+    set(ax, 'XTick', 0:0.25:1, 'TickDir', 'out',... 
+        'XTickLabel', {'INL', 'off', 'IPL', 'on', 'GCL'},...
+        'TitleFontWeight', 'normal');
     
-    title(ax, sprintf('IPL depth estimates for c%u', Neuron.ID));
+    title(ax, sprintf('c%u Stratification', Neuron.ID));
 	ylabel(ax, 'Number of annotations');
-	xlabel(ax, 'Percent IPL Depth');
-
+	% xlabel(ax, 'Percent IPL Depth');
+    
     if ip.Results.plotVariability
     	figure();
         hist(vINL-vGCL, numBins); hold on;
@@ -117,3 +121,10 @@ function [iplPercent, stats] = iplDepth(Neuron, varargin)
         xlabel('IPL depth (microns)');
         ylabel('Number of annotations');
     end
+    
+    y = get(ax, 'YLim');
+    rectangle(ax, 'Position', [-0.25, 0, 0.25, y(2)+1],...
+        'FaceColor', [0, 0, 0, 0.1], 'EdgeColor', 'none');
+    rectangle(ax, 'Position', [1, 0, 0.25, y(2)+1],...
+        'FaceColor', [0, 0, 0, 0.1], 'EdgeColor', 'none');
+    set(ax, 'YLim', y);
