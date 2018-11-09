@@ -1,5 +1,19 @@
 # Changelog
 
+### 8Nov2018
+- Added STL export for single neurons (`+sbfsem\+io\STL.m`).
+- Removed bar plot option from `util\analysis\iplDepth.m`
+- Created a default stratification plot (`util\plots\blankStrataPlot.m`).
+
+### 6Nov2018
+- Fully debugged IPL stratification colormaps in `RenderApp.m`.
+
+### 5Nov2018
+- Added class for laminated bodies (annotated as `sbfsem.core.OrganizedSER.m`)
+
+### 4Nov2018
+- Working colormaps by IPL depth in `views\RenderApp.m` but needs debugging
+
 ### 3Nov2018
 - Function for setting render color data by stratification (`util\renders\getStrataCData`)
 

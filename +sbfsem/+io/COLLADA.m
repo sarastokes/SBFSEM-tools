@@ -5,7 +5,7 @@ classdef COLLADA < handle
     %   Export renders as .dae files for use in programs like Blender
     %
     % Constructor:
-    %   obj = COLLADA(hObj, fName, reduceFac)
+    %   obj = sbfsem.io.COLLADA(hObj, fName, reduceFac)
     %
     % Inputs:
     %   hObj        Neuron or axes handle to export as .dae file
@@ -26,7 +26,7 @@ classdef COLLADA < handle
     %   12Apr2018 - SSP - pulled functions together into one class
     % ---------------------------------------------------------------------
     
-    properties (GetAccess = public)
+    properties (SetAccess = private)
         fName
         reduceFac
         hObj

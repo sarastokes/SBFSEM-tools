@@ -173,6 +173,7 @@ classdef (Abstract) StructureAPI < handle
             % -------------------------------------------------------------
 
             ip = inputParser();
+            ip.CaseSensitive = false;
             addParameter(ip, 'directed', false, @islogical);
             addParameter(ip, 'synapses', false, @islogical);
             addParameter(ip, 'visualize', false, @islogical);
@@ -348,8 +349,12 @@ classdef (Abstract) StructureAPI < handle
             % end
             
             % Apply transforms to NeitzInferiorMonkey
+            if isempty(nodes)
+                return
+            end
             if obj.transform == sbfsem.core.Transforms.SBFSEMTools
-                xyDir = [fileparts(mfilename('fullpath')), '\data'];
+                xyDir = [fileparts(fileparts(fileparts(...
+                    mfilename('fullpath')))), '\data'];
                 xydata = dlmread([xyDir,...
                     '\XY_OFFSET_NEITZINFERIORMONKEY.txt']);
                 volX = nodes.X + xydata(nodes.Z,2);
