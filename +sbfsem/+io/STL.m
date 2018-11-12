@@ -8,10 +8,18 @@ classdef STL < handle
 	%	obj = sbfsem.io.STL()
 	%
 	% Inputs:
-	%	hObj 		Neuron
+	%	neuron 		Neuron
 	% Options:
 	%	fName 		File name and path to save, otherwise dialog
-	% 	See stlwrite for remaining options
+	% 	See stlwrite for additional options
+	%
+	% Examples:
+	%	c1441 = Neuron(1441, 'i');
+	%	sbfsem.io.STL(c1441, 'C:/.../c1441.stl');
+	%
+	% Notes:
+	%	STL files can be opened in the common 3D rendering programs, PC 
+	%	users can open in Paint 3D, anyone can load at https://viewstl.com
 	%
 	% History:
 	%	8Nov2018 - SSP

@@ -25,7 +25,7 @@ classdef (Abstract) StructureGroup < handle
 	end
 
 	methods (Access = protected)
-		function structureIDs = queryByTypeID(obj)
+		function [structureIDs, parentIDs] = queryByTypeID(obj)
 			% QUERYBYTYPEID  Return structure IDs for a type ID
 			if isnan(obj.typeID)
 				error('Invalid type ID');
@@ -36,9 +36,10 @@ classdef (Abstract) StructureGroup < handle
 
 			data = readOData([obj.baseURL,...
 				'Structures?$filter=TypeID eq ', num2str(obj.typeID),...
-				'&$select=ID']);
+				'&$select=ID,ParentID']);
 			value = cat(1, data.value{:});
 			structureIDs = vertcat(value.ID);
+            parentIDs = vertcat(value.ParentID);
 		end
 
 		function pull(obj)

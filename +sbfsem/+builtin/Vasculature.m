@@ -22,11 +22,12 @@ classdef Vasculature < sbfsem.core.StructureGroup
 			% 
 			% Optional inputs:
 			%	ax 			axes handle (default = new)
+            % TODO: Fix axes specification
 			
-			if nargin < 2 || isempty(ax)
-				ax = axes('Parent', figure());
-				hold(ax, 'on');
-				grid(ax, 'on');
+            if nargin < 2 || isempty(ax)
+                ax = axes('Parent', figure());
+                hold(ax, 'on');
+                grid(ax, 'on');
 			end
 
 			for i = 1:numel(obj.IDs)

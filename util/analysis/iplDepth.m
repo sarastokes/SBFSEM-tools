@@ -21,6 +21,7 @@ function [iplPercent, stats] = iplDepth(Neuron, varargin)
 	%	7Feb2018 - SSP
     %   19Feb2018 - SSP - Added numBins input
     %   22Oct2018 - SSP - Added boundary markers from cache
+    %   8Nov2018 - SSP - Removed bar plot option
 	% ---------------------------------------------------------------------
 
 	assert(isa(Neuron, 'sbfsem.core.StructureAPI'),...
@@ -32,9 +33,9 @@ function [iplPercent, stats] = iplDepth(Neuron, varargin)
     ip = inputParser();
     ip.CaseSensitive = false;
     addParameter(ip, 'numBins', 20, @isnumeric);
+    addParameter(ip, 'Color', 'k', @(x) isvector(x) || ischar(x));
     addParameter(ip, 'plotVariability', false, @islogical);
     addParameter(ip, 'includeSoma', false, @islogical);
-    addParameter(ip, 'plotBar', true, @islogical);
     addParameter(ip, 'ax', [], @ishandle);
     addParameter(ip, 'omitOutliers', true, @islogical);
     parse(ip, varargin{:});
@@ -42,8 +43,10 @@ function [iplPercent, stats] = iplDepth(Neuron, varargin)
     numBins = ip.Results.numBins;
     includeSoma = ip.Results.includeSoma;
     ax = ip.Results.ax;
-    plotBar = ip.Results.plotBar;
     omitOutliers = ip.Results.omitOutliers;
+    lineColor = ip.Results.Color;
+    
+    fprintf('-- c%u --\n', Neuron.ID);
 
 	nodes = Neuron.getCellNodes;
 	% Soma is anything within 20% of the soma radius
@@ -79,22 +82,24 @@ function [iplPercent, stats] = iplDepth(Neuron, varargin)
 	stats.avg = mean(iplPercent);
 	stats.n = numel(iplPercent);
 	fprintf('Median IPL Depth = %.3g\n', stats.median);
-
+    
+    [a, b] = histcounts(iplPercent, numBins);
+    
     if isempty(ax)
         ax = axes('Parent', figure());
-        hold(ax, 'on');
-        figPos(gcf, 0.7, 0.6);
+        	figPos(ax.Parent, 0.7, 0.6);
+        grid(ax, 'on'); hold(ax, 'on');
+    	ylabel(ax, 'Number of annotations');
+        set(ax, 'XTick', 0:0.25:1, 'TickDir', 'out',... 
+            'XTickLabel', {'INL', 'off', 'IPL', 'on', 'GCL'},...
+            'TitleFontWeight', 'normal');
     end
     
-    if plotBar
-        hist(ax, iplPercent, numBins);
-    else
-        [a, b] = histcounts(iplPercent, numBins);
-        plot(ax, b(1:end-1)+(b(2)-b(1)), a,...
-            'Color', 'k', 'Marker', 'o',...
-            'MarkerSize', 4.5, 'LineWidth', 1,...
-            'Display', sprintf('c%u', Neuron.ID));
-    end
+    plot(ax, b(1:end-1)+(b(2)-b(1)), a,...
+        'Color', lineColor, 'Marker', 'o',...
+        'MarkerSize', 4.5, 'LineWidth', 1,...
+        'Display', sprintf('c%u', Neuron.ID));
+
     plot(stats.median, 0.1*max(a), 'Marker', '^',...
         'LineWidth', 1,...
         'Color', hex2rgb('ff4040'),...
@@ -122,9 +127,16 @@ function [iplPercent, stats] = iplDepth(Neuron, varargin)
         ylabel('Number of annotations');
     end
     
-    y = get(ax, 'YLim');
-    rectangle(ax, 'Position', [-0.25, 0, 0.25, y(2)+1],...
-        'FaceColor', [0, 0, 0, 0.1], 'EdgeColor', 'none');
-    rectangle(ax, 'Position', [1, 0, 0.25, y(2)+1],...
-        'FaceColor', [0, 0, 0, 0.1], 'EdgeColor', 'none');
-    set(ax, 'YLim', y);
+    
+    if ~isempty(findobj(ax, 'Tag', 'GCL'))
+        y = get(ax, 'YLim');
+        %set(findobj(ax, 'Tag', 'INL'), 'Position', [-0.25, 0, 0.25, y(2)+1]);
+        %set(findobj(ax, 'Tag', 'GCL'), 'Position', [1, 0, 0.25, y(2)+1]);
+        rectangle(ax, 'Position', [-0.25, 0, 0.25, y(2)+1],...
+            'FaceColor', [0, 0, 0, 0.1], 'EdgeColor', 'none');
+        rectangle(ax, 'Position', [1, 0, 0.25, y(2)+1],...
+            'FaceColor', [0, 0, 0, 0.1], 'EdgeColor', 'none');
+        set(ax, 'YLim', y);
+    end
+    
+    fprintf('\n');

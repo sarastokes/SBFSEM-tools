@@ -32,9 +32,6 @@ classdef Cylinder < handle
         % Import the neurons
         c1411 = Neuron(1411, 'i');
         c1441 = Neuron(1441, 'i');
-        % Build the 3D models
-        c1411.build();
-        c1441.build();
         % Render in a new figure
         r1411.render();
         % Add to existing figure
@@ -54,11 +51,11 @@ classdef Cylinder < handle
         smoothIter = 1;
     end
     
-    properties (GetAccess = public, Dependent = true, Hidden = true)
+    properties (Hidden, Dependent = true)
         allFV
     end
 
-    properties (Constant = true, Hidden = true)
+    properties (Hidden, Constant = true)
         CIRCLEPTS = 10;         % Points for line3
         CYLINDERPTS = 20;       % Points per around RC
         BRIDGEPTS = 2;          % Points per 2 annotations for RC

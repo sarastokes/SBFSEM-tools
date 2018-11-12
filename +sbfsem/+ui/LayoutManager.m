@@ -10,6 +10,14 @@ classdef LayoutManager < handle
 			uicontrol(h, 'Style', 'text', 'String', str);
 			uicontrol(h, varargin{:});
 			set(h, 'Heights', [-0.75, -1]);
-		end
+        end
+        
+        function h = horizontalBoxWithLabel(parentHandle, str, varargin)
+            h = uix.HBox('Parent', parentHandle,...
+                'BackgroundColor', 'w');
+            uicontrol(h, 'Style', 'text', 'String', str);
+            uicontrol(h, varargin{:});
+            set(h, 'Widths', [-1, -1]);
+        end
 	end
 end
