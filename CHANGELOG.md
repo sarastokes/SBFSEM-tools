@@ -1,5 +1,10 @@
 # Changelog
 
+### 12Nov2018
+- New `SomaStatsView.m` which can be reached through the neuron uimenu in `views\RenderApp.m`.
+- Layouts in `sbfsem.ui.LayoutManager.m` now return the handle of the text component and the parent handle.
+- Table tab in `views\GraphApp.m` now doesn't populate until selected to cut down on init time on 
+
 ### 8Nov2018
 - Added STL export for single neurons (`+sbfsem\+io\STL.m`).
 - Removed bar plot option from `util\analysis\iplDepth.m`

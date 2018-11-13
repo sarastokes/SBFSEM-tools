@@ -13,13 +13,13 @@ classdef ColorMaps
     end
     
     methods
-        function setMap(obj, h, N)
+        function setMap(obj, parentHandle, N)
             % SETMAP  Applies colormap to handle
             if nargin < 3
                 N = 256;
             end
             
-            set(h, 'colormap', obj.getMap(N));
+            set(parentHandle, 'colormap', obj.getMap(N));
         end
         
         function cmap = getMap(obj, N)

@@ -526,6 +526,13 @@ classdef GraphApp < handle
                 set(h, 'Visible', 'off');
             end
         end
+        
+        function onChangedTab(obj, ~, evt)
+            % ONCHANGEDTAB  Don't populate table until necessary
+            if strcmp(evt.NewValue.Title, 'Table') && isempty(evt.NewValue.Children)
+                obj.createTableTab(evt.NewValue);
+            end
+        end
     end
     
     % User interface initialization methods
@@ -552,10 +559,11 @@ classdef GraphApp < handle
                 'Enable', 'off',...
                 'UpdateFcn', @obj.onUpdateCursor);
             
-            tabLayout = uitabgroup('Parent', obj.figureHandle);
+            tabLayout = uitabgroup('Parent', obj.figureHandle,...
+                'SelectionChangedFcn', @obj.onChangedTab);
             graphTab = uitab(tabLayout, 'Title', 'Graph');
             
-            obj.createTableTab(tabLayout);
+            uitab(tabLayout, 'Title', 'Table', 'Tag', 'TableTab');
             obj.createHelpTab(tabLayout);
             
             % The graph layout consists of a UI column and the plot
@@ -681,11 +689,10 @@ classdef GraphApp < handle
             grid(obj.ax, 'on');
         end
         
-        function createTableTab(obj, parentHandle)
+        function createTableTab(obj, tabHandle)
             % CREATETABLE  Initialize annotation table
-            tableTab = uitab(parentHandle, 'Title', 'Table');
 
-            tablePanel = uipanel('Parent', tableTab);
+            tablePanel = uipanel('Parent', tabHandle);
 
             pos = get(obj.figureHandle, 'Position');
             locTable = uitable('Parent', tablePanel,...

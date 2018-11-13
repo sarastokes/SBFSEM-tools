@@ -562,6 +562,12 @@ classdef RenderApp < handle
             GraphApp(neuron);
             obj.updateStatus('');
         end
+
+        function onGetSomaStats(obj, ~, evt)
+            % ONGETSOMASTATS  Open SomaStatsView
+            neuron = obj.neurons(num2str(obj.tag2id(evt.Source.Tag)));
+            SomaStatsView(neuron);
+        end
         
         function onGetStratification(obj, ~, evt)
             % ONGETSTRATIFICATION  Run iplDepth, graph results
@@ -707,6 +713,9 @@ classdef RenderApp < handle
             uimenu(a, 'Label', 'Get Stratification',...
                 'Tag', obj.id2tag(ID),...
                 'Callback', @obj.onGetStratification);
+            uimenu(a, 'Label', 'Get Soma Stats',...
+                'Tag', obj.id2tag(ID),...
+                'Callback', @obj.onGetSomaStats);
             set(newNode, 'UIContextMenu', c);
         end
 
