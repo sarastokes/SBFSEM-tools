@@ -83,7 +83,10 @@ function [iplPercent, stats] = iplDepth(Neuron, varargin)
 	stats.n = numel(iplPercent);
 	fprintf('Median IPL Depth = %.3g\n', stats.median);
     
+    
     [a, b] = histcounts(iplPercent, numBins);
+    [~, ind] = max(a); binMode = b(ind)+b(2)-b(1);
+    fprintf('Mode = %.3g (for %u bins)\n', binMode, numBins);
     
     if isempty(ax)
         ax = axes('Parent', figure());
@@ -128,7 +131,7 @@ function [iplPercent, stats] = iplDepth(Neuron, varargin)
     end
     
     
-    if ~isempty(findobj(ax, 'Tag', 'GCL'))
+    if isempty(findobj(ax, 'Tag', 'GCL'))
         y = get(ax, 'YLim');
         %set(findobj(ax, 'Tag', 'INL'), 'Position', [-0.25, 0, 0.25, y(2)+1]);
         %set(findobj(ax, 'Tag', 'GCL'), 'Position', [1, 0, 0.25, y(2)+1]);
