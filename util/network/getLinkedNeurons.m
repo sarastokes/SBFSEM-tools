@@ -46,7 +46,7 @@ synapseIDs = neuron.synapseIDs(synapseType);
 if isempty(synapseIDs)
     error('No synapses of type %s were found\n', char(synapseType));
 end
-fprintf('Found %u IDs\n', numel(synapseIDs));
+% fprintf('Found %u IDs\n', numel(synapseIDs));
 
 
 % OData query URL templates

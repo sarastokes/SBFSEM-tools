@@ -41,11 +41,11 @@ classdef (Abstract) NeuronAnalysis < handle
             % NEURONANALYSIS
             if nargin > 0
                 % might eventually leave attribute validation to subclasses
-                validateattributes(target, {'sbfsem.core.NeuronAPI', 'sbfsem.NeuronGroup'}, {});
+                validateattributes(target, {'sbfsem.core.StructureAPI'}, {});
                 % Target is a transient property
                 obj.target = target;
                 % Save only the cell ID numbers with analysis
-                if isa(target, 'sbfsem.core.NeuronAPI')
+                if isa(target, 'sbfsem.core.StructureAPI')
                     obj.ID = obj.target.ID;
                 else
                     % TODO: Revist this after writing NeuronGroup code

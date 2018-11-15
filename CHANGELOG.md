@@ -1,5 +1,12 @@
 # Changelog
 
+### 15Nov2018
+- Comprehensive reciprocal synapse function (`+sbfsem\+io\ReciprocalSynapses.m`) ported from python version
+
+### 13Nov2018
+- Fixed a Neuron import issue that was skipping synapse LocalName columns
+- Updated documentation for `util\analysis\helpers\fastEuclid3d.m`
+
 ### 12Nov2018
 - New `SomaStatsView.m` which can be reached through the neuron uimenu in `views\RenderApp.m`.
 - Layouts in `sbfsem.ui.LayoutManager.m` now return the handle of the text component and the parent handle.
