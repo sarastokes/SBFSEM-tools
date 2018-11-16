@@ -67,7 +67,7 @@ classdef RenderApp < handle
         SYNAPSES = false;
         SOURCES = {'NeitzTemporalMonkey','NeitzInferiorMonkey','MarcRC1'};
         CACHE = [fileparts(fileparts(mfilename('fullname'))), filesep, 'data'];
-        COLORMAPS = {'parula', 'haxby', 'winter', 'hsv', 'cubicl', 'viridis', 'redblue', 'bone'};
+        COLORMAPS = {'parula', 'haxby', 'winter', 'hsv', 'cubicl', 'viridis', 'redblue', 'bone', 'isolum (colorblind)', 'ametrine (colorblind)'};
     end
 
     methods
@@ -260,12 +260,6 @@ classdef RenderApp < handle
                 case 'Local'
                     obj.transform = sbfsem.core.Transforms.SBFSEMTools;
             end
-        end
-
-        function onGetSynapses(~, ~, ~)
-            % ONGETSYNAPSES  neuron-specific uicontextmenu callback
-            warningdlg('Not yet implemented!');
-            return;
         end
     end
 
@@ -668,8 +662,8 @@ classdef RenderApp < handle
             view(obj.ax, obj.azel(1), obj.azel(2));
             
             h = findobj(obj.ax, 'Tag', obj.id2tag(newID));
-            set(h, 'FaceVertexCData',... 
-                repmat(h.FaceColor, [size(h.Vertices,1), 1]));
+            % set(h, 'FaceVertexCData',... 
+            %     repmat(h.FaceColor, [size(h.Vertices,1), 1]));
             
             obj.neurons(num2str(newID)) = neuron;
             obj.IDs = cat(2, obj.IDs, newID);
@@ -840,23 +834,27 @@ classdef RenderApp < handle
 
             % Rotation/zoom/pan modes require container with pixels prop
             % Using Matlab's uipanel between render axes and HBoxFlex
-            hp = uipanel('Parent', mainLayout,...
-                'BackgroundColor', 'w');
+            hp = uipanel(mainLayout, 'BackgroundColor', 'w');
+            obj.createAxes(hp);
 
-            % Create the render axes
-            obj.ax = axes('Parent', hp);
+            set(mainLayout, 'Widths', [-1 -3]);
+        end
+
+        function createAxes(obj, parentHandle)
+            % CREATEAXES  Create the render plot axes
+
+            obj.ax = axes('Parent', parentHandle);
+            hold(obj.ax, 'on');
             shading(obj.ax, 'interp');
-            axis(obj.ax, 'equal', 'tight');
             grid(obj.ax, 'on');
+            axis(obj.ax, 'equal', 'tight');
             view(obj.ax, 3);
             xlabel(obj.ax, 'X'); ylabel(obj.ax, 'Y'); zlabel(obj.ax, 'Z');
 
-            % Set up the lighting
+            % Set the lighting
             obj.lights = [light(obj.ax), light(obj.ax)];
             lightangle(obj.lights(1), 45, 30);
             lightangle(obj.lights(2), 225, 30);
-
-            set(mainLayout, 'Widths', [-1 -3]);
         end
 
         function createNeuronTab(obj, parentHandle)
@@ -1222,6 +1220,8 @@ classdef RenderApp < handle
                     cmap = parula(N);
                 case 'winter'
                     cmap = winter(N);
+                case 'bone'
+                    cmap = bone(N);
                 case 'hsv'
                     cmap = hsv(N);
                 case 'viridis'
@@ -1232,6 +1232,10 @@ classdef RenderApp < handle
                     cmap = haxby(N);
                 case 'redblue'
                     cmap = lbmap(N, 'RedBlue');
+                case 'ametrine (colorblind)'
+                    cmap = ametrine(N);
+                case 'isolum (colorblind)'
+                    cmap = isolum(N);
             end
         end
 

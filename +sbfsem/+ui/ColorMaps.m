@@ -10,6 +10,8 @@ classdef ColorMaps
         Parula
         RedBlue
         Viridis
+        Ametrine
+        Isolum
     end
     
     methods
@@ -20,6 +22,16 @@ classdef ColorMaps
             end
             
             set(parentHandle, 'colormap', obj.getMap(N));
+        end
+        
+        function tf = colorblind(obj)
+            % COLORBLIND  Is the colormap good for red-green colorblind?
+            import sbfsem.ui.Colormaps;
+            if ismember(obj, {ColorMaps.Isolum, ColorMaps.Ametrine})
+                tf = true;
+            else
+                tf = false;
+            end
         end
         
         function cmap = getMap(obj, N)
@@ -43,10 +55,10 @@ classdef ColorMaps
                     cmap = jet(N);
                 case ColorMaps.Parula
                     cmap = parula(N);
-                    % Python
+                % Python
                 case ColorMaps.Viridis
                     cmap = viridis(N);
-                    % Perceptually distinct
+                % Perceptually distinct
                 case ColorMaps.CubicL
                     if N > 256
                         N = 256;
@@ -57,12 +69,17 @@ classdef ColorMaps
                         N = 256;
                     end
                     cmap = pmkmp('CubicYF', N);
-                    % Light-Bertlein
+                % Light-Bertlein
                 case ColorMaps.RedBlue
                     cmap = fliplr(lbmap('RedBlue', N));
-                    % Ocean
+                % Ocean
                 case ColorMaps.Haxby
                     cmap = haxby(N);
+                % Colorblind
+                case ColorMaps.Isolum
+                    cmap = isolum(N);
+                case ColorMaps.Ametrine
+                    cmap = ametrine(N);
                 otherwise
                     warning('SBFSEM:UI:COLORMAPS',...
                         'Unrecognized color map');
@@ -97,6 +114,11 @@ classdef ColorMaps
                 % Ocean
                 case 'haxby'
                     obj = ColorMaps.Haxby;
+                % Colorblind
+                case 'ametrine'
+                    obj = ColorMaps.Ametrine;
+                case 'isolum'
+                    obj = ColorMaps.Isolum;
                 otherwise
                     warning('SBFSEM:UI:COLORMAPS',...
                         'Unrecognized color map');

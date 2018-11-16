@@ -51,7 +51,7 @@ classdef ReciprocalSynapses < sbfsem.analysis.NeuronAnalysis
             fprintf('c%u assigned type: %s\n', obj.neuron.ID, obj.neuronType);
             
             obj.fetchData();
-            % obj.doAnalysis();
+            obj.doAnalysis();
         end
 
         function doAnalysis(obj, searchRadius)
@@ -70,8 +70,8 @@ classdef ReciprocalSynapses < sbfsem.analysis.NeuronAnalysis
             fprintf('c%u - Analyzing with a %.3g micron search radius\n',...
                 obj.neuron.ID, obj.searchRadius);
             
-            % Remove NaNs and split
-            [preData, postData] = obj.rmUnlinked();
+            % Remove NaNs and return as arrays
+            [preData, postData] = obj.rmUnlinked(false);
             preNeurons = preData(:, 1); preSynapses = preData(:, 2); 
             postNeurons = postData(:, 1); postSynapses = postData(:, 2); 
             
@@ -105,19 +105,33 @@ classdef ReciprocalSynapses < sbfsem.analysis.NeuronAnalysis
             end
         end
 
-        function [preData, postData] = rmUnlinked(obj)
+        function [preData, postData] = rmUnlinked(obj, returnTable)
+            % RMUNLINKED  Remove NaNs from pre and post synaptic data tables
+            if nargin < 2
+                returnTable = true;
+            else
+                assert(islogical(returnTable), 'returnTable must be true/false');
+            end
+
             fprintf('%u of %u pre-synaptic neurons are unannotated\n',...
                 nnz(isnan(obj.preSynData.preNeurons)), height(obj.preSynData));
             fprintf('%u of %u post-synaptic neurons are unannotated\n',... 
                 nnz(isnan(obj.postSynData.postNeurons)), height(obj.postSynData));
             preData = obj.preSynData{~isnan(obj.preSynData.preNeurons), :};
             postData = obj.postSynData{~isnan(obj.postSynData.postNeurons), :};
+
+            if returnTable
+                preData = array2table(preData,...
+                    'VariableNames', {'preNeurons', 'preSynapses'});
+                postData = array2table(postData,...
+                    'VariableNames', {'postNeurons', 'postSynapses'});
+            end
         end
     end
 
     methods (Access = private)
         function fetchData(obj)
-            
+            % FETCHDATA  Query database for linked neurons
             switch obj.neuronType
                 case 'bipolar'
                     preName = 'ConvPost'; postName = 'RibbonPre';

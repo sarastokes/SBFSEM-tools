@@ -33,6 +33,10 @@ function iplPercent = getStrataCData(neuron, INL, GCL)
 		V(:, 1), V(:, 2));
 
 	iplPercent = (V(:, 3) - vINL) ./ ((vGCL-vINL)+eps);
+    if nnz(isnan(iplPercent)) > 0
+        fprintf('IPLDepth found %u NaNs\n', nnz(isnan(iplPercent)));
+        iplPercent(isnan(iplPercent)) = mean(iplPercent, 'omitnan');
+    end
 
 	if applyCData
 		set(neuron, 'FaceVertexCData', iplPercent);

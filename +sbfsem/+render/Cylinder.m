@@ -139,9 +139,11 @@ classdef Cylinder < handle
 
             ip = inputParser();
             ip.CaseSensitive = false;
-            addParameter(ip, 'FaceColor', [0.5 0 0.8],...
+            addParameter(ip, 'FaceColor', [0.5, 0, 1],...
                 @(x) isvector(x) || ischar(x));
             addParameter(ip, 'FaceAlpha', 1, @isnumeric);
+            addParameter(ip, 'FaceVertexCData', [],... 
+                @(x) isvector(x) || ischar(x));
             addParameter(ip, 'ax', [], @ishandle);
             addParameter(ip, 'useSegments', false, @islogical);
             addParameter(ip, 'reduce', false, @islogical);
@@ -149,6 +151,12 @@ classdef Cylinder < handle
             parse(ip, varargin{:});
             FaceColor = ip.Results.FaceColor;
             FaceAlpha = ip.Results.FaceAlpha;
+            if isempty(ip.Results.FaceVertexCData)
+                FaceVertexCData = FaceColor;
+            else
+                FaceVertexCData = ip.Results.FaceVertexCData;
+            end
+            
             
             if obj.reduceFac == 1
                 doReduction = false;
@@ -174,6 +182,7 @@ classdef Cylinder < handle
                     p = patch(obj.FV{i},...
                         'FaceColor', FaceColor,...
                         'FaceAlpha', FaceAlpha,...
+                        'FaceVertexCData', FaceVertexCData,...
                         'EdgeColor', 'none',...
                         'Tag', ip.Results.Tag,...
                         'Parent', ax);

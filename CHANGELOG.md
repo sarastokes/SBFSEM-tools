@@ -1,5 +1,9 @@
 # Changelog
 
+### 16Nov2018
+- Added colorblind colormaps to `views\RenderApp.m`: ametrine and isolum
+- Replace the rare NaN values returned from `util\render\getStrataCData.m` with median depth. Not a long-term solution but will keep the code running.
+
 ### 15Nov2018
 - Comprehensive reciprocal synapse function (`+sbfsem\+io\ReciprocalSynapses.m`) ported from python version
 
