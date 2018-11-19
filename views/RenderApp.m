@@ -64,6 +64,7 @@ classdef RenderApp < handle
 
     properties (Constant = true, Hidden = true)
         DEFAULTALPHA = 0.6;
+        BUBBLE_SIZE = 1/30;
         SYNAPSES = false;
         SOURCES = {'NeitzTemporalMonkey','NeitzInferiorMonkey','MarcRC1'};
         CACHE = [fileparts(fileparts(mfilename('fullname'))), filesep, 'data'];
@@ -291,11 +292,41 @@ classdef RenderApp < handle
                 end
             end
         end
+        
+        function onShowLastModified(obj, ~, evt)
+            % ONSHOWLASTMODIFIED  Draw bubble around last modified location
+            
+            % Delete any existing last modified annotations
+            obj.deleteLastMod();  
+            
+            neuron = obj.neurons(num2str(obj.tag2id(evt.Source.Tag)));
+            XYZ = neuron.id2xyz(neuron.getLastModifiedID());
+            if isempty(XYZ)
+                obj.updateStatus('Last Modified Not Found!');
+                return;
+            end
+            
+            axLims = obj.getLimits(obj.ax);
+            axSize = mean(abs(axLims(:,2) - axLims(:,1)));
+            radius = obj.BUBBLE_SIZE * axSize;
+            
+            % Make the annotation
+            [X, Y, Z] = sphere();
+            X = radius * X; Y = radius * Y; Z = radius * Z;
+            X = X + XYZ(1); Y = Y + XYZ(2); Z = Z + XYZ(3);
+            
+            p = surf(X, Y, Z, 'Parent', obj.ax,...
+                'FaceColor', [0.5, 0.5, 0.5], 'EdgeColor', 'none',...
+                'FaceAlpha', 0.3, 'FaceLighting', 'gouraud',...
+                'Tag', 'LastModified');
+            c = uicontextmenu();
+            uimenu(c, 'Label', 'Delete', 'Callback', @obj.deleteLastMod);
+            p.UIContextMenu = c;
+        end
 
         function onColorByStrata(obj, ~, evt)
             % ONCOLORBYSTRATA  Color by stratification
 
-            % neuron = obj.neurons(num2str(obj.tag2id(evt.Source.Tag)));
             obj.updateStatus('Coloring...');
             h = findall(obj.ax, 'Tag', evt.Source.Tag);
             set(h, 'FaceVertexCData',...
@@ -567,7 +598,12 @@ classdef RenderApp < handle
             % ONGETSTRATIFICATION  Run iplDepth, graph results
             neuron = obj.neurons(num2str(obj.tag2id(evt.Source.Tag)));
             obj.updateStatus('Analyzing...');
-            iplDepth(neuron, 'numBins', 25, 'includeSoma', true);
+            neuronColor = get(findobj(obj.ax, 'Tag', evt.Source.Tag), 'FaceColor');
+            if ischar(neuronColor)
+                neuronColor = 'k';
+            end
+            iplDepth(neuron, 'numBins', 25, 'includeSoma', true,...
+                     'Color', neuronColor);
             obj.updateStatus('');
         end
 
@@ -662,8 +698,8 @@ classdef RenderApp < handle
             view(obj.ax, obj.azel(1), obj.azel(2));
             
             h = findobj(obj.ax, 'Tag', obj.id2tag(newID));
-            % set(h, 'FaceVertexCData',... 
-            %     repmat(h.FaceColor, [size(h.Vertices,1), 1]));
+            set(h, 'FaceVertexCData',... 
+                repmat(h.FaceColor, [size(h.Vertices,1), 1]));
             
             obj.neurons(num2str(newID)) = neuron;
             obj.IDs = cat(2, obj.IDs, newID);
@@ -699,6 +735,9 @@ classdef RenderApp < handle
             uimenu(c, 'Label', 'Color by strata',...
                 'Tag', obj.id2tag(ID),...
                 'Callback', @obj.onColorByStrata);
+            uimenu(c, 'Label', 'Show Last Modified',...
+                'Tag', obj.id2tag(ID),...
+                'Callback', @obj.onShowLastModified);
             uimenu(c, 'Label', 'Open GraphApp',...
                 'Tag', obj.id2tag(ID),...
                 'Callback', @obj.onOpenGraphApp);
@@ -757,6 +796,12 @@ classdef RenderApp < handle
             else
                 set(h, 'Visible', 'off');
             end
+        end
+              
+        function deleteLastMod(varargin)
+            % DELETELASTMOD  Delete last modified location annotation
+            obj = varargin{1};
+            delete(findall(obj.ax, 'Tag', 'LastModified'));
         end
     end
 
@@ -1179,7 +1224,6 @@ classdef RenderApp < handle
             helpdlg(helpStr, dlgTitle);
         end
     end
-
 
     methods (Static = true)
         function lim = getLimits(ax)

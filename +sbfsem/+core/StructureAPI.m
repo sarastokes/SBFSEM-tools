@@ -63,6 +63,12 @@ classdef (Abstract) StructureAPI < handle
             obj.pull();
             obj.lastModified = datestr(now);
         end
+        
+        function ID = getLastModifiedID(obj)
+            % GETLASTMODIFIEDID  Get last modified location ID in structure
+            data = getLastModifiedAnnotation(obj.ID, obj.source);
+            ID = data.ID;
+        end
 
         function xyz = id2xyz(obj, IDs)
             row = ismember(obj.nodes.ID, IDs);

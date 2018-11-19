@@ -1,8 +1,12 @@
 # Changelog
 
+### 18Nov2018
+- Show area of last modified annotation in `views\RenderApp.m` using new function `util\import\getLastModifiedAnnotation.m`.
+- Added option to input Synapse ID into `sbfsem.core.NeuronAPI\getSynapseXYZ.m`
+
 ### 16Nov2018
 - Added colorblind colormaps to `views\RenderApp.m`: ametrine and isolum
-- Replace the rare NaN values returned from `util\render\getStrataCData.m` with median depth. Not a long-term solution but will keep the code running.
+- Replace the rare NaN values returned from `util\renders\getStrataCData.m` with median depth. Not a long-term solution but will keep the code running.
 
 ### 15Nov2018
 - Comprehensive reciprocal synapse function (`+sbfsem\+io\ReciprocalSynapses.m`) ported from python version

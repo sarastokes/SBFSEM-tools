@@ -150,8 +150,16 @@ classdef (Abstract) NeuronAPI < sbfsem.core.StructureAPI
             % GETSYNAPSEXYZ  Get xyz of synapse type
             %
             % Inputs:
-            %   syn             Synapse name
+            %   syn             Synapse name or Structure ID number(s)
             %   useMicrons      Logical (default = true)
+            %
+            % Examples:
+            %   % Return XYZ of all post-ribbon synapse annotations
+            %   syn = obj.getSynapseXYZ('RibbonPost');
+            %   % Return XYZ of a specific synapse ID
+            %   syn = c1781.getSynapseXYZ(14796);
+            %   % Return XYZ of several synapse IDs
+            %   syn = c1781.getSynapseXYZ([14796, 14798]);
             % -------------------------------------------------------------
             if nargin < 3
                 useMicrons = true;
@@ -162,11 +170,15 @@ classdef (Abstract) NeuronAPI < sbfsem.core.StructureAPI
             if ischar(syn)
                 syn = sbfsem.core.StructureTypes(syn);
             end
-
-            row = obj.synapses.LocalName == syn;
-            IDs = obj.synapses.ID(row,:);
-            % Find the unique instances of each synapse ID
-            row = ismember(obj.nodes.ParentID, IDs) & obj.nodes.Unique;
+            
+            if isa(syn, 'sbfsem.core.StructureTypes')                
+                row = obj.synapses.LocalName == syn;
+                IDs = obj.synapses.ID(row,:);
+                % Find the unique instances of each synapse ID
+                row = ismember(obj.nodes.ParentID, IDs) & obj.nodes.Unique;
+            elseif isnumeric(syn)
+                row = ismember(obj.nodes.ParentID, syn) & obj.nodes.Unique;
+            end
 
             % Get the xyz values for only those rows
             if useMicrons
