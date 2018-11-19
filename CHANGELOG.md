@@ -3,6 +3,7 @@
 ### 18Nov2018
 - Show area of last modified annotation in `views\RenderApp.m` using new function `util\import\getLastModifiedAnnotation.m`.
 - Added option to input Synapse ID into `sbfsem.core.NeuronAPI\getSynapseXYZ.m`
+- Updated version of `util\network\degreePlot.m` with force3 layout for newer MATLAB version
 
 ### 16Nov2018
 - Added colorblind colormaps to `views\RenderApp.m`: ametrine and isolum
