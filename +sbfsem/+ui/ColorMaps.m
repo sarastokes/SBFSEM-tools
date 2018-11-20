@@ -6,7 +6,8 @@ classdef ColorMaps
         CubicYF
         Gray
         Haxby
-        Jet
+        Hsv
+        AntiJet
         Parula
         RedBlue
         Viridis
@@ -51,10 +52,13 @@ classdef ColorMaps
                     cmap = bone(N);
                 case ColorMaps.Gray
                     cmap = gray(N);
-                case ColorMaps.Jet
-                    cmap = jet(N);
                 case ColorMaps.Parula
                     cmap = parula(N);
+                case ColorMaps.Hsv
+                    cmap = hsv(N);
+                % Improved version of jet
+                case ColorMaps.AntiJet
+                    cmap = antijet(N);
                 % Python
                 case ColorMaps.Viridis
                     cmap = viridis(N);
@@ -98,8 +102,11 @@ classdef ColorMaps
                     obj = ColorMaps.Bone;
                 case 'gray'
                     obj = ColorMaps.Gray;
-                case 'jet'
-                    obj = ColorMaps.Jet;
+                case 'hsv'
+                    obj = ColorMaps.Hsv;
+                % Improved version of jet
+                case {'jet', 'antijet'}
+                    obj = ColorMaps.AntiJet;
                 % Perceptually distinct
                 case 'cubicl'
                     obj = ColorMaps.CubicL;

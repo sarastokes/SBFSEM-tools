@@ -14,7 +14,6 @@ classdef RenderApp < handle
     %   - Check for duplicate neurons
     %   - Synapses
     %   - Legend colors
-    %   - Add neuron input validation
     %
     % See also:
     %   GRAPHAPP, IMAGESTACKAPP, IPLDEPTHAPP, NEURON
@@ -27,6 +26,7 @@ classdef RenderApp < handle
     %   7Oct2018 - SSP - New context tab for importing markers, cones
     %   30Oct2018 - SSP - Fully debugged boundary and gap markers
     %   6Nov2018 - SSP - Color by stratification added
+    %   19Nov2018 - SSP - Last modified location added
     % ---------------------------------------------------------------------
 
     properties (SetAccess = private)
@@ -68,7 +68,9 @@ classdef RenderApp < handle
         SYNAPSES = false;
         SOURCES = {'NeitzTemporalMonkey','NeitzInferiorMonkey','MarcRC1'};
         CACHE = [fileparts(fileparts(mfilename('fullname'))), filesep, 'data'];
-        COLORMAPS = {'parula', 'haxby', 'winter', 'hsv', 'cubicl', 'viridis', 'redblue', 'bone', 'isolum (colorblind)', 'ametrine (colorblind)'};
+        COLORMAPS = {'parula', 'haxby', 'winter', 'hsv', 'antijet',...
+            'cubicl', 'viridis', 'redblue', 'bone', 'isolum (colorblind)',...
+            'ametrine (colorblind)'};
     end
 
     methods
@@ -121,7 +123,7 @@ classdef RenderApp < handle
     % Neuron callback methods
     methods (Access = private)
         function onAddNeuron(obj, ~, ~)
-            
+            % ONADDNEURON  Callback for adding neurons via edit box
             inputBox = findobj(obj.figureHandle, 'Tag', 'InputBox');
             
             % No input detected
@@ -252,6 +254,7 @@ classdef RenderApp < handle
         end
 
         function onSetTransform(obj, src, ~)
+            % ONSETTRANSFORM  
             if ~isempty(obj.neurons)
                 warndlg('Changing the Transform with existing neurons is not recommended.');
             end
@@ -480,7 +483,14 @@ classdef RenderApp < handle
             colormap(obj.ax, obj.getColormap(newMap, str2double(h.String)));
         end
         
+        function onInvertMap(obj, ~, ~)
+            % ONINVERTMAP  Reverse the colormap scaling
+            currentMap = colormap(obj.ax);
+            colormap(obj.ax, flipud(currentMap));
+        end
+        
         function onKeyPress_CMapLevels(obj, src, evt)
+            % ONKEYPRESS_CMAPLEVELS  Callback to check for 'enter' press
             if strcmp(evt.Key, 'return')
                 try
                     N = str2double(src.String);
@@ -546,6 +556,7 @@ classdef RenderApp < handle
         end
 
         function onAddBoundary(obj, src, ~)
+            % ONADDBOUNDARY  Add IPL Boundary markers
             if isempty(obj.iplBound.GCL)
                 obj.updateStatus('Importing boundaries');
 
@@ -706,9 +717,8 @@ classdef RenderApp < handle
             tf = true;
         end
 
-        function newNode = addNeuronNode(obj, ID, ~, ~)
+        function newNode = addNeuronNode(obj, ID, ~)
             % ADDNEURONNODE  Add new neuron node to checkbox tree
-            % Argument four was 'hasSynapses'
 
             newNode = uiextras.jTree.CheckboxTreeNode(...
                 'Parent', obj.neuronTree,...
@@ -1047,15 +1057,25 @@ classdef RenderApp < handle
                 'TooltipString', 'Toggle b/w 3D and flat 2D',...
                 'Callback', @obj.onToggleLights);
             set(g, 'Heights', [-1 -1], 'Widths', [-1, -1]);
+            
+            uicontrol(ctrlLayout,...
+                'Style', 'text', 'String', 'Colormap:',...
+                'FontWeight', 'bold');
 
             cmapLayout = uix.HBox('Parent', ctrlLayout,...
                 'BackgroundColor', 'w');
-            LayoutManager.verticalBoxWithLabel(cmapLayout, 'Color map:',...
+            cmapSubLayout = uix.VBox('Parent', cmapLayout,...
+                'BackgroundColor', 'w');
+            uicontrol(cmapSubLayout,...
                 'Style', 'popup',...
                 'String', obj.COLORMAPS,...
                 'Tag', 'CMaps',...
                 'TooltipString', 'Change colormap used for strata',...
                 'Callback', @obj.onChangeColormap);
+            uicontrol(cmapSubLayout,...
+                'Style', 'push',...
+                'String', 'Invert Map',...
+                'Callback', @obj.onInvertMap);
             LayoutManager.verticalBoxWithLabel(cmapLayout, 'Levels:',...
                 'Style', 'edit',...
                 'String', '256',...
@@ -1073,7 +1093,7 @@ classdef RenderApp < handle
                 'Callback', @obj.onSetTransparency);
             uix.Empty('Parent', ctrlLayout);
             uicontrol(ctrlLayout,...
-                'Style', 'text', 'String', 'Axis options:',...
+                'Style', 'text', 'String', 'View points:',...
                 'FontWeight', 'bold');
             rotLayout = uix.HBox('Parent', ctrlLayout,...
                 'BackgroundColor', 'w');
@@ -1100,7 +1120,7 @@ classdef RenderApp < handle
                 'Callback', @onAddScaleBar);
 
             set(ctrlLayout, 'Heights',...
-                [-0.5, -2, -1.25, -1.25, -0.2, -0.5, -1, -0.5, -2.5, -0.75]);
+                [-0.5, -1.75, -0.5, -1.5, -1.25, -0.2, -0.5, -1, -0.5, -2.5, -0.75]);
         end
 
         function createToolbar(obj)
@@ -1119,6 +1139,9 @@ classdef RenderApp < handle
             mh.help = uimenu(obj.figureHandle, 'Label', 'Help');
             uimenu(mh.help, 'Label', 'Keyboard controls',...
                 'Tag', 'navigation',...
+                'Callback', @obj.openHelpDlg);
+            uimenu(mh.help, 'Label', 'Neuron analysis',...
+                'Tag', 'neuron_info',...
                 'Callback', @obj.openHelpDlg);
             uimenu(mh.help, 'Label', 'Annotation import',...
                 'Tag', 'import',...
@@ -1268,6 +1291,8 @@ classdef RenderApp < handle
                     cmap = bone(N);
                 case 'hsv'
                     cmap = hsv(N);
+                case 'antijet'
+                    cmap = antijet(N);
                 case 'viridis'
                     cmap = viridis(N);
                 case 'cubicl'
@@ -1302,6 +1327,15 @@ classdef RenderApp < handle
                     '   Click on figure then press ''c''\n',...
                     '\nHELP: ''h''\n']);
                 dlgTitle = 'Navigation Instructions';
+            case 'neuron_info'
+                    str = sprintf(['NEURON ANALYSES:\n',...
+                    '\nRight click on a neuron in left panel for options.\n',...
+                    '\nAPPEARANCE:\n',...
+                    '\tColor by strata shows stratification\n',...
+                    '\t\tModify appearance in PLOT tab\n',...
+                    '\t\tLevels is the number of distinct colors\n',...
+                    '\tLast modified location shows last edited area\n',...
+                    '\tRight click on grey bubble to delete\n']);
             case 'import'
                 str = sprintf(['NEURONS:\n',...
                     'Import neurons by typing in the cell ID(s)\n',...
