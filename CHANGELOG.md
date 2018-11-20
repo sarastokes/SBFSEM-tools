@@ -1,5 +1,9 @@
 # Changelog
 
+### 19Nov2018
+- Cleaned function for determining user contributions (`util\import\getContributions.m`)
+- Added a tutorial for using the contributions function (`tutorials\tutorial_Contributions.m`)
+
 ### 18Nov2018
 - Show area of last modified annotation in `views\RenderApp.m` using new function `util\import\getLastModifiedAnnotation.m`.
 - Added option to input Synapse ID into `sbfsem.core.NeuronAPI\getSynapseXYZ.m`

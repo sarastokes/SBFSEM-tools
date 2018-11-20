@@ -1,27 +1,27 @@
-function [n, groupNames] = getContributions(ID, source, synapses, visualize)
+function T = getContributions(ID, source, visualize)
 	% GETCONTRIBUTIONS
 	%
-	%
+	% Description:
+    %   Get the number of annotations per username for a Structure ID
+    %
+    % Syntax:
+    %   T = getContributions(ID, source, visualize)
+    %
+    % Inputs:
+    %   ID          Stucture ID number
+    %   source      Volume name or abbreviation
+    %   visualize   Plot result? (default = true)
+    %
+    % History:
+    %   19Jul2018 - SSP
+    %   19Nov2018 - SSP - Removed synapse option
+    % ---------------------------------------------------------------------
 
 	if nargin < 3
-		synapses = false;
-	end
-
-	if nargin < 4
-		visualize = false;
-	end
-
+		visualize = true;
+    end
 
 	usernames = getUsernames(ID, source);
-
-	if synapses
-		neuron = Neuron(ID, source, true);
-		IDs = neuron.synapseIDs();
-		for i = 1:numel(IDs)
-			usernames = vertcat(getUsernames(IDs(i), source));
-		end
-	end
-
 	usernames = cellstr(usernames);
 
 	
@@ -39,7 +39,9 @@ function [n, groupNames] = getContributions(ID, source, synapses, visualize)
 	if visualize
 		figure();
 		pie(n, groupNames);
-	end
+    end
+    
+    T = table(groupNames, n, 'VariableNames', {'Username', 'Annotations'});
 end
 
 function usernames = getUsernames(ID, source)
