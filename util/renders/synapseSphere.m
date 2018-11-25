@@ -17,6 +17,7 @@ function synapseSphere(neuron, synapse, varargin)
     %   edgecolor           Default = none
     %   facealpha           Render transparency (default = 1)
     %   tag                 Char to identify renders in scene
+    % Any other key/value input to the surf() command that renders synapse
     %
     % Notes:
     %   A unit (1 micron) sphere is created and moved to the synapse XYZ
@@ -41,16 +42,14 @@ function synapseSphere(neuron, synapse, varargin)
     assert(isa(neuron, 'sbfsem.core.NeuronAPI'),...
         'First argument must be Neuron object');
     
-    if isnumeric(synapse)
-        xyz = synapse;
-    else
-        xyz = neuron.getSynapseXYZ(synapse);
-    end
-    
+    xyz = neuron.getSynapseXYZ(synapse);
+
     ip = inputParser();
+    ip.KeepUnmatched = true;  % Surf properties
     ip.CaseSensitive = false;
     addParameter(ip, 'ax', [], @ishandle);
     addParameter(ip, 'sf', 0.5, @isnumeric);
+    % surf properties with defaults
     addParameter(ip, 'EdgeColor', 'none',...
         @(x) ischar(x) || isvector(x));
     addParameter(ip, 'FaceColor', rgb('light red'),...
@@ -60,10 +59,11 @@ function synapseSphere(neuron, synapse, varargin)
     addParameter(ip, 'Tag', [], @ischar);
     parse(ip, varargin{:});
 
-    if isempty(ip.Results.Tag) && ~isnumeric(synapse)
-        Tag = ['c', num2str(neuron.ID)];
-        if ~isnumeric(synapse)
-            Tag = [Tag, char(synapse)];
+    if isempty(ip.Results.Tag) 
+        if isnumeric(synapse)
+            Tag = ['s', num2str(synapse)];
+        else
+            Tag = ['c', num2str(neuron.ID)];
         end
     else
         Tag = ip.Results.Tag;
@@ -93,5 +93,5 @@ function synapseSphere(neuron, synapse, varargin)
             'FaceColor', ip.Results.FaceColor,...
             'EdgeColor', ip.Results.EdgeColor,...
             'FaceAlpha', ip.Results.FaceAlpha,...
-            'Tag', Tag);
+            'Tag', Tag, ip.Unmatched);
     end

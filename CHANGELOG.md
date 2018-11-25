@@ -1,5 +1,8 @@
 # Changelog
 
+### 20Nov2018
+- Improvements to `util\renders\synapseSphere.m`
+
 ### 19Nov2018
 - Cleaned function for determining user contributions (`util\import\getContributions.m`)
 - Added a tutorial for using the contributions function (`tutorials\tutorial_Contributions.m`)

@@ -292,7 +292,7 @@ classdef (Abstract) StructureAPI < handle
             end
         end
 
-        function render(obj, varargin)
+        function p = render(obj, varargin)
             % RENDER
             %
             % Inputs:
@@ -307,13 +307,13 @@ classdef (Abstract) StructureAPI < handle
             end
             if isa(obj.model, 'sbfsem.builtin.ClosedCurve')
                 obj.model.trace(varargin{:});
+                p = [];
             elseif isnumeric(obj.model) % Closed curve volume
-                volumeRender(obj.model,...
+                p = volumeRender(obj.model,...
                     'Tag', ['c', num2str(obj.ID)],...
                     varargin{:});
             else
-                obj.model.render(varargin{:});
-                view(3);
+                p = obj.model.render(varargin{:});
             end
         end
     end

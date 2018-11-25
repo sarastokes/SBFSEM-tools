@@ -128,7 +128,7 @@ classdef Cylinder < handle
             axis off;
         end
         
-        function render(obj, varargin)
+        function p = render(obj, varargin)
             % RENDER
             %
             % Optional key/value inputs:
@@ -209,6 +209,10 @@ classdef Cylinder < handle
             axis(ax, 'equal');
             axis(ax, 'tight');
             lighting phong;
+            
+            if nargout == 1
+                p = findobj(ax, 'Tag', sprintf('c%u', obj.ID));
+            end
         end
         
         function dae(obj, fname)
