@@ -22,6 +22,7 @@ function [iplPercent, stats] = iplDepth(Neuron, varargin)
     %   19Feb2018 - SSP - Added numBins input
     %   22Oct2018 - SSP - Added boundary markers from cache
     %   8Nov2018 - SSP - Removed bar plot option
+    %   18Nov2018 - SSP - Specify bins option
 	% ---------------------------------------------------------------------
 
 	assert(isa(Neuron, 'sbfsem.core.StructureAPI'),...
@@ -33,6 +34,7 @@ function [iplPercent, stats] = iplDepth(Neuron, varargin)
     ip = inputParser();
     ip.CaseSensitive = false;
     addParameter(ip, 'numBins', 20, @isnumeric);
+    addParameter(ip, 'binLocations', [], @isvector);
     addParameter(ip, 'Color', 'k', @(x) isvector(x) || ischar(x));
     addParameter(ip, 'plotVariability', false, @islogical);
     addParameter(ip, 'includeSoma', false, @islogical);
@@ -45,6 +47,7 @@ function [iplPercent, stats] = iplDepth(Neuron, varargin)
     ax = ip.Results.ax;
     omitOutliers = ip.Results.omitOutliers;
     lineColor = ip.Results.Color;
+    binLocations = ip.Results.binLocations;
     
     fprintf('-- c%u --\n', Neuron.ID);
 
@@ -83,8 +86,11 @@ function [iplPercent, stats] = iplDepth(Neuron, varargin)
 	stats.n = numel(iplPercent);
 	fprintf('Median IPL Depth = %.3g\n', stats.median);
     
-    
-    [a, b] = histcounts(iplPercent, numBins);
+    if isempty(binLocations)
+        [a, b] = histcounts(iplPercent, numBins);
+    else
+        [a, b] = histcounts(iplPercent, binLocations);
+    end
     [~, ind] = max(a); binMode = b(ind)+b(2)-b(1);
     fprintf('Mode = %.3g (for %u bins)\n', binMode, numBins);
     

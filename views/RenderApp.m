@@ -51,7 +51,7 @@ classdef RenderApp < handle
         isInverted          % Is axis color inverted
 
         % UI view controls
-        azel = [-37.5, 30];
+        azel = [-35, 30];
         zoomFac = 0.9;
         panFac = 0.02;
 
@@ -65,6 +65,7 @@ classdef RenderApp < handle
     properties (Constant = true, Hidden = true)
         DEFAULTALPHA = 0.6;
         BUBBLE_SIZE = 1/30;
+        UI_WIDTH = 140;     % Pixels
         SYNAPSES = false;
         SOURCES = {'NeitzTemporalMonkey','NeitzInferiorMonkey','MarcRC1'};
         CACHE = [fileparts(fileparts(mfilename('fullname'))), filesep, 'data'];
@@ -105,7 +106,7 @@ classdef RenderApp < handle
             end
 
             obj.neurons = containers.Map();
-            if ~strcmp(obj.source, 'MarcRC1')
+            if ~strcmp(obj.source, 'RC1')
                 obj.iplBound.GCL = sbfsem.builtin.GCLBoundary(obj.source, true);
                 obj.iplBound.INL = sbfsem.builtin.INLBoundary(obj.source, true);
             else
@@ -114,7 +115,12 @@ classdef RenderApp < handle
             obj.vessels = [];
             obj.createUI();
 
-            obj.volumeScale = getODataScale(obj.source);
+            try
+                obj.volumeScale = getODataScale(obj.source);
+            catch
+                obj.volumeScale = loadCachedVolumeScale(obj.source);
+            end
+
             obj.isInverted = false;
             obj.xyOffset = [];
         end
@@ -147,8 +153,8 @@ classdef RenderApp < handle
             for i = 1:numel(str)
                 newID = str2double(str{i});
                 obj.updateStatus(sprintf('Adding c%u', newID));
-                success = obj.addNeuron(newID);
-                if ~success
+                didImport = obj.addNeuron(newID);
+                if ~didImport
                     fprintf('Skipped c%u\n', newID);
                     continue;
                 end
@@ -156,24 +162,43 @@ classdef RenderApp < handle
                 newColor = findall(obj.ax, 'Tag', obj.id2tag(newID));
                 newColor = get(newColor(1), 'FaceColor');
 
-                obj.addNeuronNode(newID, newColor);
+                obj.addNeuronNode(newID, newColor, true);
                 obj.updateStatus();
                 % Update the plot after each neuron imports
                 drawnow;
             end
-            h = findobj(obj.figureHandle, 'Type', 'uitable');
-            data = get(h, 'Data');
-            names = get(h, 'RowName');
-            for i = 1:3
-                if data{i,1}
-                    set(obj.ax, [names{i}, 'Lim'], [data{i,2}, data{i,3}]);
+        end
+        
+        function onAddNeuronJSON(obj, ~, ~)
+            % ADDNEURONJSON  Load JSON neuron
+            [fName, fPath] = uigetfile('.json',...
+                'Choose JSON file(s)', 'MultiSelect', 'on');
+            if ischar(fName)
+                fName = {fName};
+            end
+            for i = 1:numel(fName)
+                jsonFile = fName{i};
+                newID = str2double(jsonFile(2:end-4));
+                obj.updateStatus(sprintf('Adding %u', newID));
+                
+                didImport = obj.addNeuron([fPath, jsonFile], 'JSON');
+                if ~didImport
+                    fprintf('Skipped %u\n', newID);
+                    continue;
                 end
+                               
+                newColor = findall(obj.ax, 'Tag', obj.id2tag(newID));
+                newColor = get(newColor(1), 'FaceColor');
+
+                obj.addNeuronNode(newID, newColor, false);
+                obj.updateStatus();
+                
+                drawnow;
             end
         end
 
         function onUpdateNeuron(obj, ~, evt)
             % ONUPDATENEURON  Update the underlying OData and render
-            assignin('base', 'evt', evt);
 
             % Save the view azimuth and elevation
             [az, el] = view(obj.ax);
@@ -675,12 +700,52 @@ classdef RenderApp < handle
 
     % Neuron private functions
     methods (Access = private)
-        function tf = addNeuron(obj, newID)
+        function didImport = addNeuron(obj, newID, importType)
             % ADDNEURON  Add a new neuron and render
             % See also: NEURON
             
+            if nargin < 3
+                importType = 'OData';
+            end
+            
+            switch importType
+                case 'OData'
+                    [neuron, didImport] = obj.addNeuronFromOData(newID);
+                case 'JSON'
+                    [neuron, didImport] = obj.addNeuronFromJSON(newID);
+            end
+            
+            if ~didImport
+                return;
+            end
+
+            % Build and render the 3D model
+            obj.updateStatus(sprintf('Rendering c%u', neuron.ID));
+            if isempty(neuron.model)
+                neuron.build();
+            end
+
+            colorBox = findobj(obj.figureHandle, 'Tag', 'NextColor');
+            neuron.render('ax', obj.ax,...
+                'FaceColor', colorBox.BackgroundColor,...
+                'FaceAlpha', obj.DEFAULTALPHA);
+            view(obj.ax, obj.azel(1), obj.azel(2));
+            
+            h = findobj(obj.ax, 'Tag', obj.id2tag(neuron.ID));
+            set(h, 'FaceVertexCData',... 
+                repmat(h.FaceColor, [size(h.Vertices,1), 1]));
+            
+            % If all is successful, add to neuron lists
+            obj.neurons(num2str(neuron.ID)) = neuron;
+            obj.IDs = cat(2, obj.IDs, neuron.ID);
+            didImport = true;
+        end
+
+        function [neuron, didImport] = addNeuronFromOData(obj, newID)
+            % ADDNEURONFROMODATA  Import a neuron from OData
             try
-                neuron = Neuron(newID, obj.source, obj.SYNAPSES, obj.transform);
+                neuron = Neuron(newID, obj.source, obj.synapses, obj.transform);
+                didImport = true;
             catch ME
                 switch ME.identifier
                     case 'SBFSEM:NeuronOData:invalidTypeID'
@@ -693,31 +758,27 @@ classdef RenderApp < handle
                         fprintf('Unidentified error: %s\n', ME.identifier);
                         obj.updateStatus('Error for c%u', newID);
                 end
-                tf = false;
-                return
+                
+                neuron = [];
+                didImport = false;
             end
-
-            % Build the 3D model
-            obj.updateStatus(sprintf('Rendering c%u', newID));
-            neuron.build();
-
-            % Render the neuron
-            colorBox = findobj(obj.figureHandle, 'Tag', 'NextColor');
-            neuron.render('ax', obj.ax,...
-                'FaceColor', colorBox.BackgroundColor,...
-                'FaceAlpha', obj.DEFAULTALPHA);
-            view(obj.ax, obj.azel(1), obj.azel(2));
-            
-            h = findobj(obj.ax, 'Tag', obj.id2tag(newID));
-            set(h, 'FaceVertexCData',... 
-                repmat(h.FaceColor, [size(h.Vertices,1), 1]));
-            
-            obj.neurons(num2str(newID)) = neuron;
-            obj.IDs = cat(2, obj.IDs, newID);
-            tf = true;
         end
 
-        function newNode = addNeuronNode(obj, ID, ~)
+        function [neuron, didImport] = addNeuronFromJSON(obj, newID)
+            % ADDNEURONFROMJSON  Import a neuron saved as a .json file
+
+            try
+                neuron = NeuronJSON(newID);
+                didImport = true;
+            catch ME
+                fprintf('addNeuronFromJSON failed with error message:\n\%s\n',...
+                    ME.identifier);
+                neuron = [];
+                didImport = false;
+            end
+        end
+
+        function newNode = addNeuronNode(obj, ID, ~, onlineMode)
             % ADDNEURONNODE  Add new neuron node to checkbox tree
 
             newNode = uiextras.jTree.CheckboxTreeNode(...
@@ -726,9 +787,11 @@ classdef RenderApp < handle
                 'Checked', true);
 
             c = uicontextmenu('Parent', obj.figureHandle);
-            uimenu(c, 'Label', 'Update',...
-                'Tag', obj.id2tag(ID),...
-                'Callback', @obj.onUpdateNeuron);
+            if onlineMode
+                uimenu(c, 'Label', 'Update',...
+                    'Tag', obj.id2tag(ID),...
+                    'Callback', @obj.onUpdateNeuron);
+            end
             uimenu(c, 'Label', 'Remove Neuron',...
                 'Tag', obj.id2tag(ID),...
                 'Callback', @obj.onRemoveNeuron);
@@ -742,20 +805,26 @@ classdef RenderApp < handle
                     'Tag', obj.id2tag(ID),...
                     'Callback', @obj.onSetTransparency)
             end
-            uimenu(c, 'Label', 'Color by strata',...
-                'Tag', obj.id2tag(ID),...
-                'Callback', @obj.onColorByStrata);
-            uimenu(c, 'Label', 'Show Last Modified',...
-                'Tag', obj.id2tag(ID),...
-                'Callback', @obj.onShowLastModified);
+            if ~isempty(obj.iplBound.GCL)
+                uimenu(c, 'Label', 'Color by strata',...
+                    'Tag', obj.id2tag(ID),...
+                    'Callback', @obj.onColorByStrata);
+            end
+            if onlineMode
+                uimenu(c, 'Label', 'Show Last Modified',...
+                    'Tag', obj.id2tag(ID),...
+                    'Callback', @obj.onShowLastModified);
+            end
             uimenu(c, 'Label', 'Open GraphApp',...
                 'Tag', obj.id2tag(ID),...
                 'Callback', @obj.onOpenGraphApp);
             a = uimenu(c, 'Label', 'Analysis',...
                 'Tag', obj.id2tag(ID));
-            uimenu(a, 'Label', 'Get Stratification',...
-                'Tag', obj.id2tag(ID),...
-                'Callback', @obj.onGetStratification);
+            if ~isempty(obj.iplBound.GCL)
+                uimenu(a, 'Label', 'Get Stratification',...
+                    'Tag', obj.id2tag(ID),...
+                    'Callback', @obj.onGetStratification);
+            end
             uimenu(a, 'Label', 'Get Soma Stats',...
                 'Tag', obj.id2tag(ID),...
                 'Callback', @obj.onGetSomaStats);
@@ -827,6 +896,18 @@ classdef RenderApp < handle
             set(findobj(obj.figureHandle, 'Tag', 'StatusBox'), 'String', str);
             drawnow;
         end
+        
+        function matchAxes(obj)
+            % MATCHAXES  Reset axes limits to user specified values
+            h = findobj(obj.figureHandle, 'Type', 'uitable');
+            data = get(h, 'Data');
+            names = get(h, 'RowName');
+            for i = 1:3
+                if data{i,1}
+                    set(obj.ax, [names{i}, 'Lim'], [data{i,2}, data{i,3}]);
+                end
+            end
+        end
 
         function newAxes = exportFigure(obj)
             % EXPORTFIGURE  Open figure in a new window
@@ -865,7 +946,8 @@ classdef RenderApp < handle
 
             % Main layout with 2 panels (UI, axes)
             mainLayout = uix.HBoxFlex('Parent', obj.figureHandle,...
-                'BackgroundColor', 'w');
+                'BackgroundColor', 'w', 'Tag', 'MainLayout',...
+                'SizeChangedFcn', @obj.onLayoutResize);
 
             % Create the user interface panel and tabs
             tabGroup = uitabgroup('Parent', mainLayout);
@@ -875,11 +957,13 @@ classdef RenderApp < handle
                 'Spacing', 5, 'Padding', 5);
             obj.createNeuronTab(uiLayout);
             
-            contextLayout = uix.VBox(...
-                'Parent', uitab(tabGroup, 'Title', 'Context'),...
-                'BackgroundColor', 'w',...
-                'Spacing', 0, 'Padding', 5);
-            obj.createContextTab(contextLayout);
+            if ~strcmp(obj.source, 'RC1')
+                contextLayout = uix.VBox(...
+                    'Parent', uitab(tabGroup, 'Title', 'Context'),...
+                    'BackgroundColor', 'w',...
+                    'Spacing', 0, 'Padding', 5);
+                obj.createContextTab(contextLayout);
+            end
 
             ctrlLayout = uix.VBox(...
                 'Parent', uitab(tabGroup, 'Title', 'Plot'),...
@@ -889,8 +973,8 @@ classdef RenderApp < handle
 
             % Rotation/zoom/pan modes require container with pixels prop
             % Using Matlab's uipanel between render axes and HBoxFlex
-            hp = uipanel(mainLayout, 'BackgroundColor', 'w');
-            obj.createAxes(hp);
+            axesPanel = uipanel(mainLayout, 'BackgroundColor', 'w');
+            obj.createAxes(axesPanel);
 
             set(mainLayout, 'Widths', [-1 -3]);
         end
@@ -969,11 +1053,7 @@ classdef RenderApp < handle
 
         function createContextTab(obj, contextLayout)
             % CREATECONTEXTTAB  Interface with non-neuron structures
-            if strcmp(obj.source, 'RC1')
-                uicontrol(contextLayout, 'Style', 'text',...
-                    'String', 'No markers or cones for RC1');
-                return;
-            end
+
             LayoutManager = sbfsem.ui.LayoutManager;
             uicontrol(contextLayout,...
                 'Style', 'text', 'String', 'Boundary Markers:',...
@@ -1124,6 +1204,9 @@ classdef RenderApp < handle
         end
 
         function createToolbar(obj)
+            mh.import = uimenu(obj.figureHandle, 'Label', 'Import');
+            uimenu(mh.import, 'Label', 'Import .json',...
+                'Callback', @obj.onAddNeuronJSON);
             mh.export = uimenu(obj.figureHandle, 'Label', 'Export');
             uimenu(mh.export, 'Label', 'Open in new figure window',...
                 'Callback', @obj.onExportFigure);
@@ -1154,6 +1237,12 @@ classdef RenderApp < handle
 
     % User interface callbacks
     methods (Access = private)
+        function onLayoutResize(obj, src, ~)
+            % ONLAYOUTRESIZE  Keeps UI panel size constant with figure resizes
+            axesWidth = (obj.figureHandle.Position(3)-obj.UI_WIDTH)/obj.UI_WIDTH;
+            set(src, 'Widths', [-1, -axesWidth]);
+        end
+
         function onKeyPress(obj, ~, eventdata)
             % ONKEYPRESS  Control plot view with keyboard
             %
@@ -1218,7 +1307,8 @@ classdef RenderApp < handle
                     posViking = posMicrons./um2pix; % pix
 
                     % Reverse the xyOffset applied on Neuron creation
-                    if strcmp(obj.source, 'NeitzInferiorMonkey')
+                    if strcmp(obj.source, 'NeitzInferiorMonkey') && ...
+                            obj.transform == sbfsem.core.Transforms.SBFSEMTools
                         if isempty(obj.xyOffset)
                             dataDir = fileparts(fileparts(mfilename('fullpath')));
                             offsetPath = [dataDir,filesep,'data',filesep,...

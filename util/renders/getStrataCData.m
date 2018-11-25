@@ -3,6 +3,9 @@ function iplPercent = getStrataCData(neuron, INL, GCL)
     %
     % Description:
     %   Assign vertex color data based on percent IPL stratification
+    %
+    % Syntax:
+    %   iplPercent = getStrataCData(neuron, INL, GCL);
 	%
 	% Inputs:
 	%	neuron 		Patch or vertices matrix (from StructureAPI.render)
@@ -11,6 +14,9 @@ function iplPercent = getStrataCData(neuron, INL, GCL)
     %
     % Output:
     %   iplPercent  Face vertex CData
+    %
+    % See also:
+    %   SBFSEM.CORE.NEURONAPI, NEURON
 	%
 	% History:
 	%	3Nov2018 - SSP
