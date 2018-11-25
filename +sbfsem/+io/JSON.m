@@ -34,6 +34,17 @@ classdef JSON < handle
             
             obj.source = validateSource(source);
         end
+        
+        function neuron = import(obj, jsonPath)
+            % IMPORT
+            if nargin == 0
+                jsonPath = '';
+            end
+            if ~ismember(filesep, jsonPath)
+                jsonPath = [obj.fPath, filesep, jsonPath];
+            end
+            neuron = NeuronJSON(jsonPath);
+        end
             
         function str = export(obj, neuron)
             % EXPORT  Exports a neuron to filePath

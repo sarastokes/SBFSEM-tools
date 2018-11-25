@@ -48,10 +48,17 @@ classdef (Abstract) StructureAPI < handle
             obj.ID = ID;
             obj.source = validateSource(source);
             
-            obj.ODataClient = sbfsem.io.NeuronOData(obj.ID, obj.source);
-
-            % XYZ volume dimensions in nm/pix, nm/pix, nm/sections
-            obj.volumeScale = getODataScale(obj.source);
+            try
+                obj.ODataClient = sbfsem.io.NeuronOData(obj.ID, obj.source);
+                % XYZ volume dimensions in nm/pix, nm/pix, nm/sections
+                obj.volumeScale = getODataScale(obj.source);
+            catch ME
+                if strcmp(ME.identifier, 'MATLAB:webservices:UnknownHost')
+                    fprintf('Operating in offline mode\n');
+                end
+                obj.ODataClient = [];
+                obj.volumeScale = loadCachedVolumeScale(obj.source);
+            end
 
             % Track when the object was created
             obj.lastModified = datestr(now);

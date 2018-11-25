@@ -1,5 +1,9 @@
 # Changelog
 
+### 25Nov2018
+- Access volume scale offline with `util\import\loadCachedVolumeScale.m`. Also helpful for `NeuronJSON.m` compatibility with `sbfsem.core.StructureAPI.m`
+- Fixed bugs with `NeuronJSON.m`.
+
 ### 20Nov2018
 - Improvements to `util\renders\synapseSphere.m`
 

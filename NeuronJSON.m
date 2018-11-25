@@ -5,11 +5,12 @@ classdef NeuronJSON < sbfsem.core.NeuronAPI
 	%	Instantiates a Neuron object from a JSON file
 	%
 	% Constructor:
-	% 	obj = NeuronJSON()
+	% 	obj = NeuronJSON(jsonPath)
 	% 
 	% History:
 	%	21Aug2018 - SSP
-	% ------------------------------------------------------------------
+    %   25Nov2018 - SSP - Removed webread dependencies, works offline now
+	% ---------------------------------------------------------------------
 
 	properties
 		fPath 		% JSON file path
@@ -17,14 +18,26 @@ classdef NeuronJSON < sbfsem.core.NeuronAPI
 
 	methods
 		function obj = NeuronJSON(jsonPath)
+            % NEURONJSON  Constructor
+            if nargin < 1
+                [fileName, filePath] = uigetfile('.json', 'Pick a JSON file');
+                jsonPath = [filePath, fileName];
+            end
+            
 			[~, fName, ext] = fileparts(jsonPath);
-			assert(strcmp(ext, '.json'), 'Input path to a JSON file!');
+			assert(strcmp(ext, '.json'), 'Input must be a JSON file!');
+            
+            ID = str2double(fName(2:end));            
+            source = validateSource(fName(1));
+            obj@sbfsem.core.NeuronAPI(ID, source);
+            
 			obj.fPath = jsonPath;
 
-			obj.source = validateSource(fName(1));
-			obj.ID = str2double(fName(2:end));
-
 			obj.parseJSON(obj.fPath);
+        end
+        
+        function update(~)
+            % UPDATE  Overwrite, this function is only useful for OData
         end
 	end
 
