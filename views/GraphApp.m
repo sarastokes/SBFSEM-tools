@@ -28,7 +28,7 @@ classdef GraphApp < handle
         segments
     end
     
-    properties (Dependent = true, Hidden = true)
+    properties (Hidden, Dependent = true)
         cmap
         surfaceAlpha
         hasSynapses
@@ -40,8 +40,8 @@ classdef GraphApp < handle
         showOffEdges
     end
     
-    properties (Access = private, Transient = true)
-        azel = [-37.5, 30];
+    properties (Hidden, Access = private)
+        azel = [-35, 30];
         zoomFac = 0.9;
         panFac = 0.02;
         doSurface = true;
@@ -50,6 +50,7 @@ classdef GraphApp < handle
     properties (Constant = true, Hidden = true)
         COLORMAPS = {'parula', 'winter', 'hsv', 'cubicl', 'viridis', 'redblue', 'haxby'};
         SOURCES = {'NeitzTemporalMonkey','NeitzInferiorMonkey','MarcRC1'};
+        UI_WIDTH = 130;
         MARGIN = 40;
     end
     
@@ -173,7 +174,10 @@ classdef GraphApp < handle
                     'Color', cdata(ind(i),:,:));
             end
         end
-        
+    end
+    
+    % Plotting functions
+    methods (Access = private)
         function plotSegments(obj)
             % SEGMENTPLOT  Plot each segment individually with ID tag
             for i = 1:height(obj.segments.segmentTable)
@@ -351,36 +355,6 @@ classdef GraphApp < handle
             end
         end
         
-        function txt = onUpdateCursor(obj, ~, evt)
-            % ONUPDATECURSOR  Custom data tip display callback
-            pos = get(evt,'Position');
-            txt = [];
-            switch evt.Target.Tag
-                case 'Unfinished'
-                    xyz = obj.neuron.id2xyz(obj.neuron.offEdges);
-                    ind = find(sum(pos, 2) == sum(xyz, 2));
-                    locID = obj.neuron.offEdges(ind); %#ok
-                    Z = obj.neuron.nodes{obj.neuron.nodes.ID == locID, 'Z'};
-                case 'Terminal'
-                    xyz = obj.neuron.id2xyz(obj.neuron.terminals);
-                    ind = find(sum(pos, 2) == sum(xyz, 2));
-                    locID = obj.neuron.terminals(ind); %#ok
-                    Z = obj.neuron.nodes{obj.neuron.nodes.ID == locID, 'Z'};
-                case 'Synapse'
-                    T = obj.neuron.getSynapseNodes();
-                    xyz = T.XYZum;
-                    ind = find(sum(pos,2) == sum(xyz, 2));
-                    locID = T{ind(1), 'ID'};
-                    Z = T{ind(1), 'Z'};     
-                    
-                    txt = {['SynapseID: ', num2str(T{ind(1), 'ParentID'})]};
-                otherwise
-                    [locID, Z] = obj.id2xyz(pos, str2double(evt.Target.Tag));
-            end
-            txt = cat(2, txt, {['ID: ' num2str(locID)],...
-                ['Section: ', num2str(Z)]});
-        end
-        
         function onSelectedMarkerType(obj, src, ~)
             % ONSELECTEDMARKERTYPE  Change node markers
             
@@ -406,61 +380,7 @@ classdef GraphApp < handle
             end
             colormap(obj.ax, obj.getColormap(obj.cmap, 256));
         end
-        
-        function onKeyPress(obj, ~, eventdata)
-            % ONKEYPRESS  Control plot view with keyboard
-            %
-            % See also: AXDRAG
-            switch eventdata.Character
-                case 'h' % help
-                    helpdlg(obj.getInstructions, 'GraphApp Instructions');
-                case 28 % azimuth down
-                    obj.azel(1) = obj.azel(1) - 5;
-                case 30 % elevation down
-                    obj.azel(2) = obj.azel(2) - 5;
-                case 31 % elevation up
-                    obj.azel(2) = obj.azel(2) + 5;
-                case 29 % azimuth up
-                    obj.azel(1) = obj.azel(1) + 5;
-                case {'z', 'Z'} % zoom
-                    if eventdata.Character == 'Z'
-                        obj.zoomFac = 1/obj.zoomFac;
-                    end
-                    
-                    x = get(obj.ax, 'XLim');
-                    y = get(obj.ax, 'YLim');
-                    
-                    set(obj.ax, 'XLim',...
-                        [0, obj.zoomFac*diff(x)] + x(1)...
-                        + (1-obj.zoomFac) * diff(x)/2);
-                    set(obj.ax, 'YLim', [0, obj.zoomFac*diff(y)] + y(1)...
-                        + (1-obj.zoomFac) * diff(y)/2);
-                case 'a'
-                    x = get(obj.ax, 'XLim');
-                    set(obj.ax, 'XLim', x + obj.panFac * diff(x));
-                case 'd'
-                    x = get(obj.ax, 'XLim');
-                    set(obj.ax, 'XLim', x - obj.panFac * diff(x));
-                case 'e'
-                    y = get(gca, 'YLim');
-                    set(obj.ax, 'YLim', y + obj.panFac * diff(y));
-                case 'q'
-                    y = get(gca, 'YLim');
-                    set(obj.ax, 'YLim', y - obj.panFac * diff(y));
-                case 'w'
-                    z = get(obj.ax, 'ZLim');
-                    set(obj.ax, 'ZLim', z + obj.panFac * diff(z));
-                case 's'
-                    z = get(obj.ax, 'ZLim');
-                    set(obj.ax, 'ZLim', z - obj.panFac * diff(z));
-                case 'm' % Return to original dimensions
-                    axis(obj.ax, 'tight');
-                otherwise
-                    return;
-            end
-            view(obj.ax, obj.azel);
-        end
-        
+
         function onCheckedColorSegments(obj, src, ~)
             % ONCOLORSEGMENTS  Randomly color to distinguish segments
             if src.Value == 1
@@ -527,11 +447,108 @@ classdef GraphApp < handle
             end
         end
         
+    end
+    
+    % Basic user interface callbacks
+    methods (Access = private)
+                
+        function onResizeLayout(obj, src, ~)
+            % ONRESIZELAYOUT  Keep UI panel size constant
+            axesWidth = (obj.figureHandle.Position(3)-obj.UI_WIDTH)/obj.UI_WIDTH;
+            set(src, 'Widths', [-1, -axesWidth]);
+        end
+        
         function onChangedTab(obj, ~, evt)
             % ONCHANGEDTAB  Don't populate table until necessary
             if strcmp(evt.NewValue.Title, 'Table') && isempty(evt.NewValue.Children)
                 obj.createTableTab(evt.NewValue);
             end
+        end       
+                
+        function txt = onUpdateCursor(obj, ~, evt)
+            % ONUPDATECURSOR  Custom data tip display callback
+            pos = get(evt,'Position');
+            txt = [];
+            switch evt.Target.Tag
+                case 'Unfinished'
+                    xyz = obj.neuron.id2xyz(obj.neuron.offEdges);
+                    ind = find(sum(pos, 2) == sum(xyz, 2));
+                    locID = obj.neuron.offEdges(ind); %#ok
+                    Z = obj.neuron.nodes{obj.neuron.nodes.ID == locID, 'Z'};
+                case 'Terminal'
+                    xyz = obj.neuron.id2xyz(obj.neuron.terminals);
+                    ind = find(sum(pos, 2) == sum(xyz, 2));
+                    locID = obj.neuron.terminals(ind); %#ok
+                    Z = obj.neuron.nodes{obj.neuron.nodes.ID == locID, 'Z'};
+                case 'Synapse'
+                    T = obj.neuron.getSynapseNodes();
+                    xyz = T.XYZum;
+                    ind = find(sum(pos,2) == sum(xyz, 2));
+                    locID = T{ind(1), 'ID'};
+                    Z = T{ind(1), 'Z'};     
+                    
+                    txt = {['SynapseID: ', num2str(T{ind(1), 'ParentID'})]};
+                otherwise
+                    [locID, Z] = obj.id2xyz(pos, str2double(evt.Target.Tag));
+            end
+            txt = cat(2, txt, {['ID: ' num2str(locID)],...
+                ['Section: ', num2str(Z)]});
+        end
+        
+
+       
+        function onKeyPress(obj, ~, eventdata)
+            % ONKEYPRESS  Control plot view with keyboard
+            %
+            % See also: AXDRAG
+            switch eventdata.Character
+                case 'h' % help
+                    helpdlg(obj.getInstructions, 'GraphApp Instructions');
+                case 28 % azimuth down
+                    obj.azel(1) = obj.azel(1) - 5;
+                case 30 % elevation down
+                    obj.azel(2) = obj.azel(2) - 5;
+                case 31 % elevation up
+                    obj.azel(2) = obj.azel(2) + 5;
+                case 29 % azimuth up
+                    obj.azel(1) = obj.azel(1) + 5;
+                case {'z', 'Z'} % zoom
+                    if eventdata.Character == 'Z'
+                        obj.zoomFac = 1/obj.zoomFac;
+                    end
+                    
+                    x = get(obj.ax, 'XLim');
+                    y = get(obj.ax, 'YLim');
+                    
+                    set(obj.ax, 'XLim',...
+                        [0, obj.zoomFac*diff(x)] + x(1)...
+                        + (1-obj.zoomFac) * diff(x)/2);
+                    set(obj.ax, 'YLim', [0, obj.zoomFac*diff(y)] + y(1)...
+                        + (1-obj.zoomFac) * diff(y)/2);
+                case 'a'
+                    x = get(obj.ax, 'XLim');
+                    set(obj.ax, 'XLim', x + obj.panFac * diff(x));
+                case 'd'
+                    x = get(obj.ax, 'XLim');
+                    set(obj.ax, 'XLim', x - obj.panFac * diff(x));
+                case 'e'
+                    y = get(gca, 'YLim');
+                    set(obj.ax, 'YLim', y + obj.panFac * diff(y));
+                case 'q'
+                    y = get(gca, 'YLim');
+                    set(obj.ax, 'YLim', y - obj.panFac * diff(y));
+                case 'w'
+                    z = get(obj.ax, 'ZLim');
+                    set(obj.ax, 'ZLim', z + obj.panFac * diff(z));
+                case 's'
+                    z = get(obj.ax, 'ZLim');
+                    set(obj.ax, 'ZLim', z - obj.panFac * diff(z));
+                case 'm' % Return to original dimensions
+                    axis(obj.ax, 'tight');
+                otherwise
+                    return;
+            end
+            view(obj.ax, obj.azel);
         end
     end
     
@@ -568,7 +585,8 @@ classdef GraphApp < handle
             
             % The graph layout consists of a UI column and the plot
             mainLayout = uix.HBoxFlex('Parent', graphTab,...
-                'BackgroundColor', 'w');
+                'BackgroundColor', 'w',...
+                'SizeChangedFcn', @obj.onResizeLayout);
             uiLayout = uix.VBox('Parent', mainLayout,...
                 'BackgroundColor', 'w');
             % Data cursor mode requires parent with pixel property

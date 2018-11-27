@@ -1,5 +1,9 @@
 # Changelog
 
+### 26Nov2018
+- Added resize function for `views\GraphApp.m`.
+- Fixed small bug in constant variable `SYNAPSES` in `views\RenderApp.m`. 
+
 ### 25Nov2018
 - Access volume scale offline with `util\import\loadCachedVolumeScale.m`. Also helpful for `NeuronJSON.m` compatibility with `sbfsem.core.StructureAPI.m`
 - Fixed bugs with `NeuronJSON.m`.

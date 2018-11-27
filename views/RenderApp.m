@@ -744,7 +744,7 @@ classdef RenderApp < handle
         function [neuron, didImport] = addNeuronFromOData(obj, newID)
             % ADDNEURONFROMODATA  Import a neuron from OData
             try
-                neuron = Neuron(newID, obj.source, obj.synapses, obj.transform);
+                neuron = Neuron(newID, obj.source, obj.SYNAPSES, obj.transform);
                 didImport = true;
             catch ME
                 switch ME.identifier
@@ -759,20 +759,6 @@ classdef RenderApp < handle
                         obj.updateStatus('Error for c%u', newID);
                 end
                 
-                neuron = [];
-                didImport = false;
-            end
-        end
-
-        function [neuron, didImport] = addNeuronFromJSON(obj, newID)
-            % ADDNEURONFROMJSON  Import a neuron saved as a .json file
-
-            try
-                neuron = NeuronJSON(newID);
-                didImport = true;
-            catch ME
-                fprintf('addNeuronFromJSON failed with error message:\n\%s\n',...
-                    ME.identifier);
                 neuron = [];
                 didImport = false;
             end
@@ -1204,6 +1190,7 @@ classdef RenderApp < handle
         end
 
         function createToolbar(obj)
+            % CREATETOOLBAR  Setup the figure toolbar
             mh.import = uimenu(obj.figureHandle, 'Label', 'Import');
             uimenu(mh.import, 'Label', 'Import .json',...
                 'Callback', @obj.onAddNeuronJSON);
@@ -1335,6 +1322,22 @@ classdef RenderApp < handle
 
             [helpStr, dlgTitle] = obj.getInstructions(src.Tag);
             helpdlg(helpStr, dlgTitle);
+        end
+    end
+    
+    methods (Static = true)
+        function [neuron, didImport] = addNeuronFromJSON(~, newID)
+            % ADDNEURONFROMJSON  Import a neuron saved as a .json file
+
+            try
+                neuron = NeuronJSON(newID);
+                didImport = true;
+            catch ME
+                fprintf('addNeuronFromJSON failed with error message:\n\%s\n',...
+                    ME.identifier);
+                neuron = [];
+                didImport = false;
+            end
         end
     end
 
