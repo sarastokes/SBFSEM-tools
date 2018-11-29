@@ -20,7 +20,7 @@ function iplPercent = getStrataCData(neuron, INL, GCL)
 	%
 	% History:
 	%	3Nov2018 - SSP
-	% ------------------------------------------------------------------
+	% ---------------------------------------------------------------------
 
 	if isa(neuron, 'matlab.graphics.primitive.Patch')
 		V = neuron.Vertices;

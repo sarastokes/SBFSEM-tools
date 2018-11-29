@@ -239,7 +239,7 @@ classdef RenderApp < handle
             
             % Apply vertex cdata mapping
             if strcmp(oldColor, 'interp')
-                newCData = getStrataCData(newPatch.Vertices,...
+                newCData = clipStrataCData(newPatch.Vertices,...
                     obj.iplBound.INL, obj.iplBound.GCL);
                 set(newPatch, 'FaceVertexCData', newCData,...
                     'FaceColor', 'interp');
@@ -358,7 +358,7 @@ classdef RenderApp < handle
             obj.updateStatus('Coloring...');
             h = findall(obj.ax, 'Tag', evt.Source.Tag);
             set(h, 'FaceVertexCData',...
-                getStrataCData(h.Vertices, obj.iplBound.INL, obj.iplBound.GCL));
+                clipStrataCData(h.Vertices, obj.iplBound.INL, obj.iplBound.GCL));
             shading(obj.ax, 'interp');
             obj.updateStatus();
         end

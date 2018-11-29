@@ -1,5 +1,8 @@
 # Changelog
 
+### 28Nov2018
+- Added `util\render\clipStrataCData.m` so now  RenderApp stratification colormaps now clip anything outside-10 to 110% IPL depth to keep colormaps relevant.
+
 ### 26Nov2018
 - Added resize function for `views\GraphApp.m`.
 - Fixed small bug in constant variable `SYNAPSES` in `views\RenderApp.m`. 
