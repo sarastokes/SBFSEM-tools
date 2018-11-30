@@ -1,5 +1,8 @@
 # Changelog
 
+### 30Nov2018
+- New class for volumes (`+sbfsem\+builtin\Volumes.m`) to be phased into rendering UIs
+
 ### 28Nov2018
 - Added `util\render\clipStrataCData.m` so now  RenderApp stratification colormaps now clip anything outside-10 to 110% IPL depth to keep colormaps relevant.
 
