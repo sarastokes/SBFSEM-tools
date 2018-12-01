@@ -236,11 +236,11 @@ classdef GraphApp < handle
             end
         end
         
-        function plotUnfinished(obj)
-            % PLOTUNFINISHED  Plot nodes marked as unfinished
+        function plotOffEdges(obj)
+            % PLOTOFFEDGES  Plot nodes marked as off edges
             
             % Delete any existing off edge nodes
-            delete(findall(obj.figureHandle, 'Tag', 'Unfinished'));
+            delete(findall(obj.figureHandle, 'Tag', 'OffEdges'));
             % Get OffEdge node IDs
             offEdgeIDs = obj.neuron.offEdges;
             % Return if no off edges in neuron
@@ -249,6 +249,31 @@ classdef GraphApp < handle
             end
             
             xyz = obj.neuron.id2xyz(offEdgeIDs);
+            h = line(obj.ax, xyz(:, 1), xyz(:, 2), xyz(:, 3),...
+                'Marker', '.', 'MarkerSize', 12,...
+                'MarkerFaceColor', rgb('navy'),...
+                'MarkerEdgeColor', rgb('navy'),...
+                'LineStyle', 'none',...
+                'Tag', 'OffEdge');
+            if ~obj.showOffEdges
+                set(h, 'Visible', 'off');
+            end
+        end
+        
+        function plotUnfinished(obj)
+            % PLOTUNFINISHED  Plot all nodes marked as unfinished
+            
+            % Delete any existing unfinished nodes
+            delete(findall(obj.figureHandle, 'Tag', 'Unfinished'));
+            
+            % Get unfinished nodes
+            unfinishedIDs = obj.neuron.unfinished;
+            % No nodes of degree 1 (highly unlikely)
+            if isempty(unfinishedIDs)
+                return;
+            end
+            
+            xyz = obj.neuron.id2xyz(unfinishedIDs);
             h = line(obj.ax, xyz(:, 1), xyz(:, 2), xyz(:, 3),...
                 'Marker', '.', 'MarkerSize', 12,...
                 'MarkerFaceColor', 'r',...
@@ -260,24 +285,6 @@ classdef GraphApp < handle
             end
         end
 
-        function plotOffEdges(obj)
-            % PLOTOFFEDGES  Plot nodes marked as terminal + offedge
-            delete(findall(obj.figureHandle, 'Tag', 'OffEdge'));
-            % Get OffEdge and Terminal IDs
-            IDs = obj.neuron.getEdgeNodes();
-            if isempty(IDs)
-                return
-            end
-
-            xyz = obj.neuron.id2xyz(IDs);
-            h = line(obj.ax, xyz(:, 1), xyz(:, 2), xyz(:, 3),...
-                'Marker', '.', 'MarkerSize', 12,...
-                'MarkerFaceColor', [0, 0, 0.5],...
-                'MarkerEdgeColor', [0, 0, 0.5],...
-                'LineStyle', 'none',...
-                'Tag', 'OffEdge');
-        end
-        
         function plotTerminals(obj)
             % PLOTTERMINALS  Plot nodes marked as terminals
             % Delete any existing off edge nodes
@@ -470,7 +477,7 @@ classdef GraphApp < handle
             pos = get(evt,'Position');
             txt = [];
             switch evt.Target.Tag
-                case 'Unfinished'
+                case 'OffEdge'
                     xyz = obj.neuron.id2xyz(obj.neuron.offEdges);
                     ind = find(sum(pos, 2) == sum(xyz, 2));
                     locID = obj.neuron.offEdges(ind); %#ok
@@ -479,6 +486,11 @@ classdef GraphApp < handle
                     xyz = obj.neuron.id2xyz(obj.neuron.terminals);
                     ind = find(sum(pos, 2) == sum(xyz, 2));
                     locID = obj.neuron.terminals(ind); %#ok
+                    Z = obj.neuron.nodes{obj.neuron.nodes.ID == locID, 'Z'};
+                case 'Unfinished'
+                    xyz = obj.neuron.id2xyz(obj.neuron.unfinished);
+                    ind = find(sum(pos, 2) == sum(xyz, 2));
+                    locID = obj.neuron.unfinished(ind); %#ok
                     Z = obj.neuron.nodes{obj.neuron.nodes.ID == locID, 'Z'};
                 case 'Synapse'
                     T = obj.neuron.getSynapseNodes();
@@ -649,6 +661,13 @@ classdef GraphApp < handle
                 'Tag', 'ShowTerminals',...
                 'TooltipString', 'Show nodes marked as terminals',...
                 'Callback', @obj.onShowTerminals);
+            uicontrol(uiLayout,...
+                'Style', 'checkbox',...
+                'String', 'Show off edges',...
+                'Value', 0,...
+                'Tag', 'ShowOffEdges',...
+                'TooltipString', 'Show nodes marked as off edges',...
+                'Callback', @obj.onShowOffEdges);
             uix.Empty('Parent', uiLayout);
             LayoutManager.verticalBoxWithLabel(uiLayout, 'Marker Size:',...
                 'Style', 'popup',...
@@ -678,7 +697,7 @@ classdef GraphApp < handle
             obj.createPlot();
             
             set(uiLayout, 'Heights',...
-                [-0.5, -1.2, -0.3, -0.5, -0.5, -0.5, -0.5, -0.5, -0.3, -1, -1, -0.8, -0.5]);
+                [-0.5, -1.2, -0.3, -0.5, -0.5, -0.5, -0.5, -0.5, -0.5, -0.3, -1, -1, -0.8, -0.5]);
         
             set(mainLayout, 'Widths', [-1 -3.5]);
 

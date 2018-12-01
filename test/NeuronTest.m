@@ -139,6 +139,13 @@ classdef NeuronTest < matlab.unittest.TestCase
                 'XYZ dimensions are incorrect');
         end
         
+        function testUnfinished(testCase)
+            testcase.verifyEqual(...
+                testCase.T1.unfinished,...
+                [176264; 176266],...
+                'Incorrect node IDs marked as unfinished');
+        end
+        
         function testSynapses(testCase)
         	% Parent IDs
         	testCase.verifyEqual(...

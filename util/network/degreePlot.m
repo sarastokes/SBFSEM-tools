@@ -22,7 +22,7 @@ function p = degreePlot(neuron)
     [G, nodeIDs] = neuron.graph();
     
     figure('Name', sprintf('c%u degree plot', neuron.ID));
-    try
+    try  % Force3 was added in MATLAB 2016, I think.
         p = plot(G, 'layout', 'force3');
         xyz = [];
         for i = 1:numel(nodeIDs)

@@ -29,8 +29,9 @@ classdef (Abstract) StructureAPI < handle
 	end
 
 	properties (Dependent = true, Hidden = true)
-        offEdges    % Unfinished branches
+        offEdges    % Branches running off volume edges
         terminals   % Branch endings
+        unfinished  % Unfinished branches
  	end
 
     properties (Access = private, Transient = true, Hidden = true)
@@ -140,7 +141,12 @@ classdef (Abstract) StructureAPI < handle
     		else
     			terminals = [];
     		end
-    	end
+        end
+        
+        function unfinished = get.unfinished(obj)
+            [G, nodeIDs] = obj.graph();
+            unfinished = nodeIDs(G.degree == 1);
+        end
 
         function edgeIDs = getEdgeNodes(obj)
             if isempty(obj.terminals) || isempty(obj.offEdges)
