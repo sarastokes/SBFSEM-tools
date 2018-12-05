@@ -6,11 +6,19 @@ classdef Segment < handle
     %
     % Notes:
     %   A class to better handle the increasingly diverse demands for the
-    %   dendrite segmentation function.
+    %   dendrite segmentation function. When trying to work through this
+    %   function, it's important to realize that there are two ID systems
+    %   for annotations in play: 1) the Viking location IDs and 2) the node
+    %   IDs within the graph representation. I've tried to keep the two
+    %   clear in the comments.
+    %
+    % See also:
+    %   NEURON/GRAPH, MINMAXNODES, DFSEARCH
     %
     % History:
     %   9Jun2018 - SSP - wrote from dendriteSegmentation
     %   26Sept2018 - SSP - added public functions for node -> location ID
+    %   2Dec2018 - SSP - made parseStartNode function static
     % ---------------------------------------------------------------------
     
     properties (SetAccess = private)
@@ -34,10 +42,12 @@ classdef Segment < handle
             [obj.Graph, obj.nodeIDs] = graph(neuron, 'directed', false);
             
             % Identify the starting node
-            if nargin < 2
+            if nargin < 2 || isempty(startNode)
                 startNode = minmaxNodes(neuron, 'min');
             end
-            obj.startNode = obj.parseStartNode(startNode);
+            
+            % Converts locationID into nodeID
+            obj.startNode = obj.parseStartNode(startNode, obj.nodeIDs);
             
             % Segment
             obj.performSegmentation(neuron);
@@ -75,7 +85,7 @@ classdef Segment < handle
         end
     end
     
-    methods (Access = private)      
+    methods (Access = private)
         function performSegmentation(obj, neuron)
             % Run a depth-first search on the graph. T is a table of
             % events: when each node is first and last encountered.
@@ -129,6 +139,7 @@ classdef Segment < handle
             % Print status to command line
             disp(['Found ' num2str(numel(segmentList)), ' branches']);
             if ~isempty(extraStartNodes)
+                fprintf('%u disconnected nodes:\n', numel(extraStartNodes));
                 disp(extraStartNodes)
             end
             
@@ -175,19 +186,18 @@ classdef Segment < handle
             % The order of discovery ('discovernode') provides a list of 
             % nodes where the parent node ID is always before children IDs.
             T = T(T.Event == 'discovernode', :);
-            obj.discoverIDs = T.Node;            
+            obj.discoverIDs = T.Node;    
         end
     end
     
-    methods (Access = private)
-        
-        function startNode = parseStartNode(obj, startNode)
-            % PARSESTARTNODE
-            if ismember(startNode, obj.nodeIDs) 
+    methods (Static)
+        function startNode = parseStartNode(startNode, nodeIDs)
+            % PARSESTARTNODE  Convert location ID into node ID
+            if ismember(startNode, nodeIDs) 
                 % Find node ID for a location ID
-                startNode = find(obj.nodeIDs == startNode);
+                startNode = find(nodeIDs == startNode);
                 fprintf('Location ID mapped to node %u\n', startNode);
-            elseif startNode > numel(obj.nodeIDs)    
+            elseif startNode > numel(nodeIDs)    
                 warning('Invalid StartNode, setting to nodeID = 1');
                 startNode = 1;
             end
