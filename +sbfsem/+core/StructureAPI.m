@@ -146,6 +146,8 @@ classdef (Abstract) StructureAPI < handle
         function unfinished = get.unfinished(obj)
             [G, nodeIDs] = obj.graph();
             unfinished = nodeIDs(G.degree == 1);
+            unfinished = setdiff(unfinished, obj.terminals);
+            unfinished = setdiff(unfinished, obj.offEdges);
         end
 
         function edgeIDs = getEdgeNodes(obj)

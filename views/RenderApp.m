@@ -69,7 +69,7 @@ classdef RenderApp < handle
         SYNAPSES = false;
         SOURCES = {'NeitzTemporalMonkey','NeitzInferiorMonkey','MarcRC1'};
         CACHE = [fileparts(fileparts(mfilename('fullname'))), filesep, 'data'];
-        COLORMAPS = {'parula', 'haxby', 'winter', 'hsv', 'antijet',...
+        COLORMAPS = {'haxby', 'parula', 'winter', 'hsv', 'antijet',...
             'cubicl', 'viridis', 'redblue', 'bone', 'isolum (colorblind)',...
             'ametrine (colorblind)'};
     end
@@ -756,7 +756,7 @@ classdef RenderApp < handle
                         obj.updateStatus('Check Connection');
                     otherwise
                         fprintf('Unidentified error: %s\n', ME.identifier);
-                        obj.updateStatus('Error for c%u', newID);
+                        obj.updateStatus(sprintf('Error for c%u', newID));
                 end
                 
                 neuron = [];
@@ -975,6 +975,7 @@ classdef RenderApp < handle
             axis(obj.ax, 'equal', 'tight');
             view(obj.ax, 3);
             xlabel(obj.ax, 'X'); ylabel(obj.ax, 'Y'); zlabel(obj.ax, 'Z');
+            colormap(obj.ax, haxby(256));
 
             % Set the lighting
             obj.lights = [light(obj.ax), light(obj.ax)];

@@ -1,9 +1,16 @@
 # Changelog
 
+### 5Dec2018
+- Fixed overlap in terminals/offedges and unfinished nodes.
+
+### 3Dec2018
+- New base graph plot: `util/network/neuronGraphPlot.m`
+
 ### 1Dec2018
 - IMPORTANT: `offEdge` is no longer used for unfinished branches, now used for branches running off the edge of volume (as intended). There is now a separate dependent property in `sbfsem.core.StructureAPI.m` called `unfinished` for unfinished branches, which are identified as having a degree of 1.
 - Support for new unfinished/off edge distinction in `views\GraphApp.m`.
 - Added a unfinished check in `tests\NeuronTest.m`
+- Changed default colormap in `views\RenderApp.m` to haxby (`lib\haxby.m`).
 
 ### 30Nov2018
 - New class for volumes (`+sbfsem\+builtin\Volumes.m`) to be phased into rendering UIs
