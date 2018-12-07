@@ -1,5 +1,9 @@
 # Changelog
 
+### 6Dec2018
+- Better visualization: `docs\iplboundary.png`
+- Fixed duplication of `data\NEITZINFERIORMONKEY_GCL.txt` boundary markers
+
 ### 5Dec2018
 - Fixed overlap in terminals/offedges and unfinished nodes.
 

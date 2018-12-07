@@ -16,10 +16,11 @@ function iplPercent = getStrataCData(neuron, INL, GCL)
     %   iplPercent  Face vertex CData
     %
     % See also:
-    %   SBFSEM.CORE.NEURONAPI, NEURON
+    %   SBFSEM.CORE.NEURONAPI, NEURON, IPLDEPTHAPP, GETSTRATACDATA
 	%
 	% History:
 	%	3Nov2018 - SSP
+    %   6Dec2018 - SSP - Resolved computation mismatch b/w sources
 	% ---------------------------------------------------------------------
 
 	if isa(neuron, 'matlab.graphics.primitive.Patch')
@@ -37,8 +38,9 @@ function iplPercent = getStrataCData(neuron, INL, GCL)
 	[X, Y] = meshgrid(INL.newXPts, INL.newYPts);
 	vINL = interp2(X, Y, INL.interpolatedSurface,...
 		V(:, 1), V(:, 2));
-
-	iplPercent = (V(:, 3) - vINL) ./ ((vGCL-vINL)+eps);
+    
+    iplPercent = (V(:, 3) - vINL) ./ ((vGCL-vINL)+eps);
+    
     if nnz(isnan(iplPercent)) > 0
         fprintf('IPLDepth found %u NaNs\n', nnz(isnan(iplPercent)));
         iplPercent(isnan(iplPercent)) = mean(iplPercent, 'omitnan');
