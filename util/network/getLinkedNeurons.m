@@ -60,7 +60,7 @@ if synapseType.isPre()
 elseif synapseType.isPost()
     url = [url, postTemplate];
 else
-    url = [url, preTemplate];
+    url = [url, postTemplate];
 end
 
 % A list of pre/post-synaptic neurons

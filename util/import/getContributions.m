@@ -16,29 +16,34 @@ function T = getContributions(ID, source, visualize)
     %   19Jul2018 - SSP
     %   19Nov2018 - SSP - Removed synapse option
     % ---------------------------------------------------------------------
-
-	if nargin < 3
-		visualize = true;
+    
+    if nargin < 3
+        visualize = true;
     end
-
-	usernames = getUsernames(ID, source);
-	usernames = cellstr(usernames);
-
-	
-	[groupIndex, groupNames] = findgroups(usernames);
-	n = splitapply(@numel, usernames, groupIndex);
-
-	[n, ind] = sort(n, 'descend');
-	groupNames = groupNames(ind);
-
-	fprintf('c%u annotators:\n', ID);
-	for i = 1:numel(n)
-		fprintf('\t%u - %s\n', n(i), groupNames{i});
-	end
-
-	if visualize
-		figure();
-		pie(n, groupNames);
+    
+    usernames = getUsernames(ID, source);
+    nAnnotations = numel(usernames);
+    usernames = cellstr(usernames);
+    
+    
+    [groupIndex, groupNames] = findgroups(usernames);
+    n = splitapply(@numel, usernames, groupIndex);
+    
+    [n, ind] = sort(n, 'descend');
+    groupNames = groupNames(ind);
+    
+    fprintf('c%u annotators:\n', ID);
+    for i = 1:numel(n)
+        fprintf('\t%u - %s\n', n(i), groupNames{i});
+    end
+    
+    if visualize
+        figure();
+        pie(n, ones(size(n)), groupNames);
+        title(sprintf('c%u - %u annotations', ID, nAnnotations));
+        if numel(groupNames) > 1
+            colormap(pmkmp(numel(groupNames), 'cubicl'));
+        end
     end
     
     T = table(groupNames, n, 'VariableNames', {'Username', 'Annotations'});
