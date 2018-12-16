@@ -5,15 +5,19 @@ classdef RenderApp < handle
     %   UI for viewing renders and creating scenes for figures
     %
     % Constructor:
-    %   obj = RenderApp(source);
+    %   obj = RenderApp(source, isMac);
+    %
+    % Inputs:
+    %   source          Volume name or abbreviation
+    %   isMac           Is running in parallels, default = false
     %
     % Example:
+    %   % Without arguments, a dialog box for choosing the source appears
+    %   RenderApp
+    %   % If running on a PC
     %   RenderApp('i');
-    %
-    % Todo:
-    %   - Check for duplicate neurons
-    %   - Synapses
-    %   - Legend colors
+    %   % If running in parallels:
+    %   RenderApp('i', true);
     %
     % See also:
     %   GRAPHAPP, IMAGESTACKAPP, IPLDEPTHAPP, NEURON
@@ -27,6 +31,7 @@ classdef RenderApp < handle
     %   30Oct2018 - SSP - Fully debugged boundary and gap markers
     %   6Nov2018 - SSP - Color by stratification added
     %   19Nov2018 - SSP - Last modified location added
+    %   16Dec2018 - SSP - Added flag for running in parallels on Mac
     % ---------------------------------------------------------------------
 
     properties (SetAccess = private)
@@ -63,22 +68,28 @@ classdef RenderApp < handle
 
         % Last saved folder (cd to start)
         saveDir
+        
+        % To accomodate for changes in rendering when running in parallels
+        isMac
     end
 
-    properties (Constant = true, Hidden = true)
-        DEFAULTALPHA = 0.6;
-        BUBBLE_SIZE = 1/30;
-        UI_WIDTH = 140;     % Pixels
+    properties (Constant = true, Hidden = true)      
+        UI_WIDTH = 150;     % Pixels
         SYNAPSES = false;
+        LAST_MODIFIED_CIRCLE_RADIUS = 1/30;
         SOURCES = {'NeitzTemporalMonkey','NeitzInferiorMonkey','MarcRC1'};
         CACHE = [fileparts(fileparts(mfilename('fullname'))), filesep, 'data'];
         COLORMAPS = {'haxby', 'parula', 'winter', 'hsv', 'antijet',...
             'cubicl', 'viridis', 'redblue', 'bone', 'isolum (colorblind)',...
             'ametrine (colorblind)'};
     end
+    
+    properties (Hidden, Dependent = true)
+        defaultAlpha
+    end
 
     methods
-        function obj = RenderApp(source)
+        function obj = RenderApp(source, isMac)
             % RENDERAPP
             %
             % Description:
@@ -107,6 +118,13 @@ classdef RenderApp < handle
                     return;
                 end
             end
+            
+            if nargin < 2
+                obj.isMac = false;
+            else
+                assert(islogical(isMac), 'isMac must be true/false');
+                obj.isMac = true;
+            end
 
             obj.neurons = containers.Map();
             if ~strcmp(obj.source, 'RC1')
@@ -127,6 +145,11 @@ classdef RenderApp < handle
             obj.isInverted = false;
             obj.xyOffset = [];
             obj.saveDir = cd;
+        end
+        
+        function defaultAlpha = get.defaultAlpha(obj)
+            h = findobj(obj.figureHandle, 'Tag', 'DefaultAlpha');
+            defaultAlpha = str2double(h.String{h.Value});
         end
     end
 
@@ -335,7 +358,7 @@ classdef RenderApp < handle
             
             % Delete any existing last modified annotations
             obj.deleteLastMod();  
-            
+            assignin('base', 'evt', evt);
             neuron = obj.evt2neuron(evt);
             
             XYZ = neuron.id2xyz(neuron.getLastModifiedID());
@@ -347,7 +370,7 @@ classdef RenderApp < handle
             
             axLims = obj.getLimits(obj.ax);
             axSize = mean(abs(axLims(:,2) - axLims(:,1)));
-            radius = obj.BUBBLE_SIZE * axSize;
+            radius = obj.LAST_MODIFIED_CIRCLE_RADIUS * axSize;
             
             % Make the annotation
             [X, Y, Z] = sphere();
@@ -356,8 +379,11 @@ classdef RenderApp < handle
             
             p = surf(X, Y, Z, 'Parent', obj.ax,...
                 'FaceColor', [0.5, 0.5, 0.5], 'EdgeColor', 'none',...
-                'FaceAlpha', 0.3, 'FaceLighting', 'gouraud',...
+                'FaceAlpha', 1, 'FaceLighting', 'gouraud',...
                 'Tag', 'LastModified');
+            if ~obj.isMac
+                p.FaceAlpha = 0.3;
+            end
             c = uicontextmenu();
             uimenu(c, 'Label', 'Delete', 'Callback', @obj.deleteLastMod);
             p.UIContextMenu = c;
@@ -797,7 +823,7 @@ classdef RenderApp < handle
             colorBox = findobj(obj.figureHandle, 'Tag', 'NextColor');
             neuron.render('ax', obj.ax,...
                 'FaceColor', colorBox.BackgroundColor,...
-                'FaceAlpha', obj.DEFAULTALPHA);
+                'FaceAlpha', obj.defaultAlpha);
             view(obj.ax, obj.azel(1), obj.azel(2));
             
             h = findobj(obj.ax, 'Tag', obj.id2tag(neuron.ID));
@@ -1071,7 +1097,7 @@ classdef RenderApp < handle
             axesPanel = uipanel(mainLayout, 'BackgroundColor', 'w');
             obj.createAxes(axesPanel);
 
-            set(mainLayout, 'Widths', [-1 -3]);
+            set(mainLayout, 'Widths', [-1 -2.75]);
         end
 
         function createAxes(obj, parentHandle)
@@ -1260,13 +1286,17 @@ classdef RenderApp < handle
                 'KeyPressFcn', @obj.onKeyPress_CMapLevels);
             set(cmapLayout, 'Widths', [-1, -0.8]);
             
-            LayoutManager.verticalBoxWithLabel(ctrlLayout, 'Transparency:',...
+            % Default render transparency is 0.6, unless Mac 
+            h = LayoutManager.verticalBoxWithLabel(ctrlLayout, 'Transparency:',...
                 'Style', 'popup',...
                 'String', {'0.1', '0.2', '0.3', '0.4', '0.5',...
                     '0.6', '0.7', '0.8', '0.9', '1'},...
                 'Value', 10,...
                 'Tag', 'DefaultAlpha',...
                 'Callback', @obj.onSetTransparency);
+            if ~obj.isMac
+                h.Value = 6;
+            end
             uix.Empty('Parent', ctrlLayout);
             uicontrol(ctrlLayout,...
                 'Style', 'text', 'String', 'View points:',...
