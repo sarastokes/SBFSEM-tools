@@ -1,5 +1,20 @@
 # Changelog
 
+### 15Dec2018
+- Updated INL boundary markers for NeitzInferiorMonkey to omit 50 markers placed with different criteria
+- Small improvements to `views\RenderApp.m` including single neuron export menu and better LastModified annotation appearance
+
+### 11Dec2018
+- Added `util\network\getAllLinkedNeurons.m` which runs `getLinkedNeurons.m` for each synapse type in a neuron.
+
+### 9Dec2018
+- Simplified `views\RenderApp.m` code with neurons containers.Map using tag instead of char(ID) keys
+
+### 8Dec2018
+- Added option to `getContributions.m` in `views\RenderApp.m` 
+- Improved plotting in `getContributions.m`
+- Added `plotLinkedNeurons.m` to make a pie chart of linked neuron synapse count
+
 ### 6Dec2018
 - Better visualization: `docs\iplboundary.png`
 - Fixed duplication of `data\NEITZINFERIORMONKEY_GCL.txt` boundary markers
