@@ -66,6 +66,7 @@ classdef DendriteDiameter < sbfsem.analysis.NeuronAnalysis
             addParameter(ip, 'ind', [], @isvector);
             addParameter(ip, 'nbins', [], @isnumeric);
             addParameter(ip, 'search', [2 5], @isvector);
+            addParameter(ip, 'includeSoma', true, @islogical);
             parse(ip, varargin{:});
             nbins = ip.Results.nbins;
             searchBins = ip.Results.search(1):ip.Results.search(2);
@@ -73,12 +74,16 @@ classdef DendriteDiameter < sbfsem.analysis.NeuronAnalysis
             % Get the soma location
             soma = getSomaXYZ(obj.target);
             % Remove rows for soma/axon
-            T = obj.target.getCellNodes;
+            nodes = obj.target.getCellNodes;
             if ~isempty(ip.Results.ind)
-                T(ip.Results.ind,:) = [];
+                nodes(ip.Results.ind,:) = [];
+            end
+            if ~ip.Results.includeSoma
+                somaRadius = obj.target.getSomaSize(false);
+                nodes(nodes.Rum > 0.8*somaRadius, :) = [];
             end
             % Get the remaining locations
-            xyz = T.XYZum;
+            xyz = nodes.XYZum;
             
             % Get the distance of each annotation from the soma
             if ip.Results.dim == 2
@@ -102,7 +107,7 @@ classdef DendriteDiameter < sbfsem.analysis.NeuronAnalysis
             end
             
             % Get the dendrite sizes
-            dendrite = T.Rum;
+            dendrite = nodes.Rum;
             
             % Prevent splitapply error for empty bins
             emptyBins = find(n == 0);
@@ -122,14 +127,15 @@ classdef DendriteDiameter < sbfsem.analysis.NeuronAnalysis
             h.sem = splitapply(@sem, dendrite, bins);
             h.median = splitapply(@median, dendrite, bins);
             h.n = sum(h.counts);
-                        
-            % Save to object
-            obj.data = h;
 
             % Save the params for later reference
             h.params.nbins = ip.Results.nbins;
             h.params.dim = ip.Results.dim;
-            h.params.ind = ip.Results.ind;           
+            h.params.ind = ip.Results.ind;     
+            
+                                    
+            % Save to object
+            obj.data = h;
             
             % Print some results
             obj.report()
@@ -167,8 +173,8 @@ classdef DendriteDiameter < sbfsem.analysis.NeuronAnalysis
                 mean(obj.data.avg(ind:end)), mean(obj.data.sem(ind:end)));
             fprintf('mean radius = %.2f +- %.2f (SD)\n',...
                 mean(obj.data.avg(ind:end)), mean(obj.data.std(ind:end)));
-            fprintf('median diameter = %.4f\n',...
-                mean(2*obj.data.median(ind:end)));
+            fprintf('median radius = %.4g\n', mean(obj.data.median(ind:end)));
+            fprintf('median diameter = %.4g\n', mean(2*obj.data.median(ind:end)));
         end
 
         function T = table(obj)

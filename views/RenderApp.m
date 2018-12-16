@@ -60,6 +60,9 @@ classdef RenderApp < handle
 
         % Transformation to XY offsets
         transform = sbfsem.core.Transforms.Viking;
+
+        % Last saved folder (cd to start)
+        saveDir
     end
 
     properties (Constant = true, Hidden = true)
@@ -123,6 +126,7 @@ classdef RenderApp < handle
 
             obj.isInverted = false;
             obj.xyOffset = [];
+            obj.saveDir = cd;
         end
     end
 
@@ -205,7 +209,7 @@ classdef RenderApp < handle
 
             % Get the target ID and neuron
             ID = obj.tag2id(evt.Source.Tag);
-            neuron = obj.neurons(num2str(ID));
+            neuron = obj.neurons(obj.id2tag(ID));
 
             % Update the OData and the 3D model
             obj.updateStatus('Updating OData');
@@ -268,12 +272,18 @@ classdef RenderApp < handle
             obj.removeNeuron(ID, node);
         end
 
-        function onExportNeuron(obj, ~, ~)
-            % ONEXPORTNEURON  Export Neuron objects to base workspace
+        function onExportNeuron(obj, ~, evt)
+            % ONEXPORTNEURON  Export one neuron to base workspace
+            neuron = obj.evt2neuron(evt);
+            assignin('base', sprintf('c%u', neuron.ID), neuron);
+        end
+
+        function onExportNeurons(obj, ~, ~)
+            % ONEXPORTNEURONS  Export all Neuron objects to base workspace
 
             tags = obj.neurons.keys;
             for i = 1:numel(tags)
-                assignin('base', sprintf('c%u', tags{i}),...
+                assignin('base', sprintf(tags{i}),...
                     obj.neurons(tags{i}));
             end
         end
@@ -293,8 +303,7 @@ classdef RenderApp < handle
     end
 
     % Node tree callbacks - apply to just one neuron
-    methods (Access = private)
-    
+    methods (Access = private) 
         function onNodeChecked(obj, ~, evt)
             % ONNODECHECKED  Toggles visibility of patches
 
@@ -327,11 +336,13 @@ classdef RenderApp < handle
             % Delete any existing last modified annotations
             obj.deleteLastMod();  
             
-            neuron = obj.neurons(num2str(obj.tag2id(evt.Source.Tag)));
+            neuron = obj.evt2neuron(evt);
+            
             XYZ = neuron.id2xyz(neuron.getLastModifiedID());
+            % If last annotation was placed after loading Neuron, just use
+            % the annotation with the highest LocationID.
             if isempty(XYZ)
-                obj.updateStatus('Last Modified Not Found!');
-                return;
+                XYZ = neuron.id2xyz(max(neuron.nodes.ID));
             end
             
             axLims = obj.getLimits(obj.ax);
@@ -426,7 +437,7 @@ classdef RenderApp < handle
         end
 
         function onSetRotation(obj, src, ~)
-            % ONSETROTATION
+            % ONSETROTATION  Set to one of a preset of common rotations
             switch src.Tag
                 case 'XY1'
                     view(obj.ax, 2);
@@ -439,6 +450,7 @@ classdef RenderApp < handle
                 case '3D'
                     view(obj.ax, 3);
             end
+            [obj.azel(1), obj.azel(2)] = view(obj.ax);
         end
 
         function onSetLimits(obj, src, evt)
@@ -618,7 +630,7 @@ classdef RenderApp < handle
             % ONOPENVIEW  Open a single neuron analysis view
             % See also: GRAPHAPP
 
-            neuron = obj.neurons(num2str(obj.tag2id(evt.Source.Tag)));
+            neuron = obj.evt2neuron(evt);
             obj.updateStatus('Opening view');
             GraphApp(neuron);
             obj.updateStatus('');
@@ -626,13 +638,31 @@ classdef RenderApp < handle
 
         function onGetSomaStats(obj, ~, evt)
             % ONGETSOMASTATS  Open SomaStatsView
-            neuron = obj.neurons(num2str(obj.tag2id(evt.Source.Tag)));
+            % See also: SOMASTATSVIEW
+            neuron = obj.evt2neuron(evt);
             SomaStatsView(neuron);
+        end
+
+        function onGetDendriteDiameter(obj, ~, evt)
+            % ONGETDENDRITEDIAMETER  Show dendrite diameter histogram
+            % See also: sbfsem.analysis.DendriteDiameter
+            neuron = obj.evt2neuron(evt);
+            x = sbfsem.analysis.DendriteDiameter(neuron,...
+                'includeSoma', false);
+            x.plot();
+        end
+
+        function onGetContributions(obj, ~, evt)
+            % ONGETCONTRIBUTIONS  Pie chart of annotator contributions
+            % See also: GETCONTRIBUTIONS
+            neuron = obj.evt2neuron(evt);
+            getContributions(neuron.ID, obj.source);
         end
         
         function onGetStratification(obj, ~, evt)
             % ONGETSTRATIFICATION  Run iplDepth, graph results
-            neuron = obj.neurons(num2str(obj.tag2id(evt.Source.Tag)));
+            % See also: IPLDEPTH
+            neuron = obj.evt2neuron(evt);
             obj.updateStatus('Analyzing...');
             neuronColor = get(findobj(obj.ax, 'Tag', evt.Source.Tag), 'FaceColor');
             if ischar(neuronColor)
@@ -642,8 +672,33 @@ classdef RenderApp < handle
                      'Color', neuronColor);
             obj.updateStatus('');
         end
+        
+        function onExportNeuronImage(obj, ~, evt)
+            newAxes = obj.exportFigure();
+            set(newAxes.Parent, 'InvertHardcopy', 'off');
+            
+            [fName, fPath] = obj.uiputfile(...
+                {'*.png', '*.tiff', '*.jpeg'},...
+                'Save image as PNG, TIFF, JPEG');
+            
+            % Catch when user cancels out of save dialog
+            if isempty(fName) || isempty(fPath)
+                return;
+            end
+            
+            % Save by extension type
+            [~, ~, exten] = fileparts(fName);
+            exten = '-d' + exten(2:end);
+            
+            patches = findall(newAxes, 'Type', 'patch');
+            for i = 1:numel(patches)
+                if strcmp(get(patches(i), 'Tag'), evt.Source.Tag)
+                    
+                end
+            end
+        end
 
-        function onExportImage(obj, src, ~)
+        function onExportImage(obj, src, evt)
             % ONEXPORTIMAGE  Save renders as an image
 
             % Export figure to new window without uicontrols
@@ -651,9 +706,9 @@ classdef RenderApp < handle
             set(newAxes.Parent, 'InvertHardcopy', 'off');
 
             % Open a save dialog to get path, name and extension
-            [fName, fPath] = uiputfile(...
-                {'*.jpeg'; '*.png'; '*.tiff'},...
-                'Save image as a JPEG, PNG or TIFF');
+            [fName, fPath] = obj.uiputfile(...
+                {'*.png'; '*.tiff'; '*.jpeg'},...
+                'Save image as a PNG, TIFF or JPEG');
 
             % Catch when user cancels out of save dialog
             if isempty(fName) || isempty(fPath)
@@ -661,14 +716,8 @@ classdef RenderApp < handle
             end
 
             % Save by extension type
-            switch fName(end-2:end)
-                case 'png'
-                    exten = '-dpng';
-                case 'peg'
-                    exten = '-djpeg';
-                case 'iff'
-                    exten = '-dtiff';
-            end
+            [~, ~, exten] = fileparts(fName);
+            exten = '-d' + exten(2:end);
 
             if isempty(strfind(src.Label, 'high res'))
                 print(newAxes.Parent, [fPath, fName], exten);
@@ -684,12 +733,32 @@ classdef RenderApp < handle
             % See also: EXPORTSCENEDAE
 
             % Prompt user for file name and path
-            [fName, fPath] = uiputfile('*.dae', 'Save as');
+            [fName, fPath] = obj.uiputfile('*.dae', 'Save as DAE file');
             % Catch when user cancels out of save dialog
             if isempty(fName) || isempty(fPath)
                 return;
             end
             exportSceneDAE(obj.ax, [fPath, fName]);
+        end
+
+        function onExportSTL(obj, ~, evt)
+            % ONEXPORTSTL  Export neuron as .stl file
+            neuron = obj.evt2neuron(evt);
+            [fName, fPath] = obj.uiputfile('*.stl', 'Save as .stl file');
+            if isempty(fName) || isempty(fPath)
+                return;
+            end
+            sbfsem.io.STL(neuron, [fPath, filesep, fName]);
+        end
+
+        function onExportDAE(obj, ~, evt)
+            % ONEXPORTDAE
+            neuron = obj.evt2neuron(evt);
+            [fName, fPath] = obj.uiputfile('*.dae', 'Save as .dae file');
+            if isempty(fName) || isempty(fPath)
+                return;
+            end
+            neuron.dae([fPath, fName]);
         end
 
         function onExportFigure(obj, ~, ~)
@@ -736,7 +805,7 @@ classdef RenderApp < handle
                 repmat(h.FaceColor, [size(h.Vertices,1), 1]));
             
             % If all is successful, add to neuron lists
-            obj.neurons(num2str(neuron.ID)) = neuron;
+            obj.neurons(obj.id2tag(neuron.ID)) = neuron;
             obj.IDs = cat(2, obj.IDs, neuron.ID);
             didImport = true;
         end
@@ -811,9 +880,31 @@ classdef RenderApp < handle
                     'Tag', obj.id2tag(ID),...
                     'Callback', @obj.onGetStratification);
             end
+            uimenu(a, 'Label', 'Get Dendrite Diameter',...
+                'Tag', obj.id2tag(ID),...
+                'Callback', @obj.onGetDendriteDiameter);
             uimenu(a, 'Label', 'Get Soma Stats',...
                 'Tag', obj.id2tag(ID),...
                 'Callback', @obj.onGetSomaStats);
+            uimenu(a, 'Label', 'Get User Contributions',...
+                'Tag', obj.id2tag(ID),...
+                'Callback', @obj.onGetContributions);
+            e = uimenu(c, 'Label', 'Export',...
+                'Tag', obj.id2tag(ID));
+            uimenu(e, 'Label', 'Neuron Object to workspace',...
+                'Tag', obj.id2tag(ID),...
+                'Callback', @obj.onExportNeuron);
+            uimenu(e, 'Label', 'Render to new figure',...
+                'Tag', obj.id2tag(ID));
+            uimenu(e, 'Label', 'Render to saved image',...
+                'Tag', obj.id2tag(ID));
+            uimenu(e, 'Label', 'Save as .stl file',...
+                'Tag', obj.id2tag(ID),...
+                'Callback', @obj.onExportSTL);
+            uimenu(e, 'Label', 'Save as .dae file',...
+                'Tag', obj.id2tag(ID),...
+                'Callback', @obj.onExportDAE);
+            
             set(newNode, 'UIContextMenu', c);
         end
 
@@ -823,7 +914,7 @@ classdef RenderApp < handle
             % Delete from checkbox tree
             delete(node);
             % Clear out neuron data
-            obj.neurons(num2str(ID)) = [];
+            obj.neurons(obj.id2tag(ID)) = [];
             obj.IDs(obj.IDs == ID) = [];
             % Delete the patch from the render
             delete(findall(obj.ax, 'Tag', obj.id2tag(ID)));
@@ -872,6 +963,12 @@ classdef RenderApp < handle
 
     % Misc private functions
     methods (Access = private)
+
+        function neuron = evt2neuron(obj, evt)
+            % EVT2NEURON  Get neuron object from ID in event tag
+            neuron = obj.neurons(evt.Source.Tag);
+        end
+
         function updateStatus(obj, str)
             % UPDATESTATUS  Update status text
             if nargin < 2
@@ -881,6 +978,18 @@ classdef RenderApp < handle
             end
             set(findobj(obj.figureHandle, 'Tag', 'StatusBox'), 'String', str);
             drawnow;
+        end
+        
+        function [fName, fPath] = uiputfile(obj, exten, str)
+            % UIPUTFILE  Overwrite uiputfile to send to last saved directory
+            if nargin < 3
+                str = '';
+            end
+            cd(obj.saveDir);
+            [fName, fPath] = uiputfile(exten, str);
+            if ~isempty(fPath)
+                obj.saveDir = fPath;
+            end
         end
         
         function matchAxes(obj)
@@ -1205,7 +1314,7 @@ classdef RenderApp < handle
             uimenu(mh.export, 'Label', 'Export as COLLADA',...
                 'Callback', @obj.onExportCollada);
             uimenu(mh.export, 'Label', 'Send neurons to workspace',...
-                'Callback', @obj.onExportNeuron);
+                'Callback', @obj.onExportNeurons);
 
             mh.help = uimenu(obj.figureHandle, 'Label', 'Help');
             uimenu(mh.help, 'Label', 'Keyboard controls',...

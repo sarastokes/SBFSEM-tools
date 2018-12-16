@@ -17,6 +17,9 @@ classdef (Abstract) BoundaryMarker < handle
     %   obj.addToScene(ax, varargin); 
     %   obj.rmFromScene(ax);
     %
+    % See also:
+    %   REGULARIZEDATA3D, SBFSEM.CORE.GCLBOUNDARY
+    %
     % 11Nov2017 - SSP
     % 4Jan2018 - SSP - standardized function names
     % 7Feb2018 - SSP - better plotting, add and remove from scene methods
