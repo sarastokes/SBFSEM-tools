@@ -297,17 +297,14 @@ classdef RenderApp < handle
 
         function onExportNeuron(obj, ~, evt)
             % ONEXPORTNEURON  Export one neuron to base workspace
-            neuron = obj.evt2neuron(evt);
-            assignin('base', sprintf('c%u', neuron.ID), neuron);
-        end
-
-        function onExportNeurons(obj, ~, ~)
-            % ONEXPORTNEURONS  Export all Neuron objects to base workspace
-
-            tags = obj.neurons.keys;
-            for i = 1:numel(tags)
-                assignin('base', sprintf(tags{i}),...
-                    obj.neurons(tags{i}));
+            if strcmp(evt.Source.Tag, 'GroupFcn')                
+                tags = obj.neurons.keys;
+                for i = 1:numel(tags)
+                    assignin('base', sprintf(tags{i}), obj.neurons(tags{i}));
+                end
+            else
+                neuron = obj.evt2neuron(evt);
+                assignin('base', sprintf('c%u', neuron.ID), neuron);
             end
         end
 
@@ -358,7 +355,6 @@ classdef RenderApp < handle
             
             % Delete any existing last modified annotations
             obj.deleteLastMod();  
-            assignin('base', 'evt', evt);
             neuron = obj.evt2neuron(evt);
             
             XYZ = neuron.id2xyz(neuron.getLastModifiedID());
@@ -649,7 +645,7 @@ classdef RenderApp < handle
         end
     end
 
-    % External callbacks
+    % Analysis callbacks
     methods (Access = private)
 
         function onOpenGraphApp(obj, ~, evt)
@@ -698,38 +694,25 @@ classdef RenderApp < handle
                      'Color', neuronColor);
             obj.updateStatus('');
         end
-        
-        function onExportNeuronImage(obj, ~, evt)
-            newAxes = obj.exportFigure();
-            set(newAxes.Parent, 'InvertHardcopy', 'off');
-            
-            [fName, fPath] = obj.uiputfile(...
-                {'*.png', '*.tiff', '*.jpeg'},...
-                'Save image as PNG, TIFF, JPEG');
-            
-            % Catch when user cancels out of save dialog
-            if isempty(fName) || isempty(fPath)
-                return;
-            end
-            
-            % Save by extension type
-            [~, ~, exten] = fileparts(fName);
-            exten = '-d' + exten(2:end);
-            
-            patches = findall(newAxes, 'Type', 'patch');
-            for i = 1:numel(patches)
-                if strcmp(get(patches(i), 'Tag'), evt.Source.Tag)
-                    
-                end
-            end
-        end
+    end
+    
+    % Export callbacks
+    methods (Access = private)
 
-        function onExportImage(obj, src, evt)
+        function onExportImage(obj, ~, evt)
             % ONEXPORTIMAGE  Save renders as an image
 
             % Export figure to new window without uicontrols
             newAxes = obj.exportFigure();
-            set(newAxes.Parent, 'InvertHardcopy', 'off');
+            % If not a group function, delete other patches
+            if ~strcmp(evt.Source.Tag, 'GroupFcn')
+                patches = findall(newAxes, 'Type', 'patch');
+                for i = 1:numel(patches)
+                    if ~strcmp(patches(i).Tag, evt.Source.Tag)
+                        delete(patches(i));
+                    end
+                end
+            end
 
             % Open a save dialog to get path, name and extension
             [fName, fPath] = obj.uiputfile(...
@@ -745,11 +728,8 @@ classdef RenderApp < handle
             [~, ~, exten] = fileparts(fName);
             exten = '-d' + exten(2:end);
 
-            if isempty(strfind(src.Label, 'high res'))
-                print(newAxes.Parent, [fPath, fName], exten);
-            else
-                print(newAxes.Parent, [fPath, fName], exten, '-r600');
-            end
+            print(newAxes.Parent, [fPath, fName], exten, '-r600');
+
             fprintf('Saved as: %s\n', [fPath, fName]);
             delete(newAxes.Parent);
         end
@@ -774,11 +754,11 @@ classdef RenderApp < handle
             if isempty(fName) || isempty(fPath)
                 return;
             end
-            sbfsem.io.STL(neuron, [fPath, filesep, fName]);
+            sbfsem.io.STL(neuron, [fPath, fName]);
         end
 
         function onExportDAE(obj, ~, evt)
-            % ONEXPORTDAE
+            % ONEXPORTDAE  Export neuron as .dae file
             neuron = obj.evt2neuron(evt);
             [fName, fPath] = obj.uiputfile('*.dae', 'Save as .dae file');
             if isempty(fName) || isempty(fPath)
@@ -787,9 +767,19 @@ classdef RenderApp < handle
             neuron.dae([fPath, fName]);
         end
 
-        function onExportFigure(obj, ~, ~)
+        function onExportFigure(obj, ~, evt)
             % ONEXPORTFIGURE  Copy figure to new window
-            obj.exportFigure();
+
+            newAxes = obj.exportFigure();
+            % If not a group function, delete other patches
+            if ~strcmp(evt.Source.Tag, 'GroupFcn')
+                patches = findall(newAxes, 'Type', 'patch');
+                for i = 1:numel(patches)
+                    if ~strcmp(patches(i).Tag, evt.Source.Tag)
+                        delete(patches(i));
+                    end
+                end
+            end
         end
     end
 
@@ -873,7 +863,7 @@ classdef RenderApp < handle
                     'Tag', obj.id2tag(ID),...
                     'Callback', @obj.onUpdateNeuron);
             end
-            uimenu(c, 'Label', 'Remove Neuron',...
+            uimenu(c, 'Label', 'Remove',...
                 'Tag', obj.id2tag(ID),...
                 'Callback', @obj.onRemoveNeuron);
             uimenu(c, 'Label', 'Change Color',...
@@ -921,15 +911,17 @@ classdef RenderApp < handle
                 'Tag', obj.id2tag(ID),...
                 'Callback', @obj.onExportNeuron);
             uimenu(e, 'Label', 'Render to new figure',...
-                'Tag', obj.id2tag(ID));
+                'Tag', obj.id2tag(ID),...
+                'Callback', @obj.onExportFigure);
             uimenu(e, 'Label', 'Render to saved image',...
-                'Tag', obj.id2tag(ID));
+                'Tag', obj.id2tag(ID),...
+                'Callback', @obj.onExportImage);
             uimenu(e, 'Label', 'Save as .stl file',...
                 'Tag', obj.id2tag(ID),...
                 'Callback', @obj.onExportSTL);
-            uimenu(e, 'Label', 'Save as .dae file',...
-                'Tag', obj.id2tag(ID),...
-                'Callback', @obj.onExportDAE);
+            % uimenu(e, 'Label', 'Save as .dae file',...
+            %     'Tag', obj.id2tag(ID),...
+            %     'Callback', @obj.onExportDAE);
             
             set(newNode, 'UIContextMenu', c);
         end
@@ -1287,7 +1279,7 @@ classdef RenderApp < handle
             set(cmapLayout, 'Widths', [-1, -0.8]);
             
             % Default render transparency is 0.6, unless Mac 
-            h = LayoutManager.verticalBoxWithLabel(ctrlLayout, 'Transparency:',...
+            LayoutManager.verticalBoxWithLabel(ctrlLayout, 'Transparency:',...
                 'Style', 'popup',...
                 'String', {'0.1', '0.2', '0.3', '0.4', '0.5',...
                     '0.6', '0.7', '0.8', '0.9', '1'},...
@@ -1295,7 +1287,7 @@ classdef RenderApp < handle
                 'Tag', 'DefaultAlpha',...
                 'Callback', @obj.onSetTransparency);
             if ~obj.isMac
-                h.Value = 6;
+                set(findobj(obj.figureHandle, 'Tag', 'DefaultAlpha'), 'Value', 6);
             end
             uix.Empty('Parent', ctrlLayout);
             uicontrol(ctrlLayout,...
@@ -1336,15 +1328,16 @@ classdef RenderApp < handle
                 'Callback', @obj.onAddNeuronJSON);
             mh.export = uimenu(obj.figureHandle, 'Label', 'Export');
             uimenu(mh.export, 'Label', 'Open in new figure window',...
+                'Tag', 'GroupFcn',...
                 'Callback', @obj.onExportFigure);
             uimenu(mh.export, 'Label', 'Export as image',...
-                'Callback', @obj.onExportImage);
-            uimenu(mh.export, 'Label', 'Export as image (high res)',...
+                'Tag', 'GroupFcn',...
                 'Callback', @obj.onExportImage);
             uimenu(mh.export, 'Label', 'Export as COLLADA',...
                 'Callback', @obj.onExportCollada);
             uimenu(mh.export, 'Label', 'Send neurons to workspace',...
-                'Callback', @obj.onExportNeurons);
+                'Tag', 'GroupFcn',...
+                'Callback', @obj.onExportNeuron);
 
             mh.help = uimenu(obj.figureHandle, 'Label', 'Help');
             uimenu(mh.help, 'Label', 'Keyboard controls',...

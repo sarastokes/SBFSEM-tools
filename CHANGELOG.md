@@ -1,5 +1,9 @@
 # Changelog
 
+### 16Dec2018
+- Added `isMac` option to `views\RenderApp.m` to circumvent rendering errors when running MATALB on parallels
+- Added `lib\igamm.m` from the Machine Vision Toolbox for gamma correction of EM images
+
 ### 15Dec2018
 - Updated INL boundary markers for NeitzInferiorMonkey to omit 50 markers placed with different criteria
 - Small improvements to `views\RenderApp.m` including single neuron export menu and better LastModified annotation appearance
