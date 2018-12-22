@@ -585,10 +585,10 @@ classdef RenderApp < handle
             
             if src.Value
                 if isempty(obj.vessels)
+                    obj.updateStatus('Loading vessels...');
                     obj.vessels = sbfsem.builtin.Vasculature(obj.source);
-                    if ~isempty(obj.vessels.vessels)
-                        obj.vessels.render(obj.ax);
-                    end
+                    obj.vessels.render(obj.ax);
+                    obj.updateStatus('');
                 else
                     set(findall(obj.figureHandle, 'Tag', 'BloodVessel'),...
                         'Visible', 'on');
@@ -1423,7 +1423,7 @@ classdef RenderApp < handle
 
                     % Convert microns to Viking pixel coordinates
                     posMicrons = mean(get(obj.ax, 'CurrentPoint')); %um
-                    um2pix = obj.volumeScale/1e3; % nm/pix -> um/pix
+                    um2pix = obj.volumeScale ./ 1e3; % nm/pix -> um/pix
                     posViking = posMicrons./um2pix; % pix
 
                     % Reverse the xyOffset applied on Neuron creation

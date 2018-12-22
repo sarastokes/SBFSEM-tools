@@ -172,10 +172,10 @@ classdef OData < handle
         end
         
         function data = getUserLastAnnotations(obj, username, numAnnotations)
-            % GETUSERLASTANNOTATIONS
+            % GETUSERLASTLOCATIONS
             %
             % Input:
-            %   username
+            %   username            Viking username (char)
             %
             % Optional input:
             %   numAnnotations      Number to return (default = 1)
@@ -190,6 +190,25 @@ classdef OData < handle
                 username, '''&$orderby=LastModified desc ',...
                 '&$select=LastModified,ID,ParentID,TypeCode',...
                 '&$top=', num2str(numAnnotations)];
+            data = webread(str, obj.webOpt);
+            data = cat(1, data.value{:});
+        end
+        
+        function data = getUserLastStructures(obj, username, numStructures)
+            % GETUSERLASTSTRUCTURES
+            %
+            % Input:
+            %   username            Viking username (char)
+            %
+            % Optional input:
+            %   numStructures       Number to return (default = 1)
+            % -------------------------------------------------------------
+            str = [getServiceRoot(obj.source), 'Structures(',...
+                   num2str(ID), ')$filter=Username eq ', username,...
+                   '&$select=ID,ParentID&$orderby=LastModified desc'];
+            if nargin == 3
+                str = [str, '&$top=', numStructures];
+            end
             data = webread(str, obj.webOpt);
             data = cat(1, data.value{:});
         end

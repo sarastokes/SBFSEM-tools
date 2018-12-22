@@ -22,7 +22,7 @@ function T = getContributions(ID, source, visualize)
     end
     
     usernames = getUsernames(ID, source);
-    nAnnotations = numel(usernames);
+    nAnnotations = size(usernames, 1);
     usernames = cellstr(usernames);
     
     

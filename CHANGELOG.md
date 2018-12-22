@@ -1,5 +1,10 @@
 # Changelog
 
+### 21Dec2018
+- Fixed error in number of annotations in `util\import\getContributions.m` figure title
+- Added `sbfsem.io.OData\getUserLastStructures`
+- Fixed toggle of blood vesseles in `views\RenderApp.m`
+
 ### 16Dec2018
 - Added `isMac` option to `views\RenderApp.m` to circumvent rendering errors when running MATALB on parallels
 - Added `lib\igamm.m` from the Machine Vision Toolbox for gamma correction of EM images

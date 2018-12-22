@@ -4,13 +4,23 @@ classdef SWC < handle
 % Description:
 %	A class for handling SWC files
 %
+% Constructor:
+%   obj = sbfsem.io.SWC(neuron, varargin);
+%
+% Input:
+%   neuron      Neuron object
+% Optional key/value inputs:
+%   fPath       Folder to save output (otherwise UI asks for folder)
+%   startNode   Default lets sbfsem.render.Segment choose
+%
+%
 % Example:
 %   c4568 = Neuron(4568, 'i');
 %   x = sbfsem.io.SWC(c4568);
 %   x.save();
 %
 %
-% Layout:
+% Notes:
 %       --> n T x y z R P <--
 % n is an integer label that identifies the current point and increments by
 % one from one line to the next.
@@ -30,6 +40,9 @@ classdef SWC < handle
 %
 % Resources:
 %	Above description from: www.research.mssm.edu/cnic/swc.html
+%
+% See also:
+%   SBFSEM.RENDER.SEGMENT
 %
 % History:
 %   12Mar2018 - SSP
@@ -161,7 +174,7 @@ classdef SWC < handle
         function save(obj, fPath)
             % SAVE  Save SWC table as .swc file
             if nargin == 2
-                assert(isdir(fPath), 'fPath must be a valid file path!')
+                assert(isfolder(fPath), 'fPath must be a valid file path!')
                 obj.fPath = fPath;
             end
 
