@@ -1,5 +1,8 @@
 # Changelog
 
+### 2Jan2018
+- Fixed error in loading `RenderApp.m` for RC1
+
 ### 21Dec2018
 - Fixed error in number of annotations in `util\import\getContributions.m` figure title
 - Added `sbfsem.io.OData\getUserLastStructures`

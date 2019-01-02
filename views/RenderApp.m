@@ -127,7 +127,7 @@ classdef RenderApp < handle
             end
 
             obj.neurons = containers.Map();
-            if ~strcmp(obj.source, 'RC1')
+            if ~ismember(obj.source, {'RC1', 'MarcRC1'})
                 obj.iplBound.GCL = sbfsem.builtin.GCLBoundary(obj.source, true);
                 obj.iplBound.INL = sbfsem.builtin.INLBoundary(obj.source, true);
             else
