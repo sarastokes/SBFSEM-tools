@@ -716,8 +716,8 @@ classdef RenderApp < handle
 
             % Open a save dialog to get path, name and extension
             [fName, fPath] = obj.uiputfile(...
-                {'*.png'; '*.tiff'; '*.jpeg'},...
-                'Save image as a PNG, TIFF or JPEG');
+                {'*.png'; '*.tiff'},...
+                'Save image as a PNG or TIFF');
 
             % Catch when user cancels out of save dialog
             if isempty(fName) || isempty(fPath)
@@ -725,8 +725,11 @@ classdef RenderApp < handle
             end
 
             % Save by extension type
-            [~, ~, exten] = fileparts(fName);
-            exten = '-d' + exten(2:end);
+            if ~contains(fName, 'png')
+                exten = '-dpng';
+            else
+                exten = '-dtiffn';
+            end
 
             print(newAxes.Parent, [fPath, fName], exten, '-r600');
 

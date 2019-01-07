@@ -1,5 +1,8 @@
 # Changelog
 
+### 7Jan2018
+- Fixed export of high resolution `.tiff` files in `RenderApp.m`.
+
 ### 2Jan2018
 - Fixed error in loading `RenderApp.m` for RC1
 
