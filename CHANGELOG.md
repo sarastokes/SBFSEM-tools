@@ -1,5 +1,8 @@
 # Changelog
 
+### 10Jan2018
+- Added boundary marker cache files for `RC1`
+
 ### 7Jan2018
 - Fixed export of high resolution `.tiff` files in `RenderApp.m`.
 
