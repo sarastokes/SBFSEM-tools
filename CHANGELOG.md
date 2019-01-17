@@ -1,5 +1,8 @@
 # Changelog
 
+### 17Jan2018
+- Fixed error in `sbfsem.io.OData\getUserLastStructures.m`
+
 ### 10Jan2018
 - Added boundary marker cache files for `RC1`
 
