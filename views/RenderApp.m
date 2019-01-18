@@ -580,19 +580,17 @@ classdef RenderApp < handle
             end
         end
         
-        function onKeyPress_CMapLevels(obj, src, evt)
-            % ONKEYPRESS_CMAPLEVELS  Callback to check for 'enter' press
-            if strcmp(evt.Key, 'return')
-                try
-                    N = str2double(src.String);
-                catch
-                    warndlg('Levels must be number between 2 and 256');
-                    set(src, 'String', '256');
-                    N = 256;
-                end
-                h = findobj(obj.figureHandle, 'Tag', 'CMaps');
-                colormap(obj.ax, obj.getColormap(h.String{h.Value}, N));
+        function onEditColormapLevels(obj, src, ~)
+            % ONEDITCOLORMAPLEVELS  Discretizes number of colormap colors
+            try
+                N = str2double(src.String);
+            catch
+                warndlg('Invalid input,  must be integer from 2-256');
+                set(src, 'String', '256');
+                N = 256;
             end
+            h = findobj(obj.figureHandle, 'Tag', 'CMaps');
+            colormap(obj.ax, obj.getColormap(h.String{h.Value}, N));
         end
     end
 
@@ -1312,8 +1310,8 @@ classdef RenderApp < handle
                 'Style', 'edit',...
                 'String', '256',...
                 'Tag', 'MapLevels',...
-                'TooltipString', 'Set levels for colormap (2-256)',...
-                'KeyPressFcn', @obj.onKeyPress_CMapLevels);
+                'TooltipString', 'Set # of colors (2-256), then press enter',...
+                'Callback', @obj.onEditColormapLevels);
             set(p, 'Widths', [-1, -0.8]);
             uicontrol(cmapGrid,... % cmapSubLayout,...
                 'Style', 'check',...
