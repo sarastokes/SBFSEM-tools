@@ -574,9 +574,9 @@ classdef RenderApp < handle
         function onScaleColormap(obj, src, ~)
             % ONSCALECOLORMAP  Fix scaling to IPL or set to auto
             if src.Value
-                set(obj.ax, 'CLimMode', 'manual', 'CLim', [0, 1]);
+                set(obj.ax, 'CLimMode', 'auto');                
             else
-                set(obj.ax, 'CLimMode', 'auto');
+                set(obj.ax, 'CLimMode', 'manual', 'CLim', [0, 1]);
             end
         end
         
@@ -1321,7 +1321,7 @@ classdef RenderApp < handle
             uicontrol(cmapGrid,...
                 'Style', 'check',...
                 'String', 'Scale',...
-                'Value', 1,...
+                'Value', 0,...
                 'TooltipString', 'Switch between fixed/automatic scaling',...
                 'Callback', @obj.onScaleColormap);
             set(cmapGrid, 'Widths', [-1, -0.8], 'Heights', [-1, -1]);
