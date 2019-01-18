@@ -1,7 +1,10 @@
 # Changelog
 
 ### 17Jan2018
+- Added options for fixed color limits and colorbar for stratification colormaps in `views\RenderApp.m`
 - Fixed error in `sbfsem.io.OData\getUserLastStructures.m`
+- Removed `isInverted` property from `views\RenderApp.m`
+- Fixed background invert bug in `views\RenderApp.m` that prevented switching from black to white
 
 ### 10Jan2018
 - Added boundary marker cache files for `RC1`

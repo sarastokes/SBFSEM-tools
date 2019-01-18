@@ -52,9 +52,6 @@ classdef RenderApp < handle
         lights              % Light handles
         scaleBar            % Scale bar (empty until loaded)
 
-        % UI properties
-        isInverted          % Is axis color inverted
-
         % UI view controls
         azel = [-35, 30];
         zoomFac = 0.9;
@@ -142,14 +139,16 @@ classdef RenderApp < handle
                 obj.volumeScale = loadCachedVolumeScale(obj.source);
             end
 
-            obj.isInverted = false;
             obj.xyOffset = [];
             obj.saveDir = cd;
         end
         
         function defaultAlpha = get.defaultAlpha(obj)
-            h = findobj(obj.figureHandle, 'Tag', 'DefaultAlpha');
-            defaultAlpha = str2double(h.String{h.Value});
+            if obj.isMac
+                defaultAlpha = 1;
+            else
+                defaultAlpha = 0.6;
+            end
         end
     end
 
@@ -267,7 +266,7 @@ classdef RenderApp < handle
             % Apply vertex cdata mapping
             if strcmp(oldColor, 'interp')
                 newCData = clipStrataCData(newPatch.Vertices,...
-                    obj.iplBound.INL, obj.iplBound.GCL);
+                    obj.iplBound.INL, obj.iplBound.GCL, 0);
                 set(newPatch, 'FaceVertexCData', newCData,...
                     'FaceColor', 'interp');
             else
@@ -417,11 +416,11 @@ classdef RenderApp < handle
                 newAlpha = str2double(src.Label);
                 set(findall(obj.ax, 'Type', 'patch'),...
                     'FaceAlpha', newAlpha);
-            elseif strcmp(src.Tag, 'DefaultAlpha')
-                % Apply to all neurons (from popup menu)
-                newAlpha = str2double(src.String{src.Value});
-                set(findall(obj.ax, 'Type', 'patch'),...
-                    'FaceAlpha', newAlpha);
+            % elseif strcmp(src.Tag, 'DefaultAlpha')
+            %     % Apply to all neurons (from popup menu)
+            %     newAlpha = str2double(src.String{src.Value});
+            %     set(findall(obj.ax, 'Type', 'patch'),...
+            %         'FaceAlpha', newAlpha);
             elseif strcmp(src.Tag, 'SurfAlpha')
                 newAlpha = str2double(src.String{src.Value});
                 set(findall(obj.ax, 'Type', 'surface'),...
@@ -456,6 +455,28 @@ classdef RenderApp < handle
             end
             set(obj.ax, 'XColor', newColor,...
                 'YColor', newColor, 'ZColor', newColor);
+        end
+        
+        function onToggleColorbar(obj, src, ~)
+            % ONTOGGLECOLORBAR
+            if src.Value
+                cbarHandle = colorbar(obj.ax,...
+                    'Direction', 'reverse',...
+                    'TickDirection', 'out',...
+                    'AxisLocation', 'out',...
+                    'Location', 'eastoutside');
+                cbarHandle.Label.String = 'IPL Depth (%)';
+                if strcmpi(obj.ax.CLimMode, 'manual')
+                    cbarHandle.Ticks = 0:0.25:1;
+                end
+                cbarHandle.TickLabels = 100 * cbarHandle.Ticks;
+                
+                if obj.ax.Color == [0, 0, 0]
+                    cbarHandle.Color = 'w';
+                end
+            else
+                colorbar(obj.ax, 'off');
+            end
         end
 
         function onSetRotation(obj, src, ~)
@@ -506,16 +527,14 @@ classdef RenderApp < handle
             end
         end
 
-        function onToggleInvert(obj, ~, ~)
+        function onToggleInvert(obj, src, ~)
             % ONINVERT  Invert figure colors
-            if ~obj.isInverted
+            if src.Value
                 bkgdColor = 'k'; frgdColor = 'w';
                 set(obj.ax, 'GridColor', [0.85, 0.85, 0.85]);
-                obj.isInverted = true;
             else
                 bkgdColor = 'w'; frgdColor = 'k';
                 set(obj.ax, 'GridColor', [0.15 0.15 0.15]);
-                obj.isInverted = true;
             end
             set(obj.ax, 'Color', bkgdColor,...
                 'XColor', frgdColor,...
@@ -523,6 +542,8 @@ classdef RenderApp < handle
                 'ZColor', frgdColor);
             set(obj.ax.Parent,...
                 'BackgroundColor', bkgdColor);
+            set(findall(obj.figureHandle, 'Type', 'colorbar'),...
+                'Color', frgdColor);
         end
 
         function onSetNextColor(obj, src, ~)
@@ -542,10 +563,21 @@ classdef RenderApp < handle
             colormap(obj.ax, obj.getColormap(newMap, str2double(h.String)));
         end
         
-        function onInvertMap(obj, ~, ~)
+        function onInvertColormap(obj, src, ~)
             % ONINVERTMAP  Reverse the colormap scaling
             currentMap = colormap(obj.ax);
-            colormap(obj.ax, flipud(currentMap));
+            if src.Value
+                colormap(obj.ax, flipud(currentMap));
+            end
+        end
+
+        function onScaleColormap(obj, src, ~)
+            % ONSCALECOLORMAP  Fix scaling to IPL or set to auto
+            if src.Value
+                set(obj.ax, 'CLimMode', 'manual', 'CLim', [0, 1]);
+            else
+                set(obj.ax, 'CLimMode', 'auto');
+            end
         end
         
         function onKeyPress_CMapLevels(obj, src, evt)
@@ -716,7 +748,7 @@ classdef RenderApp < handle
 
             % Open a save dialog to get path, name and extension
             [fName, fPath] = obj.uiputfile(...
-                {'*.png'; '*.tiff'},...
+                {'*.png'; '*.tif'},...
                 'Save image as a PNG or TIFF');
 
             % Catch when user cancels out of save dialog
@@ -730,7 +762,6 @@ classdef RenderApp < handle
             else
                 exten = '-dtiffn';
             end
-
             print(newAxes.Parent, [fPath, fName], exten, '-r600');
 
             fprintf('Saved as: %s\n', [fPath, fName]);
@@ -966,7 +997,7 @@ classdef RenderApp < handle
                 if isempty(h)
                     obj.iplBound.(name).plot('ax', obj.ax);
                     set(obj.iplBound.(name).getSurfaceHandle(obj.ax),...
-                        'FaceAlpha', 0.3);
+                        'FaceAlpha', 0.5);
                 else
                     set(h, 'Visible', 'on');
                 end
@@ -1100,17 +1131,24 @@ classdef RenderApp < handle
 
             obj.ax = axes('Parent', parentHandle);
             hold(obj.ax, 'on');
-            shading(obj.ax, 'interp');
+
+            % Set the axis parameters
             grid(obj.ax, 'on');
             axis(obj.ax, 'equal', 'tight');
-            view(obj.ax, 3);
             xlabel(obj.ax, 'X'); ylabel(obj.ax, 'Y'); zlabel(obj.ax, 'Z');
+
+            % Set colormap parameters
+            shading(obj.ax, 'interp');
             colormap(obj.ax, haxby(256));
+            set(obj.ax, 'CLimMode', 'manual', 'CLim', [0, 1]);
 
             % Set the lighting
             obj.lights = [light(obj.ax), light(obj.ax)];
             lightangle(obj.lights(1), 45, 30);
             lightangle(obj.lights(2), 225, 30);
+
+            % Set the camera angle
+            view(obj.ax, 3);
         end
 
         function createNeuronTab(obj, parentHandle)
@@ -1237,7 +1275,8 @@ classdef RenderApp < handle
                 'Spacing', 5);
             uicontrol(g, 'String', 'Invert',...
                 'Style', 'check',...
-                'String', 'Invert background: dark/light',...
+                'String', 'Invert',...
+                'TooltipString', 'Invert background (white/black)',...
                 'Callback', @obj.onToggleInvert);
             uicontrol(g, 'String', 'Grid',...
                 'Style', 'check',...
@@ -1255,44 +1294,62 @@ classdef RenderApp < handle
                 'Callback', @obj.onToggleLights);
             set(g, 'Heights', [-1 -1], 'Widths', [-1, -1]);
             
+            % Colormap layout
             uicontrol(ctrlLayout,...
                 'Style', 'text', 'String', 'Colormap:',...
                 'FontWeight', 'bold');
-
-            cmapLayout = uix.HBox('Parent', ctrlLayout,...
+            cmapGrid = uix.Grid('Parent', ctrlLayout,...
+                'Spacing', 5,...
                 'BackgroundColor', 'w');
-            cmapSubLayout = uix.VBox('Parent', cmapLayout,...
-                'BackgroundColor', 'w');
-            uicontrol(cmapSubLayout,...
+            uicontrol(cmapGrid,...
                 'Style', 'popup',...
                 'String', obj.COLORMAPS,...
                 'Tag', 'CMaps',...
                 'TooltipString', 'Change colormap used for strata',...
                 'Callback', @obj.onChangeColormap);
-            uicontrol(cmapSubLayout,...
-                'Style', 'push',...
-                'String', 'Invert Map',...
-                'Callback', @obj.onInvertMap);
-            LayoutManager.verticalBoxWithLabel(cmapLayout, 'Levels:',...
+            [~, p] = LayoutManager.horizontalBoxWithLabel(...
+                cmapGrid, 'Levels:',...
                 'Style', 'edit',...
                 'String', '256',...
                 'Tag', 'MapLevels',...
                 'TooltipString', 'Set levels for colormap (2-256)',...
                 'KeyPressFcn', @obj.onKeyPress_CMapLevels);
-            set(cmapLayout, 'Widths', [-1, -0.8]);
+            set(p, 'Widths', [-1, -0.8]);
+            uicontrol(cmapGrid,... % cmapSubLayout,...
+                'Style', 'check',...
+                'String', 'Invert',...
+                'TooltipString', 'Reverse color map',...
+                'Callback', @obj.onInvertColormap);
+            uicontrol(cmapGrid,...
+                'Style', 'check',...
+                'String', 'Scale',...
+                'Value', 1,...
+                'TooltipString', 'Switch between fixed/automatic scaling',...
+                'Callback', @obj.onScaleColormap);
+            set(cmapGrid, 'Widths', [-1, -0.8], 'Heights', [-1, -1]);
+            uicontrol(ctrlLayout,...
+                'Style', 'check',...
+                'String', 'Show colorbar',...
+                'TooltipString', 'Show stratification color legend',...
+                'Callback', @obj.onToggleColorbar);
+
+            uix.Empty('Parent', ctrlLayout);
             
             % Default render transparency is 0.6, unless Mac 
-            LayoutManager.verticalBoxWithLabel(ctrlLayout, 'Transparency:',...
-                'Style', 'popup',...
-                'String', {'0.1', '0.2', '0.3', '0.4', '0.5',...
-                    '0.6', '0.7', '0.8', '0.9', '1'},...
-                'Value', 10,...
-                'Tag', 'DefaultAlpha',...
-                'Callback', @obj.onSetTransparency);
-            if ~obj.isMac
-                set(findobj(obj.figureHandle, 'Tag', 'DefaultAlpha'), 'Value', 6);
-            end
-            uix.Empty('Parent', ctrlLayout);
+            % [~, p] = LayoutManager.horizontalBoxWithLabel(...
+            %     ctrlLayout, 'Transparency:',...
+            %     'Style', 'popup',...
+            %     'String', {'0.1', '0.2', '0.3', '0.4', '0.5',...
+            %         '0.6', '0.7', '0.8', '0.9', '1'},...
+            %     'Value', 10,...
+            %     'Tag', 'DefaultAlpha',...
+            %     'Callback', @obj.onSetTransparency);
+            % set(p, 'Widths', [-1, -0.5]);
+            % if ~obj.isMac
+            %     set(findobj(obj.figureHandle, 'Tag', 'DefaultAlpha'), 'Value', 6);
+            % end
+
+            % View rotation control
             uicontrol(ctrlLayout,...
                 'Style', 'text', 'String', 'View points:',...
                 'FontWeight', 'bold');
@@ -1306,8 +1363,11 @@ classdef RenderApp < handle
                     'Tag', rotations{i},...
                     'Callback', @obj.onSetRotation);
             end
+
+            % Axis limit control
             uicontrol(ctrlLayout,...
-                'Style', 'text', 'String', 'Axis Limits');
+                'Style', 'text', 'String', 'Axis Limits',...
+                'FontWeight', 'bold');
             uitable(ctrlLayout,...
                 'Data', {false, 0, 1; false, 0, 1; false, 0, 1},...
                 'ColumnEditable', true,...
@@ -1321,7 +1381,7 @@ classdef RenderApp < handle
                 'Callback', @onAddScaleBar);
 
             set(ctrlLayout, 'Heights',...
-                [-0.5, -1.75, -0.5, -1.5, -1.25, -0.2, -0.5, -1, -0.5, -2.5, -0.75]);
+                [-0.7, -1.75, -0.7, -1.75, -1, -0.05, -0.7, -1, -0.7, -2.6, -0.75]);
         end
 
         function createToolbar(obj)
