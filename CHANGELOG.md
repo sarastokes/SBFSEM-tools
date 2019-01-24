@@ -1,18 +1,24 @@
 # Changelog
 
-### 17Jan2018
+### 24Jan2019
+- Fixed bug in `sbfsem.analysis.DendriteDiameter\table` by removing parameter struct from the data to be converted to a table.
+
+### 19Jan2019
+- Returned option for exporting high and low resolution images in `views\RenderApp.m`
+
+### 17Jan2019
 - Added options for fixed color limits and colorbar for stratification colormaps in `views\RenderApp.m`
 - Fixed error in `sbfsem.io.OData\getUserLastStructures.m`
 - Removed `isInverted` property from `views\RenderApp.m`
 - Fixed background invert bug in `views\RenderApp.m` that prevented switching from black to white
 
-### 10Jan2018
+### 10Jan2019
 - Added boundary marker cache files for `RC1`
 
-### 7Jan2018
+### 7Jan2019
 - Fixed export of high resolution `.tiff` files in `RenderApp.m`.
 
-### 2Jan2018
+### 2Jan2019
 - Fixed error in loading `RenderApp.m` for RC1
 
 ### 21Dec2018

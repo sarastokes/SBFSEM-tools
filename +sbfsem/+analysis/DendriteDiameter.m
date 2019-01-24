@@ -178,11 +178,8 @@ classdef DendriteDiameter < sbfsem.analysis.NeuronAnalysis
         end
 
         function T = table(obj)
-            % TABLE
-            % Returns data as a table
-            warning('off', 'MATLAB:structOnObject');
-            S = struct(obj.data);
-            S = rmfield(S, 'n');
+            % TABLE  Returns data as a table
+            S = rmfield(obj.data, {'n', 'params'});
             T = struct2table(S);
         end
         
