@@ -40,7 +40,7 @@ openvar('T')
 help('sbfsem.analysis.DendriteDiameter')
 % You can also view the help for specific functions by appending them 
 % to the class name like so:
-help('sbfsem.analysis.DendriteDiameter/plot')s
+help('sbfsem.analysis.DendriteDiameter/plot')
 help('sbfsem.analysis.DendriteDiameter/includeSoma')
 
 % Increase the number of bins (experiment with this parameter)

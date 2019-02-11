@@ -1,5 +1,12 @@
 # Changelog
 
+### 10Feb2019
+- New function for plotting flatmount renders like Golgi stain images (`util\renders\golgi.m`)
+- Added option to input synapse structure IDs to `synapseSphere.m`
+
+### 2Feb2019
+- Compiled trial version of standalone RenderApp software, based on repo at this time.
+
 ### 24Jan2019
 - Fixed bug in `sbfsem.analysis.DendriteDiameter\table` by removing parameter struct from the data to be converted to a table.
 

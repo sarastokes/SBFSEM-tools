@@ -42,7 +42,15 @@ function synapseSphere(neuron, synapse, varargin)
     assert(isa(neuron, 'sbfsem.core.NeuronAPI'),...
         'First argument must be Neuron object');
     
-    xyz = neuron.getSynapseXYZ(synapse);
+    if ~isnumeric(synapse)
+        xyz = neuron.getSynapseXYZ(synapse);
+    elseif isequal(size(synapse(:), 1), numel(synapse))
+        T = neuron.getSynapseNodes();
+        row = ismember(T.ParentID, synapse);
+        xyz = T{row, 'XYZum'};
+    else
+        xyz = synapse;
+    end
 
     ip = inputParser();
     ip.KeepUnmatched = true;  % Surf properties
@@ -60,8 +68,8 @@ function synapseSphere(neuron, synapse, varargin)
     parse(ip, varargin{:});
 
     if isempty(ip.Results.Tag) 
-        if isnumeric(synapse)
-            Tag = ['s', num2str(synapse)];
+        if isnumeric(synapse) && numel(synapse) == 1
+            Tag = ['s', num2str(synapse(1))];
         else
             Tag = ['c', num2str(neuron.ID)];
         end
