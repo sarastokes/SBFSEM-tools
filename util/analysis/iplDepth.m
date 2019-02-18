@@ -12,10 +12,15 @@ function [iplPercent, stats] = iplDepth(Neuron, varargin)
     %   INL         INL-IPL Boundary object
     %   GCL         GCL-IPL Boundary object
     % Optional inputs:
-    %   numBins     Number of bins for histograms (default = 20)
+    %   numBins         Number of bins for histograms (default = 20)
+    %   binLocations    Specify a vector of exact bin locations
     % Outputs:
     %   iplPercent  Percent IPL depth for each annotation
     %   stats       Structure containing mean, median, SEM, SD, N
+    %
+    % Examples:
+    %   [iplPercent, stats] = iplDepth(c10747);
+    %   iplPercent = iplDepth(c10747, 'BinLocations', 0:0.1:1);
 	% 
 	% History
 	%	7Feb2018 - SSP
@@ -37,8 +42,9 @@ function [iplPercent, stats] = iplDepth(Neuron, varargin)
     addParameter(ip, 'binLocations', [], @isvector);
     addParameter(ip, 'Color', 'k', @(x) isvector(x) || ischar(x));
     addParameter(ip, 'plotVariability', false, @islogical);
-    addParameter(ip, 'includeSoma', false, @islogical);
+    addParameter(ip, 'includeSoma', true, @islogical);
     addParameter(ip, 'ax', [], @ishandle);
+    addParameter(ip, 'iplMargin', 0.2, @isnumeric);
     addParameter(ip, 'omitOutliers', true, @islogical);
     parse(ip, varargin{:});
     
@@ -48,6 +54,7 @@ function [iplPercent, stats] = iplDepth(Neuron, varargin)
     omitOutliers = ip.Results.omitOutliers;
     lineColor = ip.Results.Color;
     binLocations = ip.Results.binLocations;
+    iplMargin = ip.Results.iplMargin;
     
     fprintf('-- c%u --\n', Neuron.ID);
 
@@ -73,8 +80,8 @@ function [iplPercent, stats] = iplDepth(Neuron, varargin)
 	iplPercent(isnan(iplPercent)) = [];
     
     if omitOutliers
-        iplPercent(iplPercent > 1.2) = [];
-        iplPercent(iplPercent < -0.2) = [];
+        iplPercent(iplPercent > 1 + iplMargin) = [];
+        iplPercent(iplPercent < - iplMargin) = [];
     end
     disp('Mean +- SEM microns (n):');
 	printStat(iplPercent');
@@ -92,11 +99,12 @@ function [iplPercent, stats] = iplDepth(Neuron, varargin)
         [a, b] = histcounts(iplPercent, binLocations);
     end
     [~, ind] = max(a); binMode = b(ind)+b(2)-b(1);
+    stats.mode = binMode;
     fprintf('Mode = %.3g (for %u bins)\n', binMode, numBins);
     
     if isempty(ax)
         ax = axes('Parent', figure());
-        	figPos(ax.Parent, 0.7, 0.6);
+        	figPos(ax.Parent, 0.7, 0.65);
         grid(ax, 'on'); hold(ax, 'on');
     	ylabel(ax, 'Number of annotations');
         set(ax, 'XTick', 0:0.25:1, 'TickDir', 'out',... 
@@ -112,11 +120,20 @@ function [iplPercent, stats] = iplDepth(Neuron, varargin)
     plot(stats.median, 0.1*max(a), 'Marker', '^',...
         'LineWidth', 1,...
         'Color', hex2rgb('ff4040'),...
-        'Tag', sprintf('Median %.1f', stats.median));
+        'Tag', sprintf('Median %.3f', stats.median),...
+        'Display', sprintf('Median %.3f', stats.median));
+    
     plot(stats.avg, 0.1*max(a), 'Marker', '^',...
         'LineWidth', 1,...
         'Color', hex2rgb('334de6'),...
-        'Tag', sprintf('Mean %.1f', stats.avg));
+        'Tag', sprintf('Mean %.3f', stats.avg),...
+        'Display', sprintf('Mean %.3f', stats.avg));
+    
+    plot(stats.avg, 0.1*max(a), 'Marker', '^',...
+        'LineWidth', 1,...
+        'Color', hex2rgb('00cc4d'),...
+        'Tag', sprintf('Mode %.3f', stats.mode),...
+        'Display', sprintf('Mode %.3f', stats.mode));
 
     xlim(ax, [-0.25, 1.25]);
     grid(ax, 'on'); hold(ax, 'on');
@@ -126,7 +143,6 @@ function [iplPercent, stats] = iplDepth(Neuron, varargin)
     
     title(ax, sprintf('c%u Stratification', Neuron.ID));
 	ylabel(ax, 'Number of annotations');
-	% xlabel(ax, 'Percent IPL Depth');
     
     if ip.Results.plotVariability
     	figure();
@@ -139,13 +155,14 @@ function [iplPercent, stats] = iplDepth(Neuron, varargin)
     
     if isempty(findobj(ax, 'Tag', 'GCL'))
         y = get(ax, 'YLim');
-        %set(findobj(ax, 'Tag', 'INL'), 'Position', [-0.25, 0, 0.25, y(2)+1]);
-        %set(findobj(ax, 'Tag', 'GCL'), 'Position', [1, 0, 0.25, y(2)+1]);
         rectangle(ax, 'Position', [-0.25, 0, 0.25, y(2)+1],...
             'FaceColor', [0, 0, 0, 0.1], 'EdgeColor', 'none');
         rectangle(ax, 'Position', [1, 0, 0.25, y(2)+1],...
             'FaceColor', [0, 0, 0, 0.1], 'EdgeColor', 'none');
         set(ax, 'YLim', y);
     end
-    
+    l = legend();
+    set(l, 'EdgeColor', 'none', 'FontSize', 10,...
+        'Orientation', 'horizontal', 'Location', 'bestoutside',...
+        'NumColumns', 2, 'Box', 'off');
     fprintf('\n');

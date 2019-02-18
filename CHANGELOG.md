@@ -1,8 +1,9 @@
 # Changelog
 
 ## 18Feb2019
-- Added option for dendritic field centroids and improved plotting to `sbfsem.analysis.DendriticFieldHull`
+- Added option for dendritic field centroids and improved plotting to `sbfsem.analysis.DendriticFieldHull.m`
 - Dendritic field hull calculation added as an analysis option to `views\RenderApp.m`
+- Added mode calculation and margin parameter to `util\analysis\iplDepth.m` and improved plotting
 
 ### 10Feb2019
 - New function for plotting flatmount renders like Golgi stain images (`util\renders\golgi.m`)
