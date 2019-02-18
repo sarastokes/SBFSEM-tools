@@ -694,6 +694,13 @@ classdef RenderApp < handle
             neuron = obj.evt2neuron(evt);
             SomaStatsView(neuron);
         end
+        
+        function onGetDendriticFieldHull(obj, ~, evt)
+            % ONGETDENDRITICFIELDHULL  Run dendritic field hull analysis
+            % See also: SBFSEM.ANALYSIS.DENDRITICFIELDHULL
+            neuron = obj.evt2neuron(evt);
+            x = sbfsem.analysis.DendriticFieldHull(neuron);
+        end
 
         function onGetDendriteDiameter(obj, ~, evt)
             % ONGETDENDRITEDIAMETER  Show dendrite diameter histogram
@@ -935,6 +942,9 @@ classdef RenderApp < handle
             uimenu(a, 'Label', 'Get Dendrite Diameter',...
                 'Tag', obj.id2tag(ID),...
                 'Callback', @obj.onGetDendriteDiameter);
+            uimenu(a, 'Label', 'Get Dendritic Field Area',...
+                'Tag', obj.id2tag(ID),...
+                'Callback', @obj.onGetDendriticFieldHull);
             uimenu(a, 'Label', 'Get Soma Stats',...
                 'Tag', obj.id2tag(ID),...
                 'Callback', @obj.onGetSomaStats);

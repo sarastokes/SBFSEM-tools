@@ -1,5 +1,9 @@
 # Changelog
 
+## 18Feb2019
+- Added option for dendritic field centroids and improved plotting to `sbfsem.analysis.DendriticFieldHull`
+- Dendritic field hull calculation added as an analysis option to `views\RenderApp.m`
+
 ### 10Feb2019
 - New function for plotting flatmount renders like Golgi stain images (`util\renders\golgi.m`)
 - Added option to input synapse structure IDs to `synapseSphere.m`

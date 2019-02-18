@@ -8,13 +8,16 @@ classdef DendriticFieldHull < sbfsem.analysis.NeuronAnalysis
 %                       use if removing axons
 %   Output:
 %       d               structure containing stats
-%       []              creates a figure showing convhull and dendrites
+%       []              creates a figure w/ convhull, centroid, dendrites
 %
 %   NOTES:  Analysis is not projected onto plane calculated from depth
 %           markers. This should be ok for smaller neurons but will
 %           need to be corrected at some point for wide-field cells
 %
-%   Aug2017 - SSP
+%   History:
+%       Aug2017 - SSP
+%       18Feb2019 - SSP - Fixed hull coordinates and added centroid
+% -------------------------------------------------------------------------
 
     properties
         % This often requires manually removing an axon or clipping out
@@ -38,6 +41,7 @@ classdef DendriticFieldHull < sbfsem.analysis.NeuronAnalysis
             end
             obj.dendrites = xyz;
             obj.doAnalysis(xyz);
+            obj.plot();
         end
 
         function doAnalysis(obj, xyz)
@@ -58,20 +62,29 @@ classdef DendriticFieldHull < sbfsem.analysis.NeuronAnalysis
 
           k = convhull(xy(:,1), xy(:,2));
           obj.data.hullArea = polyarea(xy(k,1), xy(k,2));
-          obj.data.hull = k;
+          obj.data.hull = xy(k, :);
+          [obj.data.centroid(1), obj.data.centroid(2)] = ...
+              centroid(polyshape(xy(k,1), xy(k,2)));
+          
+          % Print results
+          fprintf('Area is %.2f\n', obj.data.hullArea);
+          fprintf('Centroid is %.2f, %.2f\n', obj.data.centroid);
 
           % Save the dendrites used
           obj.dendrites = xy;
         end
 
         function plot(obj)
-          figure(); hold on;
+          figure(); hold on; axis equal;
+          % Plot the surrounding convex hull
+          plot(polyshape(obj.data.hull(:, 1), obj.data.hull(:, 2)),...
+              'FaceAlpha', 0.3);
           % Scatter plot of the annotations
           scatter(obj.dendrites(:,1), obj.dendrites(:,2), '.k');
-          % Plot the surrounding convex hull
-          plot(obj.dendrites(obj.data.hull,1), obj.dendrites(obj.data.hull,2),...
-              'b', 'LineWidth', 2);
-          title(sprintf('area = %.2f um^2', obj.data.hullArea));
+          plot(obj.data.centroid(1), obj.data.centroid(2), 'r',... 
+              'Marker', 'p', 'MarkerSize', 9);
+          title(sprintf('area = %.2f um^2, centroid = %.2f,%.2f',...
+              obj.data.hullArea, obj.data.centroid));
         end
     end
 end
