@@ -76,8 +76,8 @@ classdef RenderApp < handle
         LAST_MODIFIED_CIRCLE_RADIUS = 1/30;
         SOURCES = {'NeitzTemporalMonkey','NeitzInferiorMonkey','MarcRC1'};
         CACHE = [fileparts(fileparts(mfilename('fullname'))), filesep, 'data'];
-        COLORMAPS = {'haxby', 'parula', 'winter', 'hsv', 'antijet',...
-            'cubicl', 'viridis', 'redblue', 'bone', 'isolum (colorblind)',...
+        COLORMAPS = {'haxby', 'parula', 'spectral', 'hsv', 'antijet', 'rdylgn',...
+            'cubicl', 'viridis', 'redblue', 'bone', 'stepseq25', 'isolum (colorblind)',...
             'ametrine (colorblind)'};
     end
     
@@ -1594,8 +1594,15 @@ classdef RenderApp < handle
             switch lower(cmapName)
                 case 'parula'
                     cmap = parula(N);
-                case 'winter'
-                    cmap = winter(N);
+                case 'stepseq25'
+                    warning('off', 'MATLAB:interp1:UsePCHIP');
+                    cmap = othercolor('StepSeq_25', N);
+                case 'spectral'
+                    warning('off', 'MATLAB:interp1:UsePCHIP');
+                    cmap = othercolor('Spectral10', N);
+                case 'rdylgn'
+                    warning('off', 'MATLAB:interp1:UsePCHIP');
+                    cmap = othercolor('RdYlGn9', N);
                 case 'bone'
                     cmap = bone(N);
                 case 'hsv'
