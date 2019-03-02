@@ -63,9 +63,8 @@ classdef DendriticFieldHull < sbfsem.analysis.NeuronAnalysis
           k = convhull(xy(:,1), xy(:,2));
           obj.data.hullArea = polyarea(xy(k,1), xy(k,2));
           obj.data.hull = xy(k, :);
-          [obj.data.centroid(1), obj.data.centroid(2)] = ...
-              centroid(polyshape(xy(k,1), xy(k,2)));
-          
+          obj.data.centroid = polygonCentroid(xy(k, 1), xy(k, 2));
+
           % Print results
           fprintf('Area is %.2f\n', obj.data.hullArea);
           fprintf('Centroid is %.2f, %.2f\n', obj.data.centroid);
@@ -77,8 +76,8 @@ classdef DendriticFieldHull < sbfsem.analysis.NeuronAnalysis
         function plot(obj)
           figure(); hold on; axis equal;
           % Plot the surrounding convex hull
-          plot(polyshape(obj.data.hull(:, 1), obj.data.hull(:, 2)),...
-              'FaceAlpha', 0.3);
+          patch('XData', obj.data.hull(:, 1), 'YData', obj.data.hull(:,2),...
+              'FaceColor', [0, 0.447, 0.741], 'FaceAlpha', 0.3);
           % Scatter plot of the annotations
           scatter(obj.dendrites(:,1), obj.dendrites(:,2), '.k');
           plot(obj.data.centroid(1), obj.data.centroid(2), 'r',... 

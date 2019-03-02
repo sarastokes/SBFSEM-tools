@@ -1,6 +1,10 @@
 # Changelog
 
-## 18Feb2019
+### 1Mar2019
+- Changed some colormaps in `views\RenderApp.m` 
+- Removed dependence on 2017b from `sbfsem.analysis.DendriticFieldHull.m` by adding in some `geom2d` functions
+
+### 18Feb2019
 - Added option for dendritic field centroids and improved plotting to `sbfsem.analysis.DendriticFieldHull.m`
 - Dendritic field hull calculation added as an analysis option to `views\RenderApp.m`
 - Added mode calculation and margin parameter to `util\analysis\iplDepth.m` and improved plotting
