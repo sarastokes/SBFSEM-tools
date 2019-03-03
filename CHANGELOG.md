@@ -1,5 +1,8 @@
 # Changelog
 
+### 2Mar2019
+- Fixed a small volume abbreviation error in `tutorial_Tortuosity.m`
+
 ### 1Mar2019
 - Changed some colormaps in `views\RenderApp.m` 
 - Removed dependence on 2017b from `sbfsem.analysis.DendriticFieldHull.m` by adding in some `geom2d` functions

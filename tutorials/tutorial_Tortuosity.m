@@ -2,7 +2,7 @@
 % 3Oct2018 - SSP
 
 
-c4781 = Neuron(4781, 'i');
+c4781 = Neuron(4781, 't');
 
 % A replacement for Tulip I've been working on recently. Tulip is fine too
 GraphApp(c4781);
