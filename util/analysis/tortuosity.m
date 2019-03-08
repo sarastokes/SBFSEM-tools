@@ -20,9 +20,12 @@ function d = tortuosity(neuron, locationA, locationB, varargin)
 	% Outputs:
 	%	d 			Tortuosity metric
 	%
+    % See also:
+    %   TUTORIAL_TORTUOSITY
+    %
 	% History:
 	%	26Sept2018 - SSP
-	% -----------------------------------------------------------------
+	% ---------------------------------------------------------------------
 
 	assert(isa(neuron, 'sbfsem.core.StructureAPI'),...
 		'Input a StructureAPI object');

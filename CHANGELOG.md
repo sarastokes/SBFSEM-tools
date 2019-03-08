@@ -1,5 +1,9 @@
 # Changelog
 
+### 7Mar2019
+- Option to suppress plot in `util\analysis\iplDepth.m`
+- New function for calculating diameter of a single dendrite (`util\analysis\singleDendriteDiameter.m`)
+
 ### 2Mar2019
 - Fixed a small volume abbreviation error in `tutorial_Tortuosity.m`
 
