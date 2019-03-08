@@ -11,23 +11,35 @@ function [iplPercent, stats] = iplDepth(Neuron, varargin)
     %   Neuron      Neuron object
     %   INL         INL-IPL Boundary object
     %   GCL         GCL-IPL Boundary object
-    % Optional inputs:
-    %   numBins         Number of bins for histograms (default = 20)
+    % Optional key/value inputs (default value):
+    %   numBins         Number of bins for histograms (20)
     %   binLocations    Specify a vector of exact bin locations
+    %   iplMargin       Area around IPL boundaries to include (0.2)
+    %   omitOutliers    Omit annotations exceeding iplMargin (true)
+    %   includeSoma     Include "soma" annotations (true)
+    %   plot            Plot the output? (true)
+    %   ax              Handle to existing axes (none, create new figure)
+    %   color           Color for the stratification line ([0 0 0])
+    %
     % Outputs:
     %   iplPercent  Percent IPL depth for each annotation
-    %   stats       Structure containing mean, median, SEM, SD, N
+    %   stats       Structure containing bin centers, values and stats
     %
     % Examples:
     %   [iplPercent, stats] = iplDepth(c10747);
     %   iplPercent = iplDepth(c10747, 'BinLocations', 0:0.1:1);
-	% 
+	%
+    % Notes:
+    %   Soma is defined as annotations over 80% as large as the largest
+    %   annotation (which is assumed to be part of the soma).
+    %
 	% History
 	%	7Feb2018 - SSP
     %   19Feb2018 - SSP - Added numBins input
     %   22Oct2018 - SSP - Added boundary markers from cache
     %   8Nov2018 - SSP - Removed bar plot option
     %   18Nov2018 - SSP - Specify bins option
+    %   7Mar2019 - SSP - Added bin locations and counts to stats output
 	% ---------------------------------------------------------------------
 
 	assert(isa(Neuron, 'sbfsem.core.StructureAPI'),...
@@ -46,6 +58,7 @@ function [iplPercent, stats] = iplDepth(Neuron, varargin)
     addParameter(ip, 'ax', [], @ishandle);
     addParameter(ip, 'iplMargin', 0.2, @isnumeric);
     addParameter(ip, 'omitOutliers', true, @islogical);
+    addParameter(ip, 'Plot', true, @islogical);
     parse(ip, varargin{:});
     
     numBins = ip.Results.numBins;
@@ -98,9 +111,20 @@ function [iplPercent, stats] = iplDepth(Neuron, varargin)
     else
         [a, b] = histcounts(iplPercent, binLocations);
     end
-    [~, ind] = max(a); binMode = b(ind)+b(2)-b(1);
+    
+    % Save bin centers and values
+    stats.bins = b(2:end) - (b(2)-b(1));
+    stats.counts = a;
+    
+    % Calculate the mode
+    [~, ind] = max(a); 
+    binMode = b(ind)+b(2)-b(1);
     stats.mode = binMode;
     fprintf('Mode = %.3g (for %u bins)\n', binMode, numBins);
+    
+    if ~ip.Results.Plot
+        return;
+    end
     
     if isempty(ax)
         ax = axes('Parent', figure());
