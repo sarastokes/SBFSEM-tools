@@ -64,10 +64,10 @@ classdef Nucleolus < sbfsem.core.StructureAPI
 			if isempty(data.value)
                 error('SBFSEM:CORE:NUCLEOLUS:InvalidID',...	
                 	'ParentID did not contain Nucleolus');
-				
             elseif numel(data.value{:}) > 1
-                error('SBFSEM:CORE:NUCLEOLUS:NotYetImplemented',...
-                    'Multiple nucleolus child structures returned');
+                throw(sbfsem.exception.NotYetImplemented(...
+                    'Nucleolus:getIDByParent',... 
+                    'Multiple nucleolus chold structures returned');
             else
                 ID = data.value{:}.ID;
 			end

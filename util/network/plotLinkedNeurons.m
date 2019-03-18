@@ -1,4 +1,4 @@
-function h = plotLinkedNeurons(linkedIDs)
+function h = plotLinkedNeurons(linkedIDs, synapseName)
     % PLOTLINKEDNEURONS
     %
     % Description:
@@ -6,9 +6,15 @@ function h = plotLinkedNeurons(linkedIDs)
     %
     % Syntax:
     %   h = plotLinkedNeurons(linkedIDs);
+    %   % Alternative input
+    %   c1 = Neuron(1, 'i', true);
+    %   h = plotLinkedNeurons(c1, 'RibbonPost');
     %
     % Input:
     %   linkedIDs       array or table of linked IDs from getLinkedNeurons
+    % Alternative input:
+    %   linkedIDs       Neuron object
+    %   synapseName     Synapse name
     %
     % Notes:
     %    '0' indicates no linked neuron.
@@ -20,8 +26,13 @@ function h = plotLinkedNeurons(linkedIDs)
     %   8Dec2018 - SSP
     % ---------------------------------------------------------------------
 
-    if istable(linkedIDs)
-        linkedIDs = linkedIDs{:, 1};
+    if nargin == 2
+        assert(isa(linkedIDs, 'sbfsem.core.NeuronAPI'), 'Input a Neuron object');
+        [linkedIDs, ~] = getLinkedNeurons(linkedIDs, synapseName);
+    else
+        if istable(linkedIDs)
+            linkedIDs = linkedIDs{:, 1};
+        end
     end
     
     linkedIDs(isnan(linkedIDs)) = 0;

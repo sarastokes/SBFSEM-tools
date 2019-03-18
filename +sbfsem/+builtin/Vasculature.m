@@ -42,7 +42,6 @@ classdef Vasculature < sbfsem.core.StructureGroup
 	methods (Access = protected)
 		function pull(obj)
 			% PULL  Get structures through OData query
-			pull@sbfsem.core.StructureGroup(obj);
 
 			obj.IDs = obj.queryByTypeID();
             if isempty(obj.IDs)

@@ -44,7 +44,9 @@ classdef (Abstract) StructureGroup < handle
 
 		function pull(obj)
 			% PULL  OData query
-			% Implemented by subclasses
+			throw(sbfsem.exception.NotYetImplemented(...
+				'StructureGroup:pull',...
+				'Define in subclasses'));
 		end
 	end
 end

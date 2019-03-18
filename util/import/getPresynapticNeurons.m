@@ -53,7 +53,8 @@ if synapseType.isPre()
 elseif synapseType.isPost()
     url = [url, postTemplate];
 else
-    error('Bidirectional synapses are not yet implemented');
+    throw(sbfsem.exception.NotYetImplemented('getPresynapticNeurons',...
+        'Bidirectional synapses are not yet implemented'));
 end
 
 % A list of pre/post-synaptic neurons

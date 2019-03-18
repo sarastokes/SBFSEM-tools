@@ -17,7 +17,9 @@ classdef Transforms
                 case 'viking'
                     obj = Transforms.Viking;
                 case 'merged'
-                    error('Not yet implemented');
+                    throw(sbfsem.exception.NotYetImplemented(...
+                        'Transforms:fromStr',...
+                        'Merged registration unavailable.'));
                 case 'none'
                     obj = Transforms.None;
                 otherwise

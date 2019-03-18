@@ -60,9 +60,9 @@ else % Synapse-specific network
         url = [url, postTemplate];
         parseBoth = false;
     else
-        error('Bidirectional synapses are not yet implemented');
-        % url = [url, bothTemplate];
-        % parseBoth = true;
+        throw(sbfsem.exception.NotYetImplemented(...
+            'getStructureLinks',... 
+            'Bidirectional synapses are not yet implemented'));
     end
 end
 
