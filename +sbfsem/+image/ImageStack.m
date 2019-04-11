@@ -195,8 +195,10 @@ classdef ImageStack < handle
         function v = video(obj, fname, varargin)
             % VIDEO  Save a video of stack
             % 	fname 		'filepath/myvideo.avi'
+            % Optional key/value inputs:
+            %   frameRate   [30]    Frames per second
             % 	flipStack 	[false] head->tail
-            % 	invert 		[false] invert colors
+            % 	invert 		[false] Invert colors
             %
             ip = inputParser();
             ip.CaseSensitive = false;
@@ -206,10 +208,12 @@ classdef ImageStack < handle
             parse(ip, varargin{:});
             
             % Get the image source file if no file path specified
-            if ~mycontains(fname, filesep) 
+            if ~contains(fname, filesep) 
                 ind = strfind(obj.head.filePath, filesep);
                 fname = [obj.head.filePath(1:ind(end)-1), filesep, fname];
             end
+            
+            warning('off', 'images:initSize:adjustingMag');
             
             fh = figure();
             if ip.Results.invert
@@ -245,6 +249,8 @@ classdef ImageStack < handle
                 end
             end
             close(v);
+            
+            warning('on', 'images:initSize:adjustingMag');
         end
     end
 end

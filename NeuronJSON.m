@@ -63,13 +63,19 @@ classdef NeuronJSON < sbfsem.core.NeuronAPI
 				obj.geometries = struct2table(vertcat(S.geometries{:}{:}));
 			end
 			if ~isempty(S.synapses)
-				obj.synapses = struct2table(vertcat(S.synapses{:}{:}));
+                try
+    				obj.synapses = struct2table(vertcat(S.synapses{:}{:}));
+                catch
+                    obj.synapses = [];
+                end
 			end
 
 			% Convert the enumerations
 			obj.transform = sbfsem.core.Transforms.fromStr(S.transform);
-            obj.synapses.LocalName = arrayfun(@(x) sbfsem.core.StructureTypes(x), obj.synapses.LocalName);
-
+            if ~isempty(obj.synapses)
+                obj.synapses.LocalName = arrayfun(@(x) sbfsem.core.StructureTypes(x), obj.synapses.LocalName);
+            end
+            
 			% Convert the model... ? For now, just rebuild it.
 			if ~isempty(S.model)
 				obj.build();

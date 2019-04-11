@@ -20,13 +20,16 @@ classdef (Abstract) StructureAPI < handle
         lastModified
         % Analyses related to the neuron
         analysis = containers.Map();
-        % Render of neuron
-        model = [];
         % Omitted location IDs
         omittedIDs = [];
         % Transform applied	
         transform = [];
-	end
+    end
+    
+    properties (Access = public)
+        % Render of neuron
+        model = [];
+    end
 
 	properties (Dependent = true, Hidden = true)
         offEdges    % Branches running off volume edges

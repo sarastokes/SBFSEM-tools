@@ -71,7 +71,8 @@ classdef JSON < handle
             warning('off', 'MATLAB:structOnObject');
             % First convert the model object, if necessary
             if ~isempty(neuron.model)
-                neuron.model = struct(neuron.model);
+                % neuron.model = struct(neuron.model);
+                neuron.model = [];
             end
             % Next convert the entire Neuron object to a structure
             S = struct(neuron);
@@ -97,7 +98,11 @@ classdef JSON < handle
                 S.synapses.LocalName = arrayfun(@char, S.synapses.LocalName,...
                     'UniformOutput', false);
             end
-            S.synapses = table2struct(S.synapses);
+            if ~isempty(S.synapses)
+                S.synapses = table2struct(S.synapses);
+            else
+                S.synapses = [];
+            end
             % Enumeration to string
             S.transform = char(S.transform);
             
