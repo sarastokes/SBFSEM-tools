@@ -1,5 +1,12 @@
 # Changelog
 
+### 7Apr2019
+- Removed `model` from cached data in `sbsfem.io.JSON.m`
+
+### 3Apr2019
+- Added IPL stratification colorbar function (`util\plots\addColorbarIPL.m`)
+- Improved input parsing for golgi imitation plots (`util\plots\golgi.m`)
+
 ### 7Mar2019
 - Option to suppress plot in `util\analysis\iplDepth.m`
 - New function for calculating diameter of a single dendrite (`util\analysis\singleDendriteDiameter.m`)
