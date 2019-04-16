@@ -91,7 +91,9 @@ function [linkedIDs, synapseIDs, synapseXYZ] = getLinkedNeurons(neuron, synapseT
         linkedIDs = linkedIDs(~isnan(linkedIDs));
     end
 
-    synapseXYZ = neuron.getSynapseXYZ(synapseIDs);
+    if nargout ~= 2
+        synapseXYZ = neuron.getSynapseXYZ(synapseIDs);
+    end
     
     if nargout == 1
         % Convert first argument to a table containing the 3 outputs
