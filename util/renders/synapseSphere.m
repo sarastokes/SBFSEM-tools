@@ -34,6 +34,10 @@ function synapseSphere(neuron, synapse, varargin)
     %   synapseSphere(c6800, 'ConvPre', 'ax', gca);
     %   synapseSphere(c6800, 'Unknown', 'ax', gca,...
     %       'FaceColor', [0.5 0.5 0.5], 'FaceAlpha', 0.5);
+    %
+    % See also:
+    %   SYNAPSEMARKER
+    %
     % History:
     %   5Jan2018 - SSP
     %   28Feb2018 - SSP - Added synapse name to tag
