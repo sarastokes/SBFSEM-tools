@@ -1,5 +1,11 @@
 # Changelog
 
+### 16Apr2019
+- Added synapse location to `util\network\getLinkedNeurons.m` and edited the output parsing. If there's only a single output, all arguments will be returned as a table.
+
+### 14Apr2019
+- Added function for returning renders in a figure (`util\renders\renderWhos.m`)
+
 ### 7Apr2019
 - Removed `model` from cached data in `sbsfem.io.JSON.m`
 

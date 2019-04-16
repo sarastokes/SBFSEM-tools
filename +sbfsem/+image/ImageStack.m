@@ -51,7 +51,7 @@ classdef ImageStack < handle
                 obj.numNodes = size(nodes,1);
             end
             
-            if ~isempty(nodes)                
+            if ~isempty(nodes)
                 if ischar(nodes)
                     imnodes = cell(0,1);
                     for i = 1:size(nodes,1)
