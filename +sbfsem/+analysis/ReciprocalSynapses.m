@@ -141,9 +141,9 @@ classdef ReciprocalSynapses < sbfsem.analysis.NeuronAnalysis
 
             % Get bipolar cell ribbon output and amacrine cell feedback
             disp('Fetching post-synaptic neurons...');
-            [postNeurons, postSynapses] = getLinkedNeurons(obj.neuron, postName);
+            [postNeurons, postSynapses, ~] = getLinkedNeurons(obj.neuron, postName);
             disp('Fetching pre-synaptic neurons...')
-            [preNeurons, preSynapses] = getLinkedNeurons(obj.neuron, preName);
+            [preNeurons, preSynapses, ~] = getLinkedNeurons(obj.neuron, preName);
 
             obj.preSynData = table(preNeurons, preSynapses);
             obj.postSynData = table(postNeurons, postSynapses);
