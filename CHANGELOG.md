@@ -1,5 +1,8 @@
 # Changelog
 
+### 5May2019
+- Added color argument to `util\renders\golgi.m`
+
 ### 16Apr2019
 - Added synapse location to `util\network\getLinkedNeurons.m` and edited the output parsing. If there's only a single output, all arguments will be returned as a table.
 - Updated functions using `util\network\getLinkedNeurons.m` to be compatible with new output

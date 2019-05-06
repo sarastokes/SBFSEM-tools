@@ -10,8 +10,9 @@ function ax = golgi(neuron, varargin)
     % Inputs:
     %   neuron      Neuron object
     % Optional key/value inputs:
-    %   ax          Handle to existing axes (default = new figure)
-    %   invert      Invert colors (default = false)
+    %   Ax          Handle to existing axes (default = new figure)
+    %   Invert      Invert colors (default = false)
+    %   Color       Render color (default = 'k'/'w', depending on invert)
     %
     % Outputs:
     %   ax          Handle to axes 
@@ -19,28 +20,35 @@ function ax = golgi(neuron, varargin)
     % History:
     %   10Feb2019 - SSP
     %   5Apr2019 - SSP - Added invert figure option, input parsing
+    %   5May2019 - SSP - Added color argument
     % ---------------------------------------------------------------------
 
     ip = inputParser();
     ip.CaseSensitive = false;
-    addParameter(ip, 'Ax', axes('Parent', figure()), @ishandle);
+    addParameter(ip, 'Ax', [], @ishandle);
     addParameter(ip, 'Invert', false, @islogical);
+    addParameter(ip, 'Color', [], @(x) ischar(x) || isnumeric(x));
     parse(ip, varargin{:});
     
     invertFigure = ip.Results.Invert;
-    ax = ip.Results.Ax;
-    delete(findall(ax, 'Type', 'light'));
+    if isempty(ip.Results.Ax)
+        ax = axes('Parent', figure());
+    else
+        ax = ip.Results.Ax;
+        delete(findall(ax, 'Type', 'light'));
+    end
+    hold(ax, 'on');
     
     if invertFigure
         ax.Color = 'k'; ax.Parent.Color = 'k';
     end
     
-    hold(ax, 'on');
-    
-    if invertFigure
+    if invertFigure && isempty(ip.Results.Color)
         neuron.render('ax', ax, 'FaceColor', 'w');
-    else
+    elseif ~invertFigure && isempty(ip.Results.Color)
         neuron.render('ax', ax, 'FaceColor', 'k');
+    else
+        neuron.render('ax', ax, 'FaceColor', ip.Results.Color);
     end
     
     view(ax, 0, 90);
