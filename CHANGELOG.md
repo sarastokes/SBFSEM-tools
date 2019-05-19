@@ -1,5 +1,9 @@
 # Changelog
 
+### 18May2019
+- Updated boundary marker cache files for NeitzTemporalMonkey
+- Added function `data\cacheBoundaryMarkers.m` to automate cache updates
+
 ### 14May2019
 - Worked on issue with arbitrary directionality assigned to Unknown synapses in database
 - Updated `util\network\getAllLinkedNeurons.m`, `util\network\getLinkedNeurons`, `+sbfsem\+core\NeuronAPI.m`
