@@ -14,12 +14,12 @@ function [linkedIDs, synapseIDs, synapseXYZ] = getLinkedNeurons(neuron, synapseT
 %	neuron              Neuron object
 %	synapseType         Synapse name (char or StructureType)
 % Optional inputs:
-%   includeUnlinked     Show unlinked synapse IDs (default = true) 
+%   includeUnlinked     Show unlinked synapse IDs (default = true)
 %
 % Outputs:
 %	linkedIDs           Structure IDs of linked cells (vector)
 %   synapseIDs          Synapse IDs linked to above structure IDs (vector)
-%   synapseXYZ          XYZ coordinates of each synapse 
+%   synapseXYZ          XYZ coordinates of each synapse
 %
 % Todo:
 %   The colormap calculation required to plot the graph doesn't
@@ -34,6 +34,7 @@ function [linkedIDs, synapseIDs, synapseXYZ] = getLinkedNeurons(neuron, synapseT
 %   4Jun2018 - SSP - revised to new function, getLinkedNeurons
 %   11Sept2018 - SSP - added argument to include/omit unlinked synapses
 %   16Apr2019 - SSP - Added table option and synapse location output
+%   6May2019 - SSP - Dealt with directionality in "undirected" synapses
 % -------------------------------------------------------------------------
 
     assert(isa(neuron, 'sbfsem.core.NeuronAPI'), 'Input neuron object');
@@ -51,52 +52,96 @@ function [linkedIDs, synapseIDs, synapseXYZ] = getLinkedNeurons(neuron, synapseT
     if isempty(synapseIDs)
         error('No synapses of type %s were found\n', char(synapseType));
     end
-    % fprintf('Found %u IDs\n', numel(synapseIDs));
 
-
-    % OData query URL templates
-    url = [getServiceRoot(neuron.source), 'StructureLinks?$filter='];
-    % Directed synapses use 'Source' for presynapses, 'Target' for postsynapses
-    postTemplate = 'TargetID eq %u &$expand=Source($select=ParentID)';
-    preTemplate = 'SourceID eq %u &$expand=Target($select=ParentID)';
-
-    if synapseType.isPre()
-        url = [url, preTemplate];
-    elseif synapseType.isPost()
-        url = [url, postTemplate];
+    if strcmp(char(synapseType), 'Unknown')
+        % What a mess... see getUndirectedLinkedIDs info below
+        [linkedIDs, finalSynapseIDs] = getUndirectedLinkedIDs(...
+            getServiceRoot(neuron.source), synapseIDs);
     else
-        url = [url, postTemplate];
-    end
+        url = [getServiceRoot(neuron.source), 'StructureLinks?$filter='];
+        % Directed synapses use 'Source' for presynapses, 'Target' for postsynapses
+        postTemplate = 'TargetID eq %u &$expand=Source($select=ParentID)';
+        preTemplate = 'SourceID eq %u &$expand=Target($select=ParentID)';
 
-    % A list of pre/post-synaptic neurons
-    linkedIDs = [];
-
-    % Query OData for ParentID of linked synapses
-    for i = 1:numel(synapseIDs)
-        importedData = readOData(sprintf(url, synapseIDs(i)));
-        try
-            data = importedData.value{1};
-            if synapseType.isPre()
-                linkedIDs = cat(1, linkedIDs, data.Target.ParentID);
-            else
-                linkedIDs = cat(1, linkedIDs, data.Source.ParentID);
-            end
-        catch
-            linkedIDs = cat(1, linkedIDs, NaN);
+        if synapseType.isPre()
+            [linkedIDs, finalSynapseIDs] = getDirectedLinkedIDs(...
+                [url, preTemplate], synapseType, synapseIDs);
+        else
+            [linkedIDs, finalSynapseIDs] = getDirectedLinkedIDs(...
+                [url, postTemplate], synapseType, synapseIDs);
         end
     end
 
     if ~includeUnlinked
-        synapseIDs = synapseIDs(~isnan(linkedIDs));
+        finalSynapseIDs = finalSynapseIDs(~isnan(linkedIDs));
         linkedIDs = linkedIDs(~isnan(linkedIDs));
     end
-
-    if nargout ~= 2
-        synapseXYZ = neuron.getSynapseXYZ(synapseIDs);
-    end
     
-    if nargout == 1
-        % Convert first argument to a table containing the 3 outputs
-        linkedIDs = table(linkedIDs, synapseIDs, synapseXYZ);
-        linkedIDs = sortrows(linkedIDs, 'linkedIDs');
+    % Use table to find only the unique rows
+    T = unique(table(linkedIDs, finalSynapseIDs));
+    T = sortrows(T, 'linkedIDs');
+    % Get the synapse locations
+    synapseXYZ = [];
+    for i = 1:numel(T.finalSynapseIDs)
+        synapseXYZ = cat(1, synapseXYZ, neuron.getSynapseXYZ(T.finalSynapseIDs(i)));
     end
+    assignin('base', 'T', T);
+    if nargout == 1
+        T.synapseXYZ = synapseXYZ;
+        linkedIDs = T;
+    elseif nargout > 1
+        linkedIDs = T.linkedIDs; synapseIDs = finalSynapseIDs;
+    end
+end
+
+function [linkedIDs, finalSynapseIDs] = getDirectedLinkedIDs(url, synapseType, synapseIDs)
+    % finalSynapseIDs duplicates synapseIDs with 2 post-synaptic neurons
+    linkedIDs = []; finalSynapseIDs = [];
+    for i = 1:numel(synapseIDs)
+        importedData = readOData(sprintf(url, synapseIDs(i)));
+        if numel(importedData.value) > 0
+            for j = 1:numel(importedData.value)
+                data = importedData.value{j};
+                if synapseType.isPre()
+                    linkedIDs = cat(1, linkedIDs, data.Target.ParentID);
+                    finalSynapseIDs = cat(1, finalSynapseIDs, synapseIDs(i));
+                else
+                    linkedIDs = cat(1, linkedIDs, data.Source.ParentID);
+                    finalSynapseIDs = cat(1, finalSynapseIDs, synapseIDs(i));
+                end
+            end
+        else
+            linkedIDs = cat(1, linkedIDs, NaN);
+            finalSynapseIDs = cat(1, finalSynapseIDs, synapseIDs(i));
+        end
+    end
+end
+
+function [linkedIDs, finalSynapseIDs] = getUndirectedLinkedIDs(url, synapseIDs)
+    % GETUNDIRECTEDLINKEDIDS
+    % Undirected synapses like Unknown retain some directionality in
+    % database, only there's no reliable way to know which direction the
+    % synapse was formed in, so... query both.
+    
+    linkedIDs = []; finalSynapseIDs = synapseIDs;  % for now
+    urlOne = [url, 'Structures(%u)/SourceOfLinks/'];
+    urlTwo = [url, 'Structures(%u)/TargetOfLinks/'];
+    
+    for i = 1:numel(synapseIDs)
+        try
+            importedData = readOData(sprintf(urlOne, synapseIDs(i)));
+            if isempty(importedData.value)
+                importedData = readOData(sprintf(urlTwo, synapseIDs(i)));
+                data = importedData.value{1};
+                iLinkedID = data.TargetID;
+            else
+                data = importedData.value{1};
+                iLinkedID = data.SourceID;
+            end
+            linkedIDs = cat(1, linkedIDs, iLinkedID);
+        catch
+            linkedIDs = cat(1, linkedIDs, NaN);
+        end
+    end
+end
+

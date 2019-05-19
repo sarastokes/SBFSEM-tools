@@ -1,5 +1,9 @@
 # Changelog
 
+### 14May2019
+- Worked on issue with arbitrary directionality assigned to Unknown synapses in database
+- Updated `util\network\getAllLinkedNeurons.m`, `util\network\getLinkedNeurons`, `+sbfsem\+core\NeuronAPI.m`
+
 ### 5May2019
 - Added color argument to `util\renders\golgi.m`
 

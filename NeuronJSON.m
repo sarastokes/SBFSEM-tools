@@ -37,11 +37,11 @@ classdef NeuronJSON < sbfsem.core.NeuronAPI
         end
         
         function update(~)
-            % UPDATE  Overwrite, this function is only useful for OData
+            % UPDATE  Overwrite, this function is only useful for databases
         end
 	end
 
-	methods (Access=private)
+	methods (Access = private)
 		function parseJSON(obj, jsonFile)
 			% Load JSON as a struct
 			S = loadjson(jsonFile);

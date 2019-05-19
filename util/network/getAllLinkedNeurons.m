@@ -24,11 +24,11 @@ function synTable = getAllLinkedNeurons(neuron)
     
     for i = 1:numel(synList)
         fprintf('Importing %s links...\n', char(synList(i)));
-        [linkedIDs, synapseIDs] = getLinkedNeurons(neuron, synList(i));
-        synTable = [synTable; table(linkedIDs, synapseIDs,...
-            repmat(string(synList(i)), [numel(linkedIDs), 1]))]; %#ok
+        T = getLinkedNeurons(neuron, synList(i));
+        T.SynapseType = repmat(string(synList(i)), [height(T), 1]);
+        synTable = [synTable; T];  %#ok
     end
     
-    synTable.Properties.VariableNames = {'NeuronID', 'SynapseID', 'SynapseType'};
+    synTable.Properties.VariableNames = {'NeuronID', 'SynapseID', 'SynapseXYZ', 'SynapseType'};
     synTable = sortrows(synTable, 'NeuronID');
 end

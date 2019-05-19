@@ -10,6 +10,7 @@ classdef (Abstract) NeuronAPI < sbfsem.core.StructureAPI
 % History:
 %   20Aug2018 - SSP
 %   25Sept2018 - SSP - split into NeuronAPI and parent StructureAPI
+% -------------------------------------------------------------------------
 
 	properties (SetAccess = protected, GetAccess = public)
         % Attributes of each synapse
@@ -185,6 +186,14 @@ classdef (Abstract) NeuronAPI < sbfsem.core.StructureAPI
                 xyz = obj.nodes{row, 'XYZum'};
             else
                 xyz = obj.nodes{row, {'X', 'Y', 'Z'}};
+            end
+            if isempty(xyz)
+                if isa(syn, 'sbfsem.core.StructureTypes')
+                    warning('No locations found for %s\n', syn);
+                else
+                    warning('No locations found for %u\n', syn);
+                end
+                xyz = [NaN, NaN, NaN];
             end
         end
 
