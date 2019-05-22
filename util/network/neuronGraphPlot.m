@@ -25,6 +25,7 @@ function p = neuronGraphPlot(neuron, G, nodeIDs)
     %
     % History:
     %   3Dec2018 - SSP - Moved from degreePlot
+    %   19May2019 - SSP - Added zero value for annotations w/out locations
     % ---------------------------------------------------------------------
 
     assert(isa(neuron, 'sbfsem.core.StructureAPI'), 'Input Neuron object');
@@ -39,8 +40,11 @@ function p = neuronGraphPlot(neuron, G, nodeIDs)
         p = plot(G, 'layout', 'force3');
         xyz = [];
         for i = 1:numel(nodeIDs)
-            xyz = cat(1, xyz,...
-                neuron.nodes{neuron.nodes.ID == nodeIDs(i), 'XYZum'});
+            iXYZ = neuron.nodes{neuron.nodes.ID == nodeIDs(i), 'XYZum'};
+            if isempty(iXYZ)
+                iXYZ = [0, 0, 0];
+            end
+            xyz = cat(1, xyz, iXYZ);
         end
         p.XData = xyz(:, 1); p.YData = xyz(:, 2); p.ZData = xyz(:, 3);
         hold on; grid on; axis equal tight;

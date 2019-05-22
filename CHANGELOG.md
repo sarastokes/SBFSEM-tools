@@ -1,5 +1,12 @@
 # Changelog
 
+### 21May2019
+- New render visualization helper function (`util\renders\randomColors.m`) to randomly assign colors to all patch objects in figure
+
+### 19May2019
+- New path length from soma graph visualization (`util\network\plotPathLength.m`)
+- Updated `util\network\neuronGraphPlot.m` to accomodate increasing incidences of annotations in database without locations
+
 ### 18May2019
 - Updated boundary marker cache files for NeitzTemporalMonkey
 - Added function `data\cacheBoundaryMarkers.m` to automate cache updates
