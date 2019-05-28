@@ -3,6 +3,7 @@
 ### 28May2019
 - Fixed reporting for `sbfsem.analysis.DendriteDiameter` where the `includeSoma` parameter was not passed to the `report` function.
 - Removed an incorrect help line from `tutorials\tutorial_DendriteDiameter.m`
+- `util\network\plotPathLength.m` now operates in microns and `util\analysis\helpers\fastEuclid3d.m` take two arrays of Nx3 XYZ locations.
 
 ### 21May2019
 - New render visualization helper function (`util\renders\randomColors.m`) to randomly assign colors to all patch objects in figure

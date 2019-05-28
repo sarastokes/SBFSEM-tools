@@ -3,6 +3,9 @@ function hideAxes(gObj)
     % 
     % Description:
     %   Toggle axes visibility without removing completely
+    % 
+    % Syntax:
+    %   hideAxes(gObj);
     %
     % Inputs:
     %   gObj      Figure or axes handle

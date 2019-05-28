@@ -13,10 +13,14 @@ function D = fastEuclid3d(mainXYZ, XYZ)
 	% OUTPUTS:
 	%		distFromSoma	Distance(s) from main location (N x 1)
 	%
-	% 18Jun2017 - SSP - created
+    % History:
+	%   18Jun2017 - SSP - created
+    %   25May2019 - SSP - added support for equally sized XYZ arrays
     % ---------------------------------------------------------------------
 
-	mainXYZ = repmat(mainXYZ, [size(XYZ, 1) 1]);
+    if size(mainXYZ) ~= size(XYZ)
+    	mainXYZ = repmat(mainXYZ, [size(XYZ, 1) 1]);
+    end
 
 	dx = bsxfun(@minus, mainXYZ(:,1), XYZ(:,1));
 	dy = bsxfun(@minus, mainXYZ(:,2), XYZ(:,2));

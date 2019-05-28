@@ -93,6 +93,7 @@ classdef PrimaryDendriteDiameter < sbfsem.analysis.NeuronAnalysis
             % Compute dendrite size stats per distance bin
             h.counts = n';
             h.edges = edges(2:end)';
+            h.binCenters = edges(2:end)' - (edges(2)-edges(1));
             h.avg = splitapply(@mean, dendrite, bins);
             h.std = splitapply(@std, dendrite, bins);
             h.sem = splitapply(@sem, dendrite, bins);
@@ -121,6 +122,30 @@ classdef PrimaryDendriteDiameter < sbfsem.analysis.NeuronAnalysis
             % Save to object
             obj.data = h;
             obj.data.inWindow = d;
+        end
+
+        function h = singleDendrite(obj, locationA, locationB, varargin)
+            ip = inputParser();
+            ip.CaseSensitive = false;
+            ip.KeepUnmatched = true;
+            addParameter(ip, 'Plot', true, @islogical);
+            parse(ip, varargin{:});
+
+            [radii, binCenters] = singleDendriteDiameter(obj.neuron, locationA, locationB,...
+                'Plot', false, ip.Unmatched);
+
+            if ip.Results.Plot
+                ax = axes('Parent', figure('Renderer', 'painters'));
+                hold(ax, 'on');
+                % Plot as diameter, not radius
+                plot(2*binCenters, a, '-ok', 'LineWidth', 1.2);
+                grid(ax, 'on');
+                set(ax, 'TitleFontWeight', 'normal');
+                title(ax, sprintf('c%u', neuron.ID));
+                ylabel(ax, 'Number of annotations');
+                figPos(ax.Parent, 0.8, 0.8);
+            end
+
         end
         
         function fh = plot(obj)
