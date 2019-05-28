@@ -1,5 +1,5 @@
 classdef DendriteDiameter < sbfsem.analysis.NeuronAnalysis
-    % PRIMARYDENDRITEDIAMETER
+    % DENDRITEDIAMETER
     % See analyzeDS.m for information on use
     %
     % Syntax:
@@ -7,13 +7,14 @@ classdef DendriteDiameter < sbfsem.analysis.NeuronAnalysis
     %
     % Parameters:
     %	neuron : neuron object
+    % Optional key/value parameters:
+    %   includeSoma : optional, logical
+    %       Include the soma aka first bin (default = true) 
     %   nbins  : optional, integer 
     %   	Number of bins for histogram (if empty, Matlab decides)
     %	dim : optional, integer	
     %       Compute distance in two (XY) or three (XYZ) dimensions
     %	ind 	    []	    rows to remove (axon, soma)
-    %	graph : optional, logical	
-    %   	Automatically plot results (default = False)
     %	search : optional, vector		
     %       Primary dendrite search window (default = [2 5])
     %
@@ -35,6 +36,9 @@ classdef DendriteDiameter < sbfsem.analysis.NeuronAnalysis
     %   x.plot();
     %	% Try a higher bin count
     %	x = sbfsem.analysis.DendriteDiameter(c4781, 'nbins', 20)
+    %   % Exclude the soma
+    %   x = sbfsem.analysis.DendriteDiameter(c4781, 'includeSoma', false);
+    %   x.plot('includeSoma', false);
     %
     %   See tutorial_DendriteDiameter.m for details
     %
@@ -45,6 +49,8 @@ classdef DendriteDiameter < sbfsem.analysis.NeuronAnalysis
     % 25Aug2017 - SSP - created from analyzeDS.m
     % 2Aug2018 - SSP - renamed to DendriteDiameter
     %                  updated to make more user-friendly
+    % 28May2019 - SSP - Fixed issue where `includeSoma` parameter wasn't
+    %                   automatically passed to the `report` function
     % --------------------------------------------------------------------
     
     properties (Constant = true, Hidden = true)
@@ -138,24 +144,30 @@ classdef DendriteDiameter < sbfsem.analysis.NeuronAnalysis
             obj.data = h;
             
             % Print some results
-            obj.report()
+            obj.report('includeSoma', ip.Results.includeSoma);
             
+            % Plot the results
+            obj.plot('includeSoma', ip.Results.includeSoma);
         end
 
-        function report(obj, includeSoma)
+        function report(obj, varargin)
             % REPORT
             %
+            % Optional key/value parameters:
             % includeSoma : optional, logical
             %   If true, includes soma bin in statistics (default = false)
             % 
             % Examples:
             %   obj.report()
-            %   % Include soma bin
-            %   obj.report(true);
+            %   % Exclude soma bin
+            %   obj.report('includeSoma', false);
+            % -------------------------------------------------------------
 
-            if nargin < 2
-                includeSoma = false;
-            end
+            ip = inputParser();
+            ip.CaseSensitive = false;
+            addParameter(ip, 'IncludeSoma', true, @islogical);
+            parse(ip, varargin{:});
+            includeSoma = ip.Results.IncludeSoma;
 
             fprintf('--- c%u ---\n', obj.target.ID);
             if includeSoma

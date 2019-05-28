@@ -12,6 +12,9 @@ a = sbfsem.analysis.DendriteDiameter(c4781);
 % You should see statistics print to the command line. If you want to see
 % these again later, just type in:
 a.report();
+% By default, the soma bin is now included in the report. To exclude the
+% soma bin, use the 'includeSoma' parameter.
+a.report('includeSoma', false);
 
 % Use the plot method to visualize the output.
 a.plot();
@@ -41,7 +44,7 @@ help('sbfsem.analysis.DendriteDiameter')
 % You can also view the help for specific functions by appending them 
 % to the class name like so:
 help('sbfsem.analysis.DendriteDiameter/plot')
-help('sbfsem.analysis.DendriteDiameter/includeSoma')
+help('sbfsem.analysis.DendriteDiameter/report')
 
 % Increase the number of bins (experiment with this parameter)
 a.doAnalysis(c4781, 'nbins', 15);

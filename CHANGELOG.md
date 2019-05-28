@@ -1,5 +1,9 @@
 # Changelog
 
+### 28May2019
+- Fixed reporting for `sbfsem.analysis.DendriteDiameter` where the `includeSoma` parameter was not passed to the `report` function.
+- Removed an incorrect help line from `tutorials\tutorial_DendriteDiameter.m`
+
 ### 21May2019
 - New render visualization helper function (`util\renders\randomColors.m`) to randomly assign colors to all patch objects in figure
 
