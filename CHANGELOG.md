@@ -1,5 +1,8 @@
 # Changelog
 
+### 29May2019
+- Added report to cmd line for `util\analysis\singleDendriteDiameter.m`
+
 ### 28May2019
 - Fixed reporting for `sbfsem.analysis.DendriteDiameter` where the `includeSoma` parameter was not passed to the `report` function.
 - Removed an incorrect help line from `tutorials\tutorial_DendriteDiameter.m`

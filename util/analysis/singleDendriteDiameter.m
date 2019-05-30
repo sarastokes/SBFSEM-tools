@@ -11,15 +11,26 @@ function radii = singleDendriteDiameter(neuron, locationA, locationB, varargin)
     % Optional key/value inputs:
     %   numBins         Number of bins for histograms (default = 10)
     %   binLocations    Specify a vector of exact bin locations
+    %   plot            Plot the output (default = true)
     %
     % Outputs:
-    % radii             All annotation radii along branch
+    %   radii           All annotation radii along branch
+    %
+    % Examples:
+    %   % Calculate dendrite diameter stats and plot histogram
+    %   c4781 = Neuron(4781, 't');
+    %   radii = singleDendriteDiameter(c4781, 178736, 193790);
+    %
+    % Notes:
+    %   This function takes the same inputs as the tortuosity analysis. For 
+    %   more examples, see the help and tutorials for tortuoisty
     %
     % See also:
     %   SBFSEM.ANALYSIS.DENDRITEDIAMETER, TORTUOSITY, TUTORIAL_TORTUOSITY
     %
     % History:
     %   2Mar2019 - SSP
+    %   29May2019 - SSP - Added stats report to the command line
     % ---------------------------------------------------------------------
     
     assert(isa(neuron, 'sbfsem.core.StructureAPI'),...
@@ -62,11 +73,17 @@ function radii = singleDendriteDiameter(neuron, locationA, locationB, varargin)
 
     if ip.Results.ExcludeSoma
         largestRadius = max(radii);
-        fprintf('Excluding largest %u annotations\n',... 
+        fprintf('Excluding largest %u annotations as soma\n',... 
             nnz(radii(radii > 0.8*largestRadius)));
         radii(radii > 0.8*largestRadius) = [];
     end
 
+    % Report the results
+    fprintf('\tMean = %.3f\n', mean(radii));
+    fprintf('\tMedian = %.3f\n', median(radii));
+    fprintf('\tSD = %.3f\n', std(radii));
+    fprintf('\tSEM = %.3f\n\n', sem(radii));
+    
     if ip.Results.Plot
         ax = axes('Parent', figure('Renderer', 'painters'));
         hold(ax, 'on');
