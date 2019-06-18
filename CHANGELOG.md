@@ -1,5 +1,9 @@
 # Changelog
 
+### 18Jun2019
+- Adding some old UI improvements to `util\views\RenderApp.m` and `util\views\IPLDepthApp.m`
+- Documentation within class for `sbfsem.core.BoundaryMarker.m`
+
 ### 29May2019
 - Added report to cmd line for `util\analysis\singleDendriteDiameter.m`
 

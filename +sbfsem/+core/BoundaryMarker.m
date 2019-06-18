@@ -18,11 +18,12 @@ classdef (Abstract) BoundaryMarker < handle
     %   obj.rmFromScene(ax);
     %
     % See also:
-    %   REGULARIZEDATA3D, SBFSEM.CORE.GCLBOUNDARY
+    %   REGULARIZEDATA3D, SBFSEM.CORE.GCLBOUNDARY, SBFSEM.CORE.INLBOUNDARY
     %
-    % 11Nov2017 - SSP
-    % 4Jan2018 - SSP - standardized function names
-    % 7Feb2018 - SSP - better plotting, add and remove from scene methods
+    % History:
+    %   11Nov2017 - SSP
+    %   4Jan2018 - SSP - standardized function names
+    %   7Feb2018 - SSP - better plotting, add and remove from scene methods
     % ---------------------------------------------------------------------
 	
 	properties (Hidden, Access = private)
@@ -228,7 +229,8 @@ classdef (Abstract) BoundaryMarker < handle
                 'interp', 'bicubic', 'smoothness', obj.SMOOTHFAC);
         end
         
-		function pull(obj)
+        function pull(obj)
+            % PULL  Query database for boundary marker annotations, parse
             disp('Querying OData...');
 			data = readOData([obj.baseURL,...
 				'Structures?$filter=TypeID eq ' num2str(obj.TYPEID),... 
