@@ -18,6 +18,10 @@ classdef GraphApp < handle
     %   RENDERAPP, NODEVIEW
     % ---------------------------------------------------------------------
     
+    events
+        ClosedApp
+    end
+
     properties (Access = public)
         neuron
         source
@@ -48,7 +52,7 @@ classdef GraphApp < handle
     end
     
     properties (Constant = true, Hidden = true)
-        COLORMAPS = {'parula', 'winter', 'hsv', 'cubicl', 'viridis', 'redblue', 'haxby'};
+        COLORMAPS = {'parula', 'bone', 'hsv', 'cubicl', 'viridis', 'redblue', 'haxby'};
         SOURCES = {'NeitzTemporalMonkey','NeitzInferiorMonkey','MarcRC1'};
         UI_WIDTH = 130;
         MARGIN = 40;
@@ -351,14 +355,25 @@ classdef GraphApp < handle
                     set(obj.dataCursor, 'Enable', 'off');
                     set(findobj(obj.figureHandle, 'Tag', 'DCBox'),...
                         'BackgroundColor', 'w');
+                    set(findobj(obj.figureHandle, 'Tag', 'CopyLocation'),...
+                        'Enable', 'off');
                     set(findobj(obj.figureHandle, 'Tag', 'ViewBox'),...
                         'BackgroundColor', [0.7, 0.7, 0.7]);
                 case 'off'  % Turn on Select mode
                     set(obj.dataCursor, 'Enable', 'on');
                     set(findobj(obj.figureHandle, 'Tag', 'DCBox'),...
                         'BackgroundColor', [0.7, 0.7, 0.7]);
+                    set(findobj(obj.figureHandle, 'Tag', 'CopyLocation'),...
+                        'Enable', 'on');
                     set(findobj(obj.figureHandle, 'Tag', 'ViewBox'),...
                         'BackgroundColor', 'w');
+            end
+        end
+
+        function onCopyLastLocation(~, src, ~)
+            % ONCOPYLASTLOCATION  Copy the last ID from cursor mode
+            if ~isempty(src.Tag)
+                clipboard('copy', str2double(src.UserData));
             end
         end
         
@@ -458,6 +473,11 @@ classdef GraphApp < handle
     
     % Basic user interface callbacks
     methods (Access = private)
+        function onClose(obj, ~, ~)
+            % ONCLOSE  Runs when user closes GraphApp
+            notify(obj, 'ClosedApp');
+            delete(obj.figureHandle);
+        end
                 
         function onResizeLayout(obj, src, ~)
             % ONRESIZELAYOUT  Keep UI panel size constant
@@ -505,10 +525,10 @@ classdef GraphApp < handle
             end
             txt = cat(2, txt, {['ID: ' num2str(locID)],...
                 ['Section: ', num2str(Z)]});
+            set(findobj(obj.figureHandle, 'Tag', 'CopyLocation'),...
+                'UserData', num2str(locID)); drawnow;
         end
         
-
-       
         function onKeyPress(obj, ~, eventdata)
             % ONKEYPRESS  Control plot view with keyboard
             %
@@ -618,12 +638,21 @@ classdef GraphApp < handle
                 'BackgroundColor', [0.7, 0.7, 0.7],...
                 'TooltipString', 'Rotate zoom and pan view',...
                 'Callback', @obj.onClickMode);
-            uicontrol(modeLayout,...
+            cursorLayout = uix.HBox('Parent', modeLayout,...
+                'BackgroundColor', 'w');
+            uicontrol(cursorLayout,...
                 'Style', 'push',...
                 'String', 'Data Cursor',...
                 'Tag', 'DCBox',...
                 'Tooltip', 'Select individual nodes',...
                 'Callback', @obj.onClickMode);
+            uicontrol(cursorLayout,...
+                'Style', 'push',...
+                'String', 'C',...
+                'Tag', 'CopyLocation', ...
+                'Tooltip', 'Copy last selected ID',...
+                'Callback', @obj.onCopyLastLocation);
+            set(cursorLayout, 'Widths', [-3, -1]);
             set(modeLayout, 'Heights', [-2, -1]);
             uix.Empty('Parent', uiLayout);
             uicontrol(uiLayout,...
@@ -720,7 +749,7 @@ classdef GraphApp < handle
             obj.plotTerminals();
             obj.plotOffEdges();
             obj.plotSynapses();
-            
+        
             axis(obj.ax, 'equal', 'tight');
             view(obj.ax, 3);
             grid(obj.ax, 'on');
@@ -729,16 +758,18 @@ classdef GraphApp < handle
         function createTableTab(obj, tabHandle)
             % CREATETABLE  Initialize annotation table
 
-            tablePanel = uipanel('Parent', tabHandle);
+            AnnotationTableView(obj);
 
-            pos = get(obj.figureHandle, 'Position');
-            locTable = uitable('Parent', tablePanel,...
-                'Data', table2cell(obj.neuron.nodes(:, {'ID', 'ParentID',...
-                'VolumeX', 'VolumeY', 'Z', 'Radius', 'OffEdge', 'Terminal'})),...
-                'ColumnName', {'ID', 'ParentID', 'X', 'Y', 'Z',...
-                'Radius', 'OffEdge', 'Terminal'});
-            set(locTable, 'Position', [obj.MARGIN, obj.MARGIN, ...
-                pos(3)-obj.MARGIN*2, pos(4)-obj.MARGIN*2]);
+            % tablePanel = uipanel('Parent', tabHandle);
+
+            %pos = get(obj.figureHandle, 'Position');
+            %locTable = uitable('Parent', tablePanel,...
+            %    'Data', table2cell(obj.neuron.nodes(:, {'ID', 'ParentID',...
+            %    'VolumeX', 'VolumeY', 'Z', 'Radius', 'OffEdge', 'Terminal'})),...
+            %    'ColumnName', {'ID', 'ParentID', 'X', 'Y', 'Z',...
+            %    'Radius', 'OffEdge', 'Terminal'});
+            %set(locTable, 'Position', [obj.MARGIN, obj.MARGIN, ...
+            %    pos(3)-obj.MARGIN*2, pos(4)-obj.MARGIN*2]);
         end
 
         function createHelpTab(obj, parentHandle)
@@ -783,8 +814,8 @@ classdef GraphApp < handle
             switch lower(cmapName)
                 case 'parula'
                     cmap = parula(N);
-                case 'winter'
-                    cmap = winter(N);
+                case 'bone'
+                    cmap = bone(N);
                 case 'hsv'
                     cmap = hsv(N);
                 case 'viridis'

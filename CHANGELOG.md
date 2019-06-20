@@ -1,5 +1,8 @@
 # Changelog
 
+### 19Jun2019 
+- Added Copy button to `util\views\GraphApp.m`
+
 ### 18Jun2019
 - Adding some old UI improvements to `util\views\RenderApp.m` and `util\views\IPLDepthApp.m`
 - Documentation within class for `sbfsem.core.BoundaryMarker.m`
