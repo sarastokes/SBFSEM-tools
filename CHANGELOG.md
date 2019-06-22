@@ -1,5 +1,8 @@
 # Changelog
 
+### 22Jun2019
+- Error messages for `util\analysis\singleDendriteDiameter.m` now return location IDs instead of node number
+
 ### 19Jun2019 
 - Added Copy button to `util\views\GraphApp.m`
 

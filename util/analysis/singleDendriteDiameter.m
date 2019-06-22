@@ -31,10 +31,20 @@ function radii = singleDendriteDiameter(neuron, locationA, locationB, varargin)
     % History:
     %   2Mar2019 - SSP
     %   29May2019 - SSP - Added stats report to the command line
+    %   22Jun2019 - SSP - Errors refer to location ID now, not node number
     % ---------------------------------------------------------------------
     
     assert(isa(neuron, 'sbfsem.core.StructureAPI'),...
         'Input a StructureAPI object');
+    if ~ismember(locationA, neuron.nodes.ID)
+        error('SBFSEM:SINGLEDENDRITEDIAMETER',...
+            'Location ID %u is not associated with c%u!',...
+            locationA, neuron.ID);
+    elseif ~ismember(locationB, neuron.nodes.ID)
+        error('SBFSEM:SINGLEDENDRITEDIAMETER',...
+            'Location ID %u is not associated with c%u!',...
+            locationB, neuron.ID);
+    end
     
     ip = inputParser();
     ip.CaseSensitive = false;
@@ -55,13 +65,14 @@ function radii = singleDendriteDiameter(neuron, locationA, locationB, varargin)
 
 	% Get the path between the nodes
 	nodePath = shortestpath(G, nodeA, nodeB);
-
-	% Misconnected nodes are common, check for them
-	if isempty(nodePath)
-		error('Nodes %u and %u are not connected!', nodeA, nodeB);
-	else
-		fprintf('Analyzing a %u node path between %u and %u\n',...
-			numel(nodePath), nodeA, nodeB);
+    
+    % Misconnected nodes are common, check for them
+    if isempty(nodePath)
+        error('SBFSEM:SINGLEDENDRITEDIAMETER',...
+            'Nodes %u and %u are not connected!', locationA, locationB);
+    else
+        fprintf('Analyzing a %u node path between %u and %u\n',...
+            numel(nodePath), locationA, locationB);
     end
     
     % Get the radius of each node
