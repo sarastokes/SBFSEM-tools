@@ -1,5 +1,8 @@
 # Changelog
 
+### 23Jun2019
+- Small UI initialization fixes in `util\views\GraphApp.m`
+
 ### 22Jun2019
 - Error messages for `util\analysis\singleDendriteDiameter.m` now return location IDs instead of node number
 
