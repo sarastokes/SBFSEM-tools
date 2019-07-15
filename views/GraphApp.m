@@ -165,19 +165,25 @@ classdef GraphApp < handle
         function colorSegments(obj)
             % COLORSEGMENTS  Assign each segment a different color
             
+            obj.updateStatus('Coloring Segments...');
+            
             tags = get(findall(obj.ax, 'Type', 'line'), 'Tag');
             % Randomize so neighboring segments appear distinct
             ind = randperm(numel(tags));
             if numel(ind) > 256
                 cdata = obj.getColormap(obj.cmap, 256);
-                cdata = cat(1, cdata, cdata);
+                for i = 1:ceil(numel(ind)/256)
+                    cdata = cat(1, cdata, cdata);
+                end
             else
                 cdata = obj.getColormap(obj.cmap, numel(ind));
             end
             for i = 1:numel(tags)
                 set(findall(obj.ax, 'Tag', tags{i}),...
-                    'Color', cdata(ind(i),:,:));
+                    'Color', cdata(ind(i),:));
+                drawnow;
             end
+            obj.updateStatus('');
         end
     end
     

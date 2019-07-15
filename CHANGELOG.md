@@ -1,5 +1,11 @@
 # Changelog
 
+### 15Jul2019
+- Fixed bug where the `colorSegments` function of `views\GraphApp.m` threw errors for neurons with over 512 segments.
+
+### 26Jun2019
+- Offline mode now compatible with `util\viking2micron.m`
+
 ### 23Jun2019
 - Small UI initialization fixes in `util\views\GraphApp.m`
 

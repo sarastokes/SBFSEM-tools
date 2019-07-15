@@ -6,11 +6,19 @@ function xyzMicrons = viking2micron(xyz, source)
 	% Output:
 	%	xyzMicrons 	coordinates converted to microns
 	% 
-	% 3Nov2017 - SSP
+    % History:
+	%   3Nov2017 - SSP
+    %   26Jun2019 - SSP - Added fallback to cache for offline use
+    % ---------------------------------------------------------------------
 
 	source = validateSource(source);
-	volumeScale = getODataScale(source); % nm
-    volumeScale = volumeScale./1e3; % um
+    try
+    	volumeScale = getODataScale(source); % nm
+        volumeScale = volumeScale./1e3; % um
+    catch
+        volumeScale = loadCachedVolumeScale(source);
+        warning('OData query for volume scale failed. Relying on cache.');
+    end
 
     if size(xyz, 2) == 1
         xyzMicrons = xyz * volumeScale(1);
