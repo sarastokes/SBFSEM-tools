@@ -12,16 +12,6 @@ help synapseSphere
 % Most functions in sbfsem-tools now have decent help info, but I'm working
 % to standardize it further.
 
-%% Basic tutorial
-
-view(0,0); % good rotation for seeing synapses on c6800
-% For a reminder of synapse names (use the "Detailed names"):
-c6800.printSyn();
-
-
-
-
-
 
 %% Basic tutorial
 % Import neuron with synapses and render
