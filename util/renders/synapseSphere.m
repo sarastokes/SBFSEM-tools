@@ -9,7 +9,7 @@ function synapseSphere(neuron, synapse, varargin)
     %
     % Inputs:
     %   neuron              Neuron object
-    %   synapse             Synapse name or XYZ coordinates
+    %   synapse             Synapse name, ID or XYZ coordinates
     % Optional key/value inputs:
     %   ax                  Axes handle (default = new figure)
     %   sf                  Synapse size (default = 0.5)
@@ -41,6 +41,7 @@ function synapseSphere(neuron, synapse, varargin)
     % History:
     %   5Jan2018 - SSP
     %   28Feb2018 - SSP - Added synapse name to tag
+    %   
     % ---------------------------------------------------------------------
     
     assert(isa(neuron, 'sbfsem.core.NeuronAPI'),...
@@ -60,7 +61,8 @@ function synapseSphere(neuron, synapse, varargin)
     ip.KeepUnmatched = true;  % Surf properties
     ip.CaseSensitive = false;
     addParameter(ip, 'ax', [], @ishandle);
-    addParameter(ip, 'sf', 0.5, @isnumeric);
+    addParameter(ip, 'MarkerSize', [], @isnumeric);
+    addParameter(ip, 'SF', 0.5, @isnumeric);  % for backwards compatibility
     % surf properties with defaults
     addParameter(ip, 'EdgeColor', 'none',...
         @(x) ischar(x) || isvector(x));
@@ -70,6 +72,12 @@ function synapseSphere(neuron, synapse, varargin)
         @(x) validateattributes(x, {'numeric'}, {'<',1, '>',0}));
     addParameter(ip, 'Tag', [], @ischar);
     parse(ip, varargin{:});
+        
+    if isempty(ip.Results.MarkerSize)
+        SF = ip.Results.SF;
+    else
+        SF = ip.Results.MarkerSize;
+    end
 
     if isempty(ip.Results.Tag) 
         if isnumeric(synapse) && numel(synapse) == 1
@@ -81,7 +89,6 @@ function synapseSphere(neuron, synapse, varargin)
         Tag = ip.Results.Tag;
     end
     
-    SF = ip.Results.sf;
     if isempty(ip.Results.ax)
         ax = axes('Parent', figure());
         hold on;

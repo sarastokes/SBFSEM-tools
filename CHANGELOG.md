@@ -1,5 +1,8 @@
 # Changelog
 
+### 20Jul2019
+- Lighting stays consistent when updating neurons in `views\RenderApp.m`
+
 ### 15Jul2019
 - Fixed bug where the `colorSegments` function of `views\GraphApp.m` threw errors for neurons with over 512 segments.
 

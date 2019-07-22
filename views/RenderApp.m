@@ -257,6 +257,7 @@ classdef RenderApp < handle
             oldPatch = findobj(obj.ax, 'Tag', evt.Source.Tag);
             oldColor = get(oldPatch, 'FaceColor');
             oldAlpha = get(oldPatch, 'FaceAlpha');
+            oldLighting = get(oldPatch, 'FaceLighting');
             % Delete the old one and render a new one
             delete(oldPatch);
             obj.updateStatus('Updating render');
@@ -275,6 +276,7 @@ classdef RenderApp < handle
                     repmat(oldColor, [size(newPatch.Vertices, 1), 1]),...
                     'FaceColor', oldColor);
             end
+            set(newPatch, 'FaceLighting', oldLighting);
             % Return to the original view azimuth and elevation
             view(obj.ax, az, el);
             obj.updateStatus('');
@@ -416,11 +418,6 @@ classdef RenderApp < handle
                 newAlpha = str2double(src.Label);
                 set(findall(obj.ax, 'Type', 'patch'),...
                     'FaceAlpha', newAlpha);
-            % elseif strcmp(src.Tag, 'DefaultAlpha')
-            %     % Apply to all neurons (from popup menu)
-            %     newAlpha = str2double(src.String{src.Value});
-            %     set(findall(obj.ax, 'Type', 'patch'),...
-            %         'FaceAlpha', newAlpha);
             elseif strcmp(src.Tag, 'SurfAlpha')
                 newAlpha = str2double(src.String{src.Value});
                 set(findall(obj.ax, 'Type', 'surface'),...

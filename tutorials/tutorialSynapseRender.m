@@ -1,33 +1,45 @@
 %% SYNAPSE MARKER TUTORIAL
-% Until I figure out how to use these 
+% 
+% See also: synapseMarker for 2D markers of different shapes.
 %
 % 28Feb2018 - SSP
+% 16Jul2019 - SSP - updated
+% -------------------------------------------------------------------------
 
+%% Builtin documentation
 % Check out the synapseSphere help info
 help synapseSphere
 % Most functions in sbfsem-tools now have decent help info, but I'm working
-% to standardize it.
+% to standardize it further.
 
-% Import neuron with synapses
-c6800 = Neuron(6800, 't', true);
-% Render (or export existing render from RenderApp. If you use RenderApp, 
-% you still have to import the Neuron from the command line, for now)
-c6800.build(); c6800.render('FaceColor', [0.5, 0.5, 1]);
+%% Basic tutorial
+
 view(0,0); % good rotation for seeing synapses on c6800
 % For a reminder of synapse names (use the "Detailed names"):
 c6800.printSyn();
 
+
+
+
+
+
+%% Basic tutorial
+% Import neuron with synapses and render
+c6800 = Neuron(6800, 't', true);
+c6800.render('FaceColor', [0.5, 0.5, 1]);
+
 % The synapseSphere function has two required inputs: neuron and synapse
 % NEURON is the Neuron object (c6800 in this case).
-% SYNAPSE is the synapse name to render (in quotes).
+% SYNAPSE is the synapses to render. There are two options:
 
+% OPTION 1: the synapse name to render (in quotes).
 % For a reminder of the synapse names:
 c6800.printSyn();
 % The synapse names used by synapseSphere are the "Detailed names"
 synapseSphere(c6800, 'ConvPost');
 
-% No axes handle was provided so it created a new figure.
-delete(gcf);
+% OPTION 2: specific synapse IDs
+% See bipolar cell input tutorial on slack board from 20190415
 
 % The synapseSphere function has optional key/value inputs as well. If not
 % specified, these optional inputs will use default values. Check the help
@@ -48,11 +60,14 @@ help synapseSphere
 % Add conventional pre-synapse markers
 synapseSphere(c6800, 'ConvPre', 'ax', gca);
 % Add the unknown synapses - gray, semi-transparent
-synapseSphere(c6800, 'Unknown', 'ax', gca, 'FaceColor', [0.5 0.5 0.5], 'FaceAlpha', 0.5);
-% The synapses are created as 1 micron unit spheres, then scaled. The
-% default scale factor is 0.5 (so 500nm spheres). To change this:
-synapseSphere(c6800, 'ConvPost', 'ax', gca, 'FaceColor', [0 0.3 0.8], 'SF', 0.5);
-synapseSphere(c6800, 'RibbonPost', 'ax', gca, 'FaceColor', [0 0.8 0.3], 'SF', 2);
+synapseSphere(c6800, 'Unknown', 'ax', gca,... 
+    'FaceColor', [0.5 0.5 0.5], 'FaceAlpha', 0.5);
+% The synapses are created as spheres with a 0.5 micron radius by default. 
+% Use the 'MarkerSize'
+synapseSphere(c6800, 'ConvPost', 'ax', gca,... 
+    'FaceColor', [0 0.3 0.8], 'SF', 0.5);
+synapseSphere(c6800, 'RibbonPost', 'ax', gca,... 
+    'FaceColor', [0 0.8 0.3], 'SF', 2);
 
 % The synapses are marked by tags following this formula:
 %   c + NeuronID + SynapseName
