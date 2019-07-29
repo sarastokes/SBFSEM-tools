@@ -6,6 +6,11 @@ function source = validateSource(source)
     %
     % Input:
     %   source      Volume name or abbreviation (char)
+    % Output:
+    %   source      Official volume name
+    %
+    % See also:
+    %   SBFSEM.BUILTIN.VOLUMES
     % ---------------------------------------------------------------------
     
    switch lower(source)

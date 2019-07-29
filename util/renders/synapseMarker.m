@@ -42,12 +42,14 @@ function synapseMarker(neuron, synapse, varargin)
     
     if ~isnumeric(synapse)
         xyz = neuron.getSynapseXYZ(synapse);
+    elseif size(synapse, 2) == 3
+        xyz = synapse;
     elseif isequal(size(synapse(:), 1), numel(synapse))
         T = neuron.getSynapseNodes();
         row = ismember(T.ParentID, synapse);
         xyz = T{row, 'XYZum'};
     else
-        xyz = synapse;
+        error('synapseMarker:Unrecognized synapse');
     end
 
     ip = inputParser();

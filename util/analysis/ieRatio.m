@@ -5,7 +5,7 @@ function [IE, numExc, numInh] = ieRatio(neuron, verbose)
 	%	A simple IE ratio calculation
 	%
 	% Syntax:
-	%	[IE, numExc, numInh] = ieRatio(neuron);
+	%	[IE, numExc, numInh] = ieRatio(neuron, verbose);
 	%
 	% Input:
 	%	neuron 			Neuron object
@@ -16,6 +16,10 @@ function [IE, numExc, numInh] = ieRatio(neuron, verbose)
 	%	IE 				Ratio of inhibitory:excitatory synapses
 	%	numExc 			Number of excitatory synapses
 	%	numInh 			Number of inhibitory synapses
+    %
+    % Example:
+    %   c = Neuron(189, 't', true);
+    %   [IE, numExc, numInh] = ieRatio(neuron, true);
 	%
 	% Note:
 	%	Defines inhibition as the number of conventional post-synapses
@@ -24,21 +28,21 @@ function [IE, numExc, numInh] = ieRatio(neuron, verbose)
 	% History 
 	%	5Mar2018 - SSP
 	% ------------------------------------------------------------------
-
-	assert(isa(neuron, 'sbfsem.core.NeuronAPI'), 'Input a neuron object');
-	if nargin < 2
-		verbose = false;
+    
+    assert(isa(neuron, 'sbfsem.core.NeuronAPI'), 'Input a neuron object');
+    if nargin < 2
+        verbose = false;
     end
     neuron.checkSynapses();
-
-	numExc = nnz(neuron.synapses.LocalName == 'RibbonPost');
-	numInh = nnz(neuron.synapses.LocalName == 'ConvPost');
-	if verbose
-		fprintf('c%u has %u excitatory and %u inhibitory synapses\n',...
-			neuron.ID, numExc, numInh);
-	end
-
-	IE = numInh/(numInh+numExc);
-	if verbose
-		fprintf('\tIE ratio is %.3g\n', IE);
-	end
+    
+    numExc = nnz(neuron.synapses.LocalName == 'RibbonPost');
+    numInh = nnz(neuron.synapses.LocalName == 'ConvPost');
+    if verbose
+        fprintf('c%u has %u excitatory and %u inhibitory synapses\n',...
+            neuron.ID, numExc, numInh);
+    end
+    
+    IE = numInh/(numInh+numExc);
+    if verbose
+        fprintf('\tIE ratio is %.3g\n', IE);
+    end

@@ -12,6 +12,9 @@ function SA = surfaceArea(neuron)
     % Output:
     %   SA          Surface area (microns2)
 	%
+    % Notes:
+    %   See surface area tutorial (currently only in Slack group).
+    %
 	% History:
 	%	14Oct2018 - SSP
     % ---------------------------------------------------------------------

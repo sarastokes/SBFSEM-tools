@@ -1,5 +1,8 @@
 # Changelog
 
+### 28Jul2019
+- Improvements to function help and several old tutorials
+
 ### 20Jul2019
 - Lighting stays consistent when updating neurons in `views\RenderApp.m`
 

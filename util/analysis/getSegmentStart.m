@@ -1,7 +1,7 @@
 function [linkingNodes, startingNodes, terminalNodes] = getSegmentStart(segments)
     % GETSEGMENTSTART
     %
-    % Description:
+    % Syntax:
     %   [linkingNodes, startingNodes, terminalNodes] =
     %   getSegmentStart(segments);
     %

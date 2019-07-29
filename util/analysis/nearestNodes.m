@@ -1,6 +1,10 @@
 function nodeIDs = nearestNodes(neuron, synapseName, swc)
     % NEARESTNODES
     %
+    % Description:
+    %   Returns the cell annotation closest to the synapse annotations of a
+    %   specific type.
+    %
     % Syntax:
     %   nodeIDs = nearestNodes(neuron, synapseName, swc)
     %

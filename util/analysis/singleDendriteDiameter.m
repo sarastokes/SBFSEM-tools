@@ -4,6 +4,10 @@ function radii = singleDendriteDiameter(neuron, locationA, locationB, varargin)
     % Description:
     %   Diameter of annotations along a single branch
     %
+    % Syntax:
+    %   radii = singleDendriteDiameter(neuron, locationA, locationB)
+    %   radii = singleDendriteDiameter(neuron, locationA, locationB, 'numBins', 20);
+    %
 	% Inputs:
 	%	neuron 			StructureAPI object
 	%	locationA 		Starting location ID
@@ -11,6 +15,7 @@ function radii = singleDendriteDiameter(neuron, locationA, locationB, varargin)
     % Optional key/value inputs:
     %   numBins         Number of bins for histograms (default = 10)
     %   binLocations    Specify a vector of exact bin locations
+    %   excludeSoma     Exclude soma (see notes, default = false)
     %   plot            Plot the output (default = true)
     %
     % Outputs:
@@ -22,6 +27,10 @@ function radii = singleDendriteDiameter(neuron, locationA, locationB, varargin)
     %   radii = singleDendriteDiameter(c4781, 178736, 193790);
     %
     % Notes:
+    %   Exclude soma removes any annotation within 20% of the largest
+    %   single annotation associated with the neuron.
+    %
+    % Help:
     %   This function takes the same inputs as the tortuosity analysis. For 
     %   more examples, see the help and tutorials for tortuoisty
     %
