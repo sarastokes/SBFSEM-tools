@@ -707,6 +707,14 @@ classdef RenderApp < handle
                 'includeSoma', false);
             x.plot();
         end
+        
+        function onGetDendriteDiameterNoSoma(obj, ~, evt)
+            % ONGETDENDRITEDIAMETERNOSOMA  As above, but including soma
+            % See also: sbfsem.analysis.DendriteDiameter
+            neuron = obj.evt2neuron(evt);
+            x = sbfsem.analysis.DendriteDiameter(neuron,...
+                'includeSoma', true);
+        end
 
         function onGetContributions(obj, ~, evt)
             % ONGETCONTRIBUTIONS  Pie chart of annotator contributions
@@ -767,7 +775,7 @@ classdef RenderApp < handle
             if contains(evt.Source.Text, 'high res')
                 print(newAxes.Parent, [fPath, fName], exten, '-r600');
             else
-                print(newAxes.Parent, [fPath, fName], exten);
+                print(newAxes.Parent, [fPath, fName], exten, '-r300');
             end
 
             fprintf('Saved as: %s\n', [fPath, fName]);
@@ -939,6 +947,9 @@ classdef RenderApp < handle
             uimenu(a, 'Label', 'Get Dendrite Diameter',...
                 'Tag', obj.id2tag(ID),...
                 'Callback', @obj.onGetDendriteDiameter);
+            uimenu(a, 'Label', 'Get Dendrite Diameter (no soma)',...
+                'Tag', obj.id2tag(ID),...
+                'Callback', @obj.onGetDendriteDiameterNoSoma);
             uimenu(a, 'Label', 'Get Dendritic Field Area',...
                 'Tag', obj.id2tag(ID),...
                 'Callback', @obj.onGetDendriticFieldHull);

@@ -40,6 +40,7 @@ function [iplPercent, stats] = iplDepth(Neuron, varargin)
     %   8Nov2018 - SSP - Removed bar plot option
     %   18Nov2018 - SSP - Specify bins option
     %   7Mar2019 - SSP - Added bin locations and counts to stats output
+    %   29Jul2019 - SSP - Added standard deviation and variance
 	% ---------------------------------------------------------------------
 
 	assert(isa(Neuron, 'sbfsem.core.StructureAPI'),...
@@ -103,6 +104,9 @@ function [iplPercent, stats] = iplDepth(Neuron, varargin)
 	stats = struct();
 	stats.median = median(iplPercent);
 	stats.sem = sem(iplPercent);
+    stats.stdev = std(iplPercent);
+    stats.var = var(iplPercent);
+    fprintf('SD = %.3g, var = %.3g\n', stats.stdev, stats.var);
 	stats.avg = mean(iplPercent);
 	stats.n = numel(iplPercent);
 	fprintf('Median IPL Depth = %.3g\n', stats.median);
@@ -122,6 +126,7 @@ function [iplPercent, stats] = iplDepth(Neuron, varargin)
     binMode = b(ind)+b(2)-b(1);
     stats.mode = binMode;
     fprintf('Mode = %.3g (for %u bins)\n', binMode, numBins);
+    
     
     if ~ip.Results.Plot
         return;
@@ -155,7 +160,7 @@ function [iplPercent, stats] = iplDepth(Neuron, varargin)
             'Tag', sprintf('Mean %.3f', stats.avg),...
             'Display', sprintf('Mean %.3f', stats.avg));
 
-        plot(stats.avg, 0.1*max(a), 'Marker', '^',...
+        plot(stats.mode, 0.1*max(a), 'Marker', '^',...
             'LineWidth', 1,...
             'Color', hex2rgb('00cc4d'),...
             'Tag', sprintf('Mode %.3f', stats.mode),...

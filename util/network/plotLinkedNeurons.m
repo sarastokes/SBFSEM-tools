@@ -1,4 +1,4 @@
-function h = plotLinkedNeurons(linkedIDs, synapseName)
+function h = plotLinkedNeurons(linkedIDs, synapseName, printN)
     % PLOTLINKEDNEURONS
     %
     % Description:
@@ -26,6 +26,10 @@ function h = plotLinkedNeurons(linkedIDs, synapseName)
     %   8Dec2018 - SSP
     % ---------------------------------------------------------------------
 
+    if nargin < 3
+        printN = true;
+    end
+    
     if nargin == 2
         assert(isa(linkedIDs, 'sbfsem.core.NeuronAPI'), 'Input a Neuron object');
         [linkedIDs, ~] = getLinkedNeurons(linkedIDs, synapseName);
@@ -51,4 +55,10 @@ function h = plotLinkedNeurons(linkedIDs, synapseName)
         colormap(flipud(haxby(256)));
     end
     
+    if printN
+        fprintf('Total synapses = %u\n', sum(n));
+        for i = 1:numel(groupNames)
+            fprintf('\t%u - %u\n', groupNames(i), n(i));
+        end
+    end
     

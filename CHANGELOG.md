@@ -1,5 +1,10 @@
 # Changelog
 
+### 29Jul2019
+- All closed curves on a single section are now rendered together (`util\renders\renderClosedCurve.m`).
+- Added extra stats to `util\render\iplDepth.m` output
+- Added no soma dendrite diameter analysis to `views\RenderApp.m`
+
 ### 28Jul2019
 - Improvements to function help and several old tutorials
 
