@@ -8,6 +8,7 @@ function fh = figPos(fh, x, y)
     % SSP 20170302
     % 20170321 - fixed screen position issue
     % 14Oct2017 - removed pixel option, wasn't using it, added misc checks
+    % ---------------------------------------------------------------------
 
     if nargin < 3
         y = [];

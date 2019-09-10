@@ -50,7 +50,9 @@ function [linkedIDs, synapseIDs, synapseXYZ] = getLinkedNeurons(neuron, synapseT
     % Find synapses
     synapseIDs = neuron.synapseIDs(synapseType);
     if isempty(synapseIDs)
-        error('No synapses of type %s were found\n', char(synapseType));
+        warning('No synapses of type %s were found\n', char(synapseType));
+        linkedIDs = []; synapseXYZ = [];
+        return;
     end
 
     if strcmp(char(synapseType), 'Unknown')
@@ -79,15 +81,17 @@ function [linkedIDs, synapseIDs, synapseXYZ] = getLinkedNeurons(neuron, synapseT
     
     % Use table to find only the unique rows
     T = unique(table(linkedIDs, finalSynapseIDs));
-    T = sortrows(T, 'linkedIDs');
+    T.Properties.VariableNames = {'NeuronID', 'SynapseID'};
+    T = sortrows(T, 'NeuronID');
+    
     % Get the synapse locations
     synapseXYZ = [];
-    for i = 1:numel(T.finalSynapseIDs)
-        synapseXYZ = cat(1, synapseXYZ, neuron.getSynapseXYZ(T.finalSynapseIDs(i)));
+    for i = 1:numel(T.SynapseID)
+        synapseXYZ = cat(1, synapseXYZ, neuron.getSynapseXYZ(T.SynapseID(i)));
     end
     assignin('base', 'T', T);
     if nargout == 1
-        T.synapseXYZ = synapseXYZ;
+        T.SynapseXYZ = synapseXYZ;
         linkedIDs = T;
     elseif nargout > 1
         linkedIDs = T.linkedIDs; synapseIDs = finalSynapseIDs;
@@ -103,16 +107,27 @@ function [linkedIDs, finalSynapseIDs] = getDirectedLinkedIDs(url, synapseType, s
             for j = 1:numel(importedData.value)
                 data = importedData.value{j};
                 if synapseType.isPre()
-                    linkedIDs = cat(1, linkedIDs, data.Target.ParentID);
+                    newLinkedID = data.Target.ParentID;
+                    if isempty(newLinkedID)
+                        newLinkedID = NaN;
+                    end
+                    linkedIDs = cat(1, linkedIDs, newLinkedID);
                     finalSynapseIDs = cat(1, finalSynapseIDs, synapseIDs(i));
                 else
-                    linkedIDs = cat(1, linkedIDs, data.Source.ParentID);
+                    newLinkedID = data.Source.ParentID;
+                    if isempty(newLinkedID)
+                        newLinkedID = NaN;
+                    end
+                    linkedIDs = cat(1, linkedIDs, newLinkedID);
                     finalSynapseIDs = cat(1, finalSynapseIDs, synapseIDs(i));
                 end
             end
         else
             linkedIDs = cat(1, linkedIDs, NaN);
             finalSynapseIDs = cat(1, finalSynapseIDs, synapseIDs(i));
+        end
+        if numel(linkedIDs) ~= numel(finalSynapseIDs)
+            error('Mismatch after %u', synapseIDs(i));
         end
     end
 end
@@ -123,7 +138,7 @@ function [linkedIDs, finalSynapseIDs] = getUndirectedLinkedIDs(url, synapseIDs)
     % database, only there's no reliable way to know which direction the
     % synapse was formed in, so... query both.
     
-    linkedIDs = []; finalSynapseIDs = synapseIDs;  % for now
+    linkedIDs = []; finalSynapseIDs = [];  % for now
     urlOne = [url, 'Structures(%u)/SourceOfLinks/'];
     urlTwo = [url, 'Structures(%u)/TargetOfLinks/'];
     
@@ -141,6 +156,11 @@ function [linkedIDs, finalSynapseIDs] = getUndirectedLinkedIDs(url, synapseIDs)
             linkedIDs = cat(1, linkedIDs, iLinkedID);
         catch
             linkedIDs = cat(1, linkedIDs, NaN);
+        end
+        finalSynapseIDs = cat(1, finalSynapseIDs, synapseIDs(i));
+        
+        if numel(linkedIDs) ~= numel(finalSynapseIDs)
+            error('Mismatch after %u', synapseIDs(i));
         end
     end
 end

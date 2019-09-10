@@ -52,9 +52,10 @@ end
 function usernames = getUsernames(ID, source)
 	baseURL = getServiceRoot(source);
 	baseURL = [baseURL, 'Structures(', num2str(ID),... 
-		')/Locations?$select=Username'];
+		')/Locations?$select=Username,ID'];
 
 	data = readOData(baseURL);
 	data = vertcat(data.value{:});
 	usernames = vertcat(data.Username);
+    usernames = cellstr(usernames);
 end
