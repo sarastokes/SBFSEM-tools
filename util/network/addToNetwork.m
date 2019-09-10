@@ -64,6 +64,10 @@ function [G, T] = addToNetwork(G, neuron, synapseName, varargin)
 	end
     
     [linkedIDs, synapseIDs, ~] = getLinkedNeurons(neuron, synapseName);
+    if isempty(linkedIDs) || isempty(synapseIDs)
+        return;
+    end
+    
     nodeIDs = unique(linkedIDs(~isnan(linkedIDs)));
     for i = 1:numel(nodeIDs)
         if ~findnode(G, num2str(nodeIDs(i)))

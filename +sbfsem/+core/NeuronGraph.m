@@ -2,7 +2,8 @@ classdef NeuronGraph < handle
     % NEURONGRAPH
     %
     % Description:
-    %   NeuronGraph wraps Matlab's builtin graph data structure
+    %   NeuronGraph wraps Matlab's builtin graph data structure and
+    %   includes additional methods for sbfsem-tools
     %
     % Constructor:
     %   obj = sbfsem.core.NeuronGraph(NEURON, ISDIRECTED)
@@ -19,8 +20,8 @@ classdef NeuronGraph < handle
     %   isDirected      Directed or undirected graph
     %
     % Dependent properties:
-    %   nodes           Returns graph nodes
-    %   edges           Returns graph edges
+    %   Nodes           Returns graph nodes
+    %   Edges           Returns graph edges
     %
     % Methods:
     %   obj.setDirected(isDirected)     Switch between graph and digraph
@@ -28,6 +29,12 @@ classdef NeuronGraph < handle
     %   nodeID = obj.id2node(ID)        Location ID to node ID
     % 	xyz = obj.node2xyz(nodeID)		NodeID to xyz coordinates (um)
     %	xyz = obj.id2xyz(ID)			Location ID to xyz coordinates (um)
+    %
+    % Methods adding options to Matlab's methods:
+    %   p = obj.plot()                  graph/plot, w/ option to set XYZ
+    %   p = obj.degreePlot()            Plot and color nodes by degree
+    %
+    % Methods from Matlab's graph/digraph:
     %	M = obj.adjacency() 			Adjacency matrix
     %	M = obj.incidence()				Incidence matrix
     %	M = obj.laplacian()				Laplacian  matrix
@@ -36,6 +43,7 @@ classdef NeuronGraph < handle
     %
     % History:
     %   16Jan2018 - SSP
+    %   20Aug2019 - SSP - cleaned for implementation
     % ---------------------------------------------------------------------
     
 	properties (SetAccess = private)
@@ -45,9 +53,9 @@ classdef NeuronGraph < handle
         isDirected
 	end
 
-	properties (Dependent = true, Hidden = true)
-		nodes
-		edges
+	properties (Dependent = true)
+		Nodes
+		Edges
 	end
 
 	methods
@@ -61,7 +69,7 @@ classdef NeuronGraph < handle
 				obj.isDirected = isDirected;
 			end
             isDirected = true;
-            [obj.G, obj.nodeIDs] = graph(neuron, 'directed', isDirected);
+            [obj.G, obj.nodeIDs] = neuron.graph('directed', isDirected);
 		end
 
 		function setIsDirected(obj, isDirected)
@@ -69,16 +77,17 @@ classdef NeuronGraph < handle
             
 			assert(islogical(isDirected));
 			obj.isDirected = isDirected;
+
             % Update the graph
-			[obj.G, obj.nodeIDs] = graph(obj.neuron);
+			[obj.G, obj.nodeIDs] = obj.neuron.graph();
 		end
 
-		function nodes = get.nodes(obj)
-			nodes = obj.G.nodes;
+		function nodes = get.Nodes(obj)
+			nodes = obj.G.Nodes;
 		end
 
-		function edges = get.edges(obj)
-			edges = obj.G.edges;
+		function edges = get.Edges(obj)
+			edges = obj.G.Edges;
         end
 
         % Access functions
@@ -102,8 +111,62 @@ classdef NeuronGraph < handle
         	id = obj.node2id(node);
         	xyz = obj.id2xyz(id);
         end
+    end
 
-        % Useful graph functions
+    % Methods from Matlab's graph functions w/ sbfsem-tools add-ons 
+    methods
+        function p = plot(obj, varargin)
+            % PLOT  Plot the graph
+            %
+            % Optional key/value inputs:
+            %   XYZ         Set nodes to annotation XYZ locations
+            %               (default = false)
+            % -------------------------------------------------------------
+
+            ip = inputParser();
+            ip.CaseSensitive = false;
+            ip.KeepUnmatched = true;
+            addParameter(ip, 'XYZ', false, @islogical);
+            parse(ip, varargin{:});
+
+            if ip.Results.XYZ
+                % p = neuronGraphPlot(obj.neuron, ip.Unmatched);
+                try
+                    p = plot(obj.G, 'layout', 'force3', ip.Unmatched);
+                    xyz = [];
+                    for i = 1:numel(obj.nodeIDs)
+                        iXYZ = obj.node2xyz(obj.nodeIDs(i));
+                        if isempty(iXYZ)
+                            iXYZ = [0, 0, 0];
+                        end
+                        xyz = cat(1, xyz, iXYZ);
+                    end
+                    p.XData = xyz(:, 1); p.YData = xyz(:, 2); p.ZData = xyz(:, 3);
+                    hold on; grid on; axis equal tight;
+                catch
+                    p = plot(obj.G, 'layout', 'layered', ip.Unmatched);
+                end
+            else
+                p = plot(obj.G, ip.Unmatched);
+            end
+        end
+
+        function p = degreePlot(obj, varargin)
+            % DEGREEPLOT  Plot graph with nodes colored by degree
+            %
+            % Inputs are the same as NeuronGraph/plot
+            % -------------------------------------------------------------
+
+            p = obj.plot(varargin{:});
+
+            highlight(p, find(G.degree == 1), 'NodeColor', 'g', 'MarkerSize', 1);
+            highlight(p, find(G.degree == 2), 'MarkerSize', 0.05);
+            highlight(p, find(G.degree == 3), 'MarkerSize', 1, 'NodeColor', 'r');
+        end
+    end
+
+    % Useful Matlab graph functions
+    methods
         function mat = adjacency(obj)
         	% ADJACENCY  Get adjacency matrix
         	mat = adjacency(obj.G);
@@ -122,10 +185,6 @@ classdef NeuronGraph < handle
         function mat = incidence(obj)
         	% INCIDENCE  Get incidence matrix
         	mat = incidence(obj.G);
-        end
-
-        function h = plot(obj, varargin)
-        	h = plot(obj.G, varargin{:});
         end
         
         function T = bfsearch(obj, varargin)

@@ -32,7 +32,7 @@ function p = plotPathLength(neuron, useDistance)
     G.Nodes.NodeColors = D(:,1);
     
     disp('Plotting neuron graph...');
-    p = neuronGraphPlot(neuron, G, nodeIDs);
+    p = neuronGraphPlot(neuron);
     p.NodeCData = G.Nodes.NodeColors;
     p.LineStyle = 'none';
     

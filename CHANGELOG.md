@@ -1,5 +1,12 @@
 # Changelog
 
+### 10Sep2019
+- Fixed issue where `util\network\getLinkedNeurons.m` throws an error for conventional synapses involving more than one pre- or post-synaptic neuron. These rare cases probably involve an annotation error, but the rest of the analysis should be able to proceed without problems.
+
+### 21Aug2019
+- Changed inputs to `util\network\neuronGraphPlot.m` and updated dependencies accordingly
+- Preparing to implement `sbfsem.analysis.NeuronGraph.m` by added all useful standalone network functions.
+
 ### 29Jul2019
 - All closed curves on a single section are now rendered together (`util\renders\renderClosedCurve.m`).
 - Added extra stats to `util\render\iplDepth.m` output
