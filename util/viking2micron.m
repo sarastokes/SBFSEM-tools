@@ -17,7 +17,7 @@ function xyzMicrons = viking2micron(xyz, source)
         volumeScale = volumeScale./1e3; % um
     catch
         volumeScale = loadCachedVolumeScale(source);
-        warning('OData query for volume scale failed. Relying on cache.');
+        % warning('OData query for volume scale failed. Relying on cache.');
     end
 
     if size(xyz, 2) == 1

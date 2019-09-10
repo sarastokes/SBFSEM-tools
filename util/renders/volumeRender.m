@@ -23,6 +23,7 @@ function h = volumeRender(vol, varargin)
 
 	ip = inputParser();
     ip.CaseSensitive = false;
+    addParameter(ip, 'Normals', true, @islogical);
 	addParameter(ip, 'FaceColor', [0.5 0.5 0.5],...
 		@(x) ischar(x) || isvector(x));
 	addParameter(ip, 'FaceAlpha', 1, @isnumeric);
@@ -67,8 +68,10 @@ function h = volumeRender(vol, varargin)
         'SpecularExponent', 50,...
         'SpecularColorReflectance', 0,...
         'Tag', ip.Results.Tag);
-	disp('Creating normals...')
-	isonormals(vol, h);
+    if ip.Results.Normals
+    	disp('Creating normals...')
+        isonormals(vol, h);
+    end
 
     % Set up the lighting
     lightangle(45, 30);

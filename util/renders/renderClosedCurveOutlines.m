@@ -1,12 +1,30 @@
-function vol = renderClosedCurveOutlines(neuron, splinePts)
-    % 
+function vol = renderClosedCurveOutlines(neuron, varargin)
+    % RENDERCLOSEDCURVEOUTLINES
+    %
+    % Description:
+    %   Renders neuron annotated with closed curves.
+    %
+    % Syntax:
+    %   vol = renderClosedCurveOutlines(neuron, varargin);
+    %
+    % Note:
+    %   Replaces RENDERCLOSEDCURVE
+    %
+    % See also:
+    %   VOLUMERENDER
+    %
     % History:
     %   9Apr2018 - first working version
+    %   5Aug2019 - correct scaling but translation is slightly off
+    % ---------------------------------------------------------------------
 
-    if nargin < 2
-        splinePts = 20;
-    end
-
+    ip = inputParser();
+    ip.CaseSensitive = false;
+    ip.KeepUnmatched = true;
+    addParameter(ip, 'Show', false, @islogical);
+    addParameter(ip, 'SplinePts', 20, @isnumeric);
+    parse(ip, varargin{:});
+    
     assert(isa(neuron, 'sbfsem.core.StructureAPI'),...
         'Input StructureAPI subclass object');
     
@@ -65,7 +83,8 @@ function vol = renderClosedCurveOutlines(neuron, splinePts)
     
     % The unique Z values are used rather than number of imnodes so that
     % multiple annotations per z-section work.
-    vol = ndgrid(1:xrange, 1:yrange, 1:numel(unique(T.Z)));
+    vol = ndgrid(1:yrange, 1:xrange, 1:numel(unique(T.Z)));
+    vol(:, :, :) = false;
     
     % This is excessive here, would be minimized later
     for i = 1:numel(imnodes)
@@ -76,7 +95,8 @@ function vol = renderClosedCurveOutlines(neuron, splinePts)
         outlinePts = bsxfun(@minus, imnodes(i).outline, [xmin, ymin]);
         outlinePts = round(outlinePts);
         % Smooth with catmull rom spline
-        [x, y] = getSpline(outlinePts(:,1), outlinePts(:,2), splinePts);
+        [x, y] = getSpline(outlinePts(:,1), outlinePts(:,2),... 
+            ip.Results.SplinePts);
         % Only integers above 0
         x = floor(x); y = floor(y);
         x(x <= 0) = 1; y(y <= 0) = 1;
@@ -102,13 +122,24 @@ function vol = renderClosedCurveOutlines(neuron, splinePts)
                 % Whole numbers for the bounding box
                 curvePoints = round(curvePoints * 100);
                 curvePoints = bsxfun(@minus, curvePoints, [xmin, ymin]);
-                [x, y] = getSpline(curvePoints(:,1), curvePoints(:,2), splinePts);
+                [x, y] = getSpline(curvePoints(:,1), curvePoints(:,2),... 
+                    ip.Results.SplinePts);
                 x = round(x); y = round(y);
                 xyPts = cat(1, xyPts, [x', y']);
             end            
             BW = mpoly2mask(xyPts, [size(vol,1), size(vol,2)], A);
         end
-        vol(:, :, zInd) = BW; %#ok<FNDSB>
+        vol(:, :, zInd) = vol(:, :, zInd) + BW; 
+    end
+    
+    if ip.Results.Show
+        h = volumeRender(vol, 'Normals', false, ip.Unmatched);
+        fprintf('Translating and scaling volume render\n');
+        % Translate and convert from pixels to microns
+        volumeScale = neuron.volumeScale/1000;  % nm -> microns
+        h.Vertices(:, 1) = (h.Vertices(:, 1)+xmin) * volumeScale(1);
+        h.Vertices(:, 2) = (h.Vertices(:, 2)+ymin) * volumeScale(2);
+        h.Vertices(:, 3) = (h.Vertices(:, 3)+min(Z)) * volumeScale(3);
     end
 end
 

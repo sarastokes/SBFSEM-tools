@@ -7,6 +7,9 @@
 - Changed inputs to `util\network\neuronGraphPlot.m` and updated dependencies accordingly
 - Preparing to implement `sbfsem.analysis.NeuronGraph.m` by added all useful standalone network functions.
 
+### 10Aug2019
+- Added `util\renders\showLinkedSynapses.m`
+
 ### 29Jul2019
 - All closed curves on a single section are now rendered together (`util\renders\renderClosedCurve.m`).
 - Added extra stats to `util\render\iplDepth.m` output

@@ -2,7 +2,7 @@ function [binaryMatrix, hiso, boundingBox] = renderClosedCurve(neuron, varargin)
     % RENDERCLOSEDCURVE  3D structure from arbitrary geometry
     %
     % Syntax:
-    %   lmcone = renderClosedCurve(neuron, varargin);
+    %   [binaryMatrix, h, boundingBox] = renderClosedCurve(neuron, varargin);
     %
     % Description:
     %   This function renders all closed curve annotations associated with
@@ -25,8 +25,12 @@ function [binaryMatrix, hiso, boundingBox] = renderClosedCurve(neuron, varargin)
     %   binaryMatrix    the binary matrix used to generate the render
     %   h               handle to 3D Patch object
     %
+    % See also:
+    %   RENDERCLOSEDCURVEOUTLINES
+    %
     % History:
     %   9Nov2017 - SSP
+    %   29Jul2019 - SSP - Fixed rendering of >1 annotations on one section
     % ---------------------------------------------------------------------
 
     assert(isa(neuron, 'sbfsem.core.StructureAPI'), 'Input Neuron object');
@@ -124,8 +128,14 @@ function [binaryMatrix, hiso, boundingBox] = renderClosedCurve(neuron, varargin)
     end
     
     % Combine multiple section annotations
-    % [zGroups, zNames] = findgroups(Z);
+    [zGroups, ~] = findgroups(Z);
     
-    hiso = volumeRender(binaryMatrix,...
+    binaryMatrix2 = zeros(size(binaryMatrix, 1), size(binaryMatrix, 2), numel(Z));
+    for i = numel(Z):-1:1
+        binaryMatrix2(:, :, numel(Z)+1-i) = sum(binaryMatrix(:, :, zGroups == i), 3);
+    end
+    
+    hiso = volumeRender(binaryMatrix2,...
         'FaceColor', faceColor,...
         'FaceAlpha', faceAlpha);
+    daspect(hiso.Parent, neuron.getDAspect());
