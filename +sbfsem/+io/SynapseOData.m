@@ -127,7 +127,8 @@ classdef SynapseOData < sbfsem.io.OData
                     [obj.nodeData, obj.edgeData, nullIDs] = obj.expandChildData(data.ID);
                     % Mark empty synapses
                     if ~isempty(nullIDs)
-                        data.Label(data.ID == nullIDs,:) = {'Null'};
+                        % data.Label(data.ID == nullIDs,:) = {'Null'};
+                        data(data.ID == nullIDs, :) = [];  % Remove entirely
                     end
                 else
                     obj.nodeData = [];
@@ -162,7 +163,11 @@ classdef SynapseOData < sbfsem.io.OData
             nullIDs = []; % Tracks IDs without location data
             childLocs = [];
             childLinks = [];
-            for i = 1:numel(IDs)
+
+            numChildren = numel(IDs);
+
+            sbfsem.ui.ProgressBar(numChildren, 'Synapse import');
+            for i = 1:numChildren
                 locs = obj.processChildLocation(IDs(i));
                 if isnan(locs)
                     nullIDs = [nullIDs, IDs(i)]; %#ok
@@ -173,7 +178,9 @@ classdef SynapseOData < sbfsem.io.OData
                         childLinks = cat(1, childLinks, links);
                     end
                 end
+                sbfsem.ui.ProgressBar(numChildren, i/numChildren);
             end
+            sbfsem.ui.ProgressBar(numChildren, 1);
         end
     end
     

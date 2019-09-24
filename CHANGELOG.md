@@ -1,5 +1,9 @@
 # Changelog
 
+### 21Sep2019
+- Added `lib\progressbar.m` and a wrapper (`sbfsem.ui.ProgressBar.m`) that limits to iterations over 50. Implemented in `sbfsem.io.SynapseOData.m`.
+- Debug multiple variable output of `util\network\getLinkedNeurons.m` to be compatible with 10Sep2019 changes.
+
 ### 10Sep2019
 - Fixed issue where `util\network\getLinkedNeurons.m` throws an error for conventional synapses involving more than one pre- or post-synaptic neuron. These rare cases probably involve an annotation error, but the rest of the analysis should be able to proceed without problems.
 
