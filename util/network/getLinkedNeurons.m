@@ -94,7 +94,7 @@ function [linkedIDs, synapseIDs, synapseXYZ] = getLinkedNeurons(neuron, synapseT
         T.SynapseXYZ = synapseXYZ;
         linkedIDs = T;
     elseif nargout > 1
-        linkedIDs = T.linkedIDs; synapseIDs = finalSynapseIDs;
+        linkedIDs = T.NeuronID; synapseIDs = finalSynapseIDs;
     end
 end
 
