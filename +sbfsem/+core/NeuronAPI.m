@@ -146,7 +146,7 @@ classdef (Abstract) NeuronAPI < sbfsem.core.StructureAPI
             end
             n = nnz(obj.synapses.LocalName == synapseName);
         end
-
+        
         function xyz = getSynapseXYZ(obj, syn, useMicrons)
             % GETSYNAPSEXYZ  Get xyz of synapse type
             %
@@ -241,6 +241,25 @@ classdef (Abstract) NeuronAPI < sbfsem.core.StructureAPI
             synapseNodes = sortrows(synapseNodes, 'ParentID');
         end
 
+        function synapseNodes = getSynapseNodesByID(obj, synapseID)
+            synapseNodes = obj.nodes(obj.nodes.ParentID == synapseID, :);           
+        end
+        
+        function synapseNodes = getSynapseNodesByType(obj, synapseType, onlyUnique)
+            if nargin < 3
+                onlyUnique = true;
+            end
+            obj.checkSynapses();
+            
+            IDs = obj.synapseIDs(synapseType);
+            if onlyUnique
+                row = ismember(obj.nodes.ParentID, IDs) & obj.nodes.Unique;
+            else
+                row = ismember(obj.nodes.ParentID, IDs);
+            end
+            synapseNodes = obj.nodes(row, :);
+        end
+        
         function printSyn(obj)
             % PRINTSYN  Print synapse summary to the command line
 
