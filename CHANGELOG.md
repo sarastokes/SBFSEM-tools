@@ -1,5 +1,8 @@
 # Changelog
 
+### 20190929
+- Removed `assignin` from `util\network\getLinkedNeurons.m` leftover from debugging
+
 ### 26Sep2019
 - Added new methods to `sbfsem.core.NeuronAPI` for returning specific subsets of synapses.
 

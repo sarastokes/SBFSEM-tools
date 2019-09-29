@@ -89,7 +89,6 @@ function [linkedIDs, synapseIDs, synapseXYZ] = getLinkedNeurons(neuron, synapseT
     for i = 1:numel(T.SynapseID)
         synapseXYZ = cat(1, synapseXYZ, neuron.getSynapseXYZ(T.SynapseID(i)));
     end
-    assignin('base', 'T', T);
     if nargout == 1
         T.SynapseXYZ = synapseXYZ;
         linkedIDs = T;
