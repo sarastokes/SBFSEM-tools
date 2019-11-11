@@ -1,5 +1,8 @@
 # Changelog
 
+### 20191111
+- Reverted SWC export function `sbfsem.io.SWC.m`
+
 ### 20191106
 - Added new colormap, `lib\cubehelix.m`
 

@@ -115,6 +115,24 @@ classdef DendriteDiameter < sbfsem.analysis.NeuronAnalysis
             % Get the dendrite sizes
             dendrite = nodes.Rum;
             
+                        
+            % Statistics on raw data before binning
+            if ip.Results.includeSoma
+                ind = 1:numel(dendrite);
+            else
+                ind = dendrite < 0.8*max(dendrite);
+                fprintf('80p of soma includes %u of %u data points\n',...
+                    nnz(ind), numel(dendrite));
+            end
+            h.totals.avg = mean(dendrite(ind));
+            h.totals.std = std(dendrite(ind));
+            h.totals.sem = sem(dendrite(ind));
+            h.totals.median = median(dendrite(ind));
+            h.totals.n = nnz(ind);
+            h.totals.omitted = numel(dendrite) - nnz(ind);
+         
+            h.data = [dendrite, somaDist];
+            
             % Prevent splitapply error for empty bins
             emptyBins = find(n == 0);
             % Make sure each bin is represented by setting empty bins to 0
@@ -172,21 +190,17 @@ classdef DendriteDiameter < sbfsem.analysis.NeuronAnalysis
             fprintf('--- c%u ---\n', obj.target.ID);
             if includeSoma
                 fprintf('** Stats include soma bin **\n')
-                ind = 1;
             else
                 fprintf('** Stats do not include soma bin **\n')
-                ind = 2;
             end
 
             % sprintf('search window = %.2f to %.2f\n', obj.data.searchWindow);
-            fprintf('analysis includes %u annotations\n',...
-                sum(obj.data.counts(ind:end)));
-            fprintf('mean radius = %.2f +- %.2f (SEM)\n',...
-                mean(obj.data.avg(ind:end)), mean(obj.data.sem(ind:end)));
-            fprintf('mean radius = %.2f +- %.2f (SD)\n',...
-                mean(obj.data.avg(ind:end)), mean(obj.data.std(ind:end)));
-            fprintf('median radius = %.4g\n', mean(obj.data.median(ind:end)));
-            fprintf('median diameter = %.4g\n', mean(2*obj.data.median(ind:end)));
+            fprintf('\t N = %u annotations\n',...
+                size(obj.data.data, 1) - obj.data.totals.omitted);
+            fprintf('\t mean radius = %.3f +- %.3f (SEM), +- %.3f (SD)\n',...
+                obj.data.totals.avg, obj.data.totals.sem, obj.data.totals.std);
+            fprintf('\t median radius = %.4g  (diameter = %.4g)\n',... 
+                obj.data.totals.median, 2*obj.data.totals.median);
         end
 
         function T = table(obj)
@@ -229,10 +243,12 @@ classdef DendriteDiameter < sbfsem.analysis.NeuronAnalysis
 
             if ip.Results.SD
                 errorMetric = obj.data.std(ind:end);
-                legendStr = 'mean (SD)';
+                legendStr = sprintf('%.3f +- %.3f (SD)\n median = %.3f',... 
+                    obj.data.totals.avg, obj.data.totals.std, obj.data.totals.median);
             else
                 errorMetric = obj.data.sem(ind:end);
-                legendStr = 'mean (SEM)';
+                legendStr = sprintf('%.3f +- %.3f (SEM)\n median = %.3f',...
+                    obj.data.totals.avg, obj.data.totals.sem, obj.data.totals.median);
             end
             
             % Plot the median, if necessary

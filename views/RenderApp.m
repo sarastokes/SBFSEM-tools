@@ -705,7 +705,6 @@ classdef RenderApp < handle
             neuron = obj.evt2neuron(evt);
             x = sbfsem.analysis.DendriteDiameter(neuron,...
                 'includeSoma', false);
-            x.plot();
         end
         
         function onGetDendriteDiameterNoSoma(obj, ~, evt)
@@ -803,6 +802,13 @@ classdef RenderApp < handle
                 return;
             end
             sbfsem.io.STL(neuron, [fPath, fName]);
+        end
+        
+        function onExportSWC(obj, ~, evt)
+            % ONEXPORTSWC  Export neuron as .swc file
+            neuron = obj.evt2neuron(evt);
+            x = sbfsem.io.SWC(neuron);
+            x.save();
         end
 
         function onExportDAE(obj, ~, evt)
@@ -976,6 +982,9 @@ classdef RenderApp < handle
             uimenu(e, 'Label', 'Save as .stl file',...
                 'Tag', obj.id2tag(ID),...
                 'Callback', @obj.onExportSTL);
+            uimenu(e, 'Label', 'Save as .swc file',...
+                'Tag', obj.id2tag(ID),...
+                'Callback', @obj.onExportSWC);
             % uimenu(e, 'Label', 'Save as .dae file',...
             %     'Tag', obj.id2tag(ID),...
             %     'Callback', @obj.onExportDAE);
