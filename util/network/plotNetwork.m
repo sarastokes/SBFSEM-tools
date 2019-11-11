@@ -12,7 +12,9 @@ function p = plotNetwork(G, varargin)
     % See also:
     %   GRAPH/PLOT, ADDTONETWORK
     %
-	% 1Oct2018 - SSP
+    % History:
+	%   1Oct2018 - SSP
+    % ---------------------------------------------------------------------
 
 	ip = inputParser();
 	ip.CaseSensitive = false;

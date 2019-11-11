@@ -71,6 +71,9 @@ function [linkedIDs, synapseIDs, synapseXYZ] = getLinkedNeurons(neuron, synapseT
         else
             [linkedIDs, finalSynapseIDs] = getDirectedLinkedIDs(...
                 [url, postTemplate], synapseType, synapseIDs);
+            if numel(linkedIDs) ~= numel(finalSynapseIDs)
+                error('Number of linked IDs does not match synapse IDs!');
+            end
         end
     end
 
@@ -83,7 +86,6 @@ function [linkedIDs, synapseIDs, synapseXYZ] = getLinkedNeurons(neuron, synapseT
     T = unique(table(linkedIDs, finalSynapseIDs));
     T.Properties.VariableNames = {'NeuronID', 'SynapseID'};
     T = sortrows(T, 'NeuronID');
-    
     % Get the synapse locations
     synapseXYZ = [];
     for i = 1:numel(T.SynapseID)

@@ -1,5 +1,18 @@
 # Changelog
 
+### 20191106
+- Added new colormap, `lib\cubehelix.m`
+
+### 20191104
+- Added `util\network\countLinkedNeurons.m`
+
+### 20191001
+- Added more error catching to `util\network\getLinkedNeurons.m`
+- Improved plotting for `util\analysis\iplDepth.m`
+
+### 20190930
+- Added boxes with bold labels to `+sbfsem\+ui\LayoutManager.m`
+
 ### 20190929
 - Removed `assignin` from `util\network\getLinkedNeurons.m` leftover from debugging
 
