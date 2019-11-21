@@ -1,7 +1,20 @@
 # Changelog
 
+### 20191118
+- Added`util\analysis\colorByUser.m`.
+- Parent axes handle key/value input to `util\network\neuronGraphPlot.m`.
+
+### 20191115
+- Wrote wrapper for Matlab's `plot3` function (`sbfsem.util.plot3`)
+- Added `sbfsem.util.` for wrapper and potentially shadowed functions
+
+### 20191112
+- New visualization of strata in a single section (`util\plots\stratificationMap`);
+- Added stratification map to `views\IPLDepthApp.m`
+
 ### 20191111
-- Reverted SWC export function `sbfsem.io.SWC.m`
+- Added `getSynapseStratification.m` 
+- Reverted SWC export function `sbfsem.io.SWC.m` and updated links accordingly
 
 ### 20191106
 - Added new colormap, `lib\cubehelix.m`

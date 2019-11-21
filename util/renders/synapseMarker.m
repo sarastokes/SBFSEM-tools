@@ -1,8 +1,8 @@
-function synapseMarker(neuron, synapse, varargin)
+function h = synapseMarker(neuron, synapse, varargin)
 	% SYNAPSEMARKER
 	%
 	% Syntax:
-    %   synapseSphere(neuron, synapse, varargin);
+    %   h = synapseSphere(neuron, synapse, varargin);
     %
     % Inputs:
     %   neuron              Neuron object
@@ -14,11 +14,14 @@ function synapseMarker(neuron, synapse, varargin)
     %   EdgeColor           Marker edge color (default = red)
     %   Tag                 Char to identify renders in scene
     % Any other key/value input to the plot() command
+    % Output:
+    %   h                   Handle to created graphics object
     %
-    % For more information on the other possible key/value inputs: 
-    %	https://www.mathworks.com/help/matlab/ref/linespec.html
-    % Marker Specifiers shows a list of possible 'Marker' inputs
-    % Also helpful will be MarkerSize, LineWidth
+    % Notes:
+    %   For more information on the other possible key/value inputs: 
+    %   	https://www.mathworks.com/help/matlab/ref/linespec.html
+    %   Marker Specifiers shows a list of possible 'Marker' inputs
+    %   MarkerSize and LineWidth are particularly helpful
     %
     % Examples:
     %	See help for synapseSphere.m for general usage.
@@ -34,7 +37,8 @@ function synapseMarker(neuron, synapse, varargin)
 	%	SYNAPSESPHERE
 	%
 	% History:
-	%	20190416 - SSP 
+	%	16Apr2019 - SSP 
+    %   1Oct2019 - SSP - added handle to graphics object as output
     % ---------------------------------------------------------------------
 
 	 assert(isa(neuron, 'sbfsem.core.NeuronAPI'),...
@@ -42,7 +46,7 @@ function synapseMarker(neuron, synapse, varargin)
     
     if ~isnumeric(synapse)
         xyz = neuron.getSynapseXYZ(synapse);
-    elseif size(synapse, 2) == 3
+    elseif size(synapse, 1) == 3
         xyz = synapse;
     elseif isequal(size(synapse(:), 1), numel(synapse))
         T = neuron.getSynapseNodes();
@@ -53,7 +57,7 @@ function synapseMarker(neuron, synapse, varargin)
     end
 
     ip = inputParser();
-    ip.KeepUnmatched = true;  % Surf properties
+    ip.KeepUnmatched = true;  % plot3 properties
     ip.CaseSensitive = false;
     addParameter(ip, 'ax', [], @ishandle);
     addParameter(ip, 'Marker', 'o', @ischar);
@@ -74,14 +78,14 @@ function synapseMarker(neuron, synapse, varargin)
     
     if isempty(ip.Results.ax)
         ax = axes('Parent', figure());
-        hold on;
+        hold(ax, 'on');
         axis(ax, 'equal');
         grid(ax, 'on');
     else
         ax = ip.Results.ax;
     end
 
-    plot3(xyz(:, 1), xyz(:, 2), xyz(:, 3),...
+    h = plot3(xyz(:, 1), xyz(:, 2), xyz(:, 3),...
     	'Parent', ax,...
     	'LineStyle', 'none',...
     	'Marker', ip.Results.Marker,...
