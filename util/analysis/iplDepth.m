@@ -166,12 +166,25 @@ function [iplPercent, stats] = iplDepth(Neuron, varargin)
             'Tag', sprintf('Mode %.3f', stats.mode),...
             'Display', sprintf('Mode %.3f', stats.mode));
     end
-
-    xlim(ax, [-0.25, 1.25]);
+    
     grid(ax, 'on'); hold(ax, 'on');
-    set(ax, 'XTick', 0:0.25:1, 'TickDir', 'out',... 
-        'XTickLabel', {'INL', 'off', 'IPL', 'on', 'GCL'},...
-        'TitleFontWeight', 'normal');
+    set(ax, 'TickDir', 'out', 'TitleFontWeight', 'normal');
+    
+    if ip.Results.omitOutliers
+        xlim(ax, [-0.25, 1.25]);
+        set(ax, 'XTick', 0:0.25:1,... 
+        'XTickLabel', {'INL', 'off', 'IPL', 'on', 'GCL'});
+    else
+        xBound = [-0.25, 1.25];
+        if min(iplPercent) < xBound(1)
+            xBound(1) = min(iplPercent);
+        end
+        if max(iplPercent) > xBound(1)
+            xBound(2) = ceil(max(iplPercent)*10)/10;
+        end
+        xlim(ax, xBound);
+        set(ax, 'XTickMode', 'auto', 'XTickLabel', {});
+    end
     
     title(ax, sprintf('c%u Stratification', Neuron.ID));
 	ylabel(ax, 'Number of annotations');
