@@ -89,7 +89,7 @@ classdef ReciprocalSynapses < sbfsem.analysis.NeuronAnalysis
                     D = pdist2(preXYZ, postXYZ);
                     dataTable = cat(1, dataTable,...
                         [obj.reciprocalIDs(i), preIDs(j), postIDs(k), min(min(D))]);
-                end
+                end 
             end
             obj.data = array2table(dataTable);
             obj.data.Properties.VariableNames = {'NeuronID', 'PreID', 'PostID', 'Distance'};
@@ -160,7 +160,7 @@ classdef ReciprocalSynapses < sbfsem.analysis.NeuronAnalysis
                 obj.neuronType = 'bipolar';
             elseif obj.neuron.getSynapseN('BipConvPre') > 0
                 obj.neuronType = 'bipolar';
-            else
+            elseif obj.neuron.getSynapseN('ConvPre') > 0
                 obj.neuronType = 'amacrine';
             end
         end

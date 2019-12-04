@@ -187,9 +187,10 @@ classdef (Abstract) StructureAPI < handle
             % NEURON2GRAPH  Create a graph representation
             %
             % Optional key/value inputs:
-            %   directed        [f]     directed or undirected
-            %   synapses        [f]     include child structures
-            %   visualize       [f]     plot the graph?
+            %   directed      [false]   Directed graph?
+            %   weighted      [false]   Weight edges by distance b/w nodes?
+            %   synapses      [false]   Include child structures?
+            %   visualize     [false]   Plot the graph?
             %
             % Outputs:
             %   G               graph or digraph
@@ -198,26 +199,32 @@ classdef (Abstract) StructureAPI < handle
 
             ip = inputParser();
             ip.CaseSensitive = false;
-            addParameter(ip, 'directed', false, @islogical);
-            addParameter(ip, 'synapses', false, @islogical);
-            addParameter(ip, 'visualize', false, @islogical);
+            addParameter(ip, 'Directed', false, @islogical);
+            addParameter(ip, 'Weighted', false, @islogical);
+            addParameter(ip, 'Synapses', false, @islogical);
+            addParameter(ip, 'Visualize', false, @islogical);
             parse(ip, varargin{:});
 
-            if ip.Results.synapses
+            if ip.Results.Synapses
                 edge_rows = obj.edges;
             else
                 edge_rows = obj.edges.ID == obj.ID;
             end
 
-            if ip.Results.directed
+            if ip.Results.Directed
                 G = digraph(cellstr(num2str(obj.edges.A(edge_rows,:))),...
                     cellstr(deblank(num2str(obj.edges.B(edge_rows,:)))));
             else
                 G = graph(cellstr(num2str(obj.edges.A(edge_rows,:))),...
                     cellstr(num2str(obj.edges.B(edge_rows,:))));
+                if ip.Results.Weighted
+                    G = graph(cellstr(num2str(obj.edges.A(edge_rows,:))),...
+                        cellstr(num2str(obj.edges.B(edge_rows,:))),...
+                        getEdgeWeights(obj));
+                end
             end
 
-            if ip.Results.visualize
+            if ip.Results.Visualize
                 figure();
                 plot(G);
             end
@@ -233,6 +240,15 @@ classdef (Abstract) StructureAPI < handle
                     nodeIDs = str2double(G.Nodes{:,:});
                 end
                 fprintf('Omitted %u locations\n', numel(obj.omittedIDs));
+            end
+            
+            function edgeWeights = getEdgeWeights(neuron)
+                aXYZ = []; bXYZ = [];
+                for j = 1:numel(neuron.edges.A)
+                    aXYZ = cat(1, aXYZ, neuron.id2xyz(neuron.edges.A(j)));
+                    bXYZ = cat(1, bXYZ, neuron.id2xyz(neuron.edges.B(j)));
+                end
+                edgeWeights = fastEuclid3d(aXYZ, bXYZ);
             end
         end
 	end

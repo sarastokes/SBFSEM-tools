@@ -46,8 +46,8 @@ function [iplPercent, stats] = iplDepth(Neuron, varargin)
 	assert(isa(Neuron, 'sbfsem.core.StructureAPI'),...
 		'Input a StructureAPI object');
     
-    GCL = sbfsem.builtin.GCLBoundary(Neuron.source, true);
-    INL = sbfsem.builtin.INLBoundary(Neuron.source, true);
+    % GCL = sbfsem.builtin.GCLBoundary(Neuron.source, true);
+    % INL = sbfsem.builtin.INLBoundary(Neuron.source, true);
     
     ip = inputParser();
     ip.CaseSensitive = false;
@@ -81,17 +81,18 @@ function [iplPercent, stats] = iplDepth(Neuron, varargin)
         nodes(nodes.Rum > 0.8*somaRadius, :) = [];
     end
 
-	xyz = nodes.XYZum;
-
-	[X, Y] = meshgrid(GCL.newXPts, GCL.newYPts);
-	vGCL = interp2(X, Y, GCL.interpolatedSurface,...
-		xyz(:,1), xyz(:,2));
-
-	[X, Y] = meshgrid(INL.newXPts, INL.newYPts);
-	vINL = interp2(X, Y, INL.interpolatedSurface,...
-		xyz(:,1), xyz(:,2));
-
-	iplPercent = (xyz(:, 3) - vINL) ./ ((vGCL - vINL)+eps);
+%	xyz = nodes.XYZum;
+% 
+% 	[X, Y] = meshgrid(GCL.newXPts, GCL.newYPts);
+% 	vGCL = interp2(X, Y, GCL.interpolatedSurface,...
+% 		xyz(:,1), xyz(:,2));
+% 
+% 	[X, Y] = meshgrid(INL.newXPts, INL.newYPts);
+% 	vINL = interp2(X, Y, INL.interpolatedSurface,...
+% 		xyz(:,1), xyz(:,2));
+% 
+% 	iplPercent = (xyz(:, 3) - vINL) ./ ((vGCL - vINL)+eps);
+    iplPercent = micron2ipl(nodes.XYZum, Neuron.source);
 	iplPercent(isnan(iplPercent)) = [];
     
     if omitOutliers

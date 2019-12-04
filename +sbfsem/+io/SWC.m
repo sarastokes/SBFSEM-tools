@@ -81,6 +81,8 @@ classdef SWC < handle
             [obj.G, obj.idMap] = graph(obj.neuron);
             [obj.segments, ~, ~, obj.startNode] = dendriteSegmentation(...
                 obj.neuron, 'startNode', obj.startNode);
+            
+            obj.go();
         end
 
         function go(obj)

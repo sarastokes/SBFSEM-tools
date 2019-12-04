@@ -46,6 +46,7 @@ classdef OData < handle
     
     % Misc query functions
 	methods
+        
         function [ids, labels] = idsByLabel(obj, label, exactMatch)
             % IDSBYLABEL
             %
@@ -211,6 +212,27 @@ classdef OData < handle
             end
             data = webread(str, obj.webOpt);
             data = cat(1, data.value{:});
+        end
+        
+        function [usernames, locationIDs] = getUsernames(obj, ID)
+            % GETUSERNAMES
+            %
+            % Input:
+            %   ID              Neuron ID
+            %
+            % Output:
+            %   usernames       Annotation user last modified
+            %   locationIDs     Corresponding location ID for annotations
+            % -------------------------------------------------------------
+            queryURL = [getServiceRoot(obj.source),... 
+                'Structures(', num2str(ID), ')/Locations?$select=Username,ID'];
+
+            data = readOData(queryURL);
+            data = vertcat(data.value{:});
+            usernames = cellstr(vertcat(data.Username));
+            if nargout == 2
+                locationIDs = vertcat(data.ID);
+            end
         end
     end
 

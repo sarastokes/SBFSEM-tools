@@ -17,6 +17,7 @@ classdef SynapseOData < sbfsem.io.OData
     % History:
     %   3Jan2018 - SSP - Moved from NeuronOData
     %   5Mar2018 - SSP - Updated for new JSON decoder
+    %   4Dec2019 - SSP - Updated exception handling for Viking glitches
     % ---------------------------------------------------------------------
     
     properties (SetAccess = private, GetAccess = public)
@@ -106,7 +107,7 @@ classdef SynapseOData < sbfsem.io.OData
             importedData = readOData(obj.childURL);
             
             obj.numChildren = numel(importedData.value);
-            fprintf('c%u has %u child structures\n',... 
+            fprintf('c%u has %u child structures. Fetching data\n',... 
                 obj.parentID, obj.numChildren);
 
             if ~isempty(importedData.value)
@@ -121,14 +122,14 @@ classdef SynapseOData < sbfsem.io.OData
                 data.Tags = obj.parseTags(data.Tags);
                 
                 if expandChild
-                    fprintf('Fetching data for %u child structures\n',...
-                        obj.numChildren);
                     % Process all child IDs
                     [obj.nodeData, obj.edgeData, nullIDs] = obj.expandChildData(data.ID);
-                    % Mark empty synapses
+                    
+                    % Remove empty synapses (Viking glitch where deleted
+                    % synapses stay in database with a StructureID and
+                    % links but no actual locations).
                     if ~isempty(nullIDs)
-                        % data.Label(data.ID == nullIDs,:) = {'Null'};
-                        data(data.ID == nullIDs, :) = [];  % Remove entirely
+                        data(ismember(data.ID, nullIDs), :) = [];
                     end
                 else
                     obj.nodeData = [];
@@ -153,7 +154,7 @@ classdef SynapseOData < sbfsem.io.OData
             else
                 Locs = NaN;
                 % This is important to track bc throws errors in VikingPlot
-                fprintf('No locations for s%u\n', ID);
+                fprintf('\tNo locations for s%u\n', ID);
             end
         end
         

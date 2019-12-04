@@ -11,7 +11,7 @@ function h = synapseMarker(neuron, synapse, varargin)
     %   ax                  Axes handle (default = new figure)
     % 	Marker 				Marker shape (default = 'o')
     %   FaceColor           Marker face color (default = none)
-    %   EdgeColor           Marker edge color (default = red)
+    %   EdgeColor           Marker edge color (default = black)
     %   Tag                 Char to identify renders in scene
     % Any other key/value input to the plot() command
     % Output:
@@ -31,7 +31,7 @@ function h = synapseMarker(neuron, synapse, varargin)
     %		'Marker', 'x', 'LineWidth', 1);
     %
     % 	synapseMarker(c5370, 'ConvPost',...
-    %		'MarkerSize', 7, 'FaceColor', [0 1 1], 'EdgeColor', 'k');
+    %		'MarkerSize', 7, 'FaceColor', [0 1 1], 'EdgeColor', 'r');
     %
 	% See also:
 	%	SYNAPSESPHERE
@@ -39,6 +39,7 @@ function h = synapseMarker(neuron, synapse, varargin)
 	% History:
 	%	16Apr2019 - SSP 
     %   1Oct2019 - SSP - added handle to graphics object as output
+    %   2Dec2019 - SSP - Changed default edge color to black
     % ---------------------------------------------------------------------
 
 	 assert(isa(neuron, 'sbfsem.core.NeuronAPI'),...
@@ -46,7 +47,7 @@ function h = synapseMarker(neuron, synapse, varargin)
     
     if ~isnumeric(synapse)
         xyz = neuron.getSynapseXYZ(synapse);
-    elseif size(synapse, 1) == 3
+    elseif size(synapse, 2) == 3
         xyz = synapse;
     elseif isequal(size(synapse(:), 1), numel(synapse))
         T = neuron.getSynapseNodes();
@@ -61,7 +62,7 @@ function h = synapseMarker(neuron, synapse, varargin)
     ip.CaseSensitive = false;
     addParameter(ip, 'ax', [], @ishandle);
     addParameter(ip, 'Marker', 'o', @ischar);
-    addParameter(ip, 'EdgeColor', 'r', @(x) ischar(x) || isvector(x));
+    addParameter(ip, 'EdgeColor', 'k', @(x) ischar(x) || isvector(x));
     addParameter(ip, 'FaceColor', 'none', @(x) ischar(x) || isvector(x));
     addParameter(ip, 'Tag', [], @ischar);
     parse(ip, varargin{:});

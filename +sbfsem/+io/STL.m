@@ -34,11 +34,13 @@ classdef STL < handle
 		function obj = STL(neuron, fName, varargin)
 
 			if isa(neuron, 'sbfsem.core.StructureAPI')
+				if isempty(neuron.model)
 					neuron.build();
-					obj.FV = neuron.model.allFV;
+				end
+				obj.FV = neuron.model.allFV;
             elseif isa(neuron, 'matlab.graphics.primitive.Patch')
-					obj.FV = struct('Faces', neuron.Faces,... 
-									'Vertices', neuron.Vertices);
+				obj.FV = struct('Faces', neuron.Faces,... 
+								'Vertices', neuron.Vertices);
             else
 				error('SBFSEM:IO:STL:InvalidInput',...
 					'Must provide Neuron object or patch');

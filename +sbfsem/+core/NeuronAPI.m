@@ -175,11 +175,11 @@ classdef (Abstract) NeuronAPI < sbfsem.core.StructureAPI
             if isa(syn, 'sbfsem.core.StructureTypes')                
                 row = obj.synapses.LocalName == syn;
                 IDs = obj.synapses.ID(row,:);
-                % Find the unique instances of each synapse ID
-                row = ismember(obj.nodes.ParentID, IDs) & obj.nodes.Unique;
             elseif isnumeric(syn)
-                row = ismember(obj.nodes.ParentID, syn) & obj.nodes.Unique;
+                IDs = syn;
             end
+            % Find the unique instances of each synapse ID
+            row = ismember(obj.nodes.ParentID, IDs) & obj.nodes.Unique;
 
             % Get the xyz values for only those rows
             if useMicrons
@@ -194,6 +194,15 @@ classdef (Abstract) NeuronAPI < sbfsem.core.StructureAPI
                     warning('No locations found for %u\n', syn);
                 end
                 xyz = [NaN, NaN, NaN];
+            elseif numel(xyz) > 3*numel(IDs)
+                if isa(syn, 'sbfsem.core.StructureTypes')
+                    warning('%u locations for %s - check Viking', numel(xyz)/3, syn);
+                else
+                    warning('%u locations for %u - check Viking', numel(xyz)/3, syn);
+                    if numel(IDs) == 1
+                        xyz = xyz(1, :);
+                    end
+                end
             end
         end
 

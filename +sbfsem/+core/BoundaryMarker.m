@@ -89,11 +89,11 @@ classdef (Abstract) BoundaryMarker < handle
             end
             
             % Create a new grid of points to sample from
-            ptsRange = [floor(min(obj.markerLocations));... 
-                        ceil(max(obj.markerLocations))];
+            ptsRange = [min(obj.markerLocations); max(obj.markerLocations)];
             if strcmp(obj.units, 'microns')
                 ptsRange = viking2micron(ptsRange, obj.source);
             end
+            ptsRange = [floor(ptsRange(1,:)); ceil(ptsRange(2,:))];
 
             obj.newXPts = linspace(ptsRange(1,1), ptsRange(2,1), numPts);          
             obj.newYPts = linspace(ptsRange(1,2), ptsRange(2,2), numPts);
@@ -175,9 +175,11 @@ classdef (Abstract) BoundaryMarker < handle
         function addToScene(obj, ax, varargin)
             % ADDTOSCENE
             %
+            % Syntax:
+            %   obj.addToScene(ax, varargin);
+            %
             % Description:
             %   Plot the boundary markers to a scene
-            %
             % -------------------------------------------------------------
             assert(ishandle(ax), 'Must input an axes handle');
             ip = inputParser();
@@ -212,9 +214,7 @@ classdef (Abstract) BoundaryMarker < handle
             delete(obj.getDataHandle(obj.ax));
             delete(obj.getSurfaceHandle(obj.ax));
         end
-    end
-    
-    methods (Access = protected)   
+        
         function z = getSurface(obj)
             % 9Dec2017 - SSP - changed from scatteredInterpolant
             
@@ -229,6 +229,9 @@ classdef (Abstract) BoundaryMarker < handle
                 'interp', 'bicubic', 'smoothness', obj.SMOOTHFAC);
         end
         
+    end
+    
+    methods (Access = protected)   
         function pull(obj)
             % PULL  Query database for boundary marker annotations, parse
             disp('Querying OData...');

@@ -1,7 +1,14 @@
 # Changelog
 
+### 20191204
+- Updated exception handling in `sbfsem.io.SynapseOData` for Viking glitch where deleted synapses retain their StructureID and links but have no actual locations. Also made cmd line output less redundant. 
+
+### 20191202
+- Changed default `EdgeColor` to black in `util\renders\synapseMarker.m`
+
 ### 20191118
-- Added`util\analysis\colorByUser.m`.
+- Added`util\plots\colorByUser.m`.
+- Added `getUsername()` method to `sbfsem.io.OData.m`
 - Parent axes handle key/value input to `util\network\neuronGraphPlot.m`.
 
 ### 20191115
