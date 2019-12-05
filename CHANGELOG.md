@@ -2,6 +2,7 @@
 
 ### 20191204
 - Updated exception handling in `sbfsem.io.SynapseOData` for Viking glitch where deleted synapses retain their StructureID and links but have no actual locations. Also made cmd line output less redundant. 
+- Added cell ID labels to `sbfsem.analysis.DendriticFieldHull.m`
 
 ### 20191202
 - Changed default `EdgeColor` to black in `util\renders\synapseMarker.m`

@@ -77,13 +77,14 @@ classdef DendriticFieldHull < sbfsem.analysis.NeuronAnalysis
           figure(); hold on; axis equal;
           % Plot the surrounding convex hull
           patch('XData', obj.data.hull(:, 1), 'YData', obj.data.hull(:,2),...
-              'FaceColor', [0, 0.447, 0.741], 'FaceAlpha', 0.3);
+              'FaceColor', [0, 0.447, 0.741], 'FaceAlpha', 0.3,...
+              'Tag', num2str(obj.ID));
           % Scatter plot of the annotations
           scatter(obj.dendrites(:,1), obj.dendrites(:,2), '.k');
           plot(obj.data.centroid(1), obj.data.centroid(2), 'r',... 
               'Marker', 'p', 'MarkerSize', 9);
-          title(sprintf('area = %.2f um^2, centroid = %.2f,%.2f',...
-              obj.data.hullArea, obj.data.centroid));
+          title(sprintf('c%u - area = %.2f um^2, centroid = %.2f,%.2f',...
+              obj.ID, obj.data.hullArea, obj.data.centroid));
         end
     end
 end
