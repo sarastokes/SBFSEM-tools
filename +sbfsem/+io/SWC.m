@@ -167,7 +167,9 @@ classdef SWC < handle
 			fprintf(fid, '# REGION');
 			switch obj.neuron.source
 				case 'NeitzTemporalMonkey'
-					fprintf(fid, ' Temporal\n');
+                    fprintf(fid, ' Temporal\n');
+                case 'NeitzNasalMonkey'
+                    fprintf(fid, ' Nasal\n');
 				case 'NeitzInferiorMonkey'
 					fprintf(fid, ' Inferior\n');
 				otherwise

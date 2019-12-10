@@ -11,6 +11,9 @@ function source = validateSource(source)
     %
     % See also:
     %   SBFSEM.BUILTIN.VOLUMES
+    %
+    % History:
+    %   9Dec2019 - SSP - Added Nasal volume
     % ---------------------------------------------------------------------
     
    switch lower(source)
@@ -18,6 +21,8 @@ function source = validateSource(source)
             source = 'NeitzTemporalMonkey';
         case {'inferior', 'i', 'neitzinferior', 'neitzinferiormonkey', 'inf'}
             source = 'NeitzInferiorMonkey';
+        case {'nasal', 'n', 'neitznasal', 'neitznasalmonkey'}
+            source = 'NeitzNasalMonkey';
         case {'rc1', 'marcrc1', 'r'}
             source = 'RC1';
         otherwise

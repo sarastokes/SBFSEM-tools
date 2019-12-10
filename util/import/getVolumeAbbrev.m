@@ -3,6 +3,8 @@ function str = getVolumeAbbrev(source)
     switch source
         case 'NeitzInferiorMonkey'
             str = 'i';
+        case 'NeitzNasalMonkey'
+            str = 'n';
         case 'NeitzTemporalMonkey'
             str = 't';
         case 'RC1'

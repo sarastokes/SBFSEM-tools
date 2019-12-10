@@ -75,7 +75,7 @@ classdef RenderApp < handle
         SYNAPSES = false;
         LAST_MODIFIED_CIRCLE_RADIUS = 1/30;
         BKGD_COLOR = [0.96, 0.98, 1];
-        SOURCES = {'NeitzTemporalMonkey','NeitzInferiorMonkey','MarcRC1'};
+        SOURCES = {'NeitzTemporalMonkey', 'NeitzInferiorMonkey', 'NeitzNasalMonkey', 'RC1'};
         CACHE = [fileparts(fileparts(mfilename('fullname'))), filesep, 'data'];
         COLORMAPS = {'haxby', 'parula', 'spectral', 'hsv', 'antijet', 'rdylgn',...
             'cubicl', 'viridis', 'redblue', 'bone', 'stepseq25', 'isolum (colorblind)',...
@@ -125,7 +125,7 @@ classdef RenderApp < handle
             end
 
             obj.neurons = containers.Map();
-            if ~ismember(obj.source, {'RC1', 'MarcRC1'})
+            if ~ismember(obj.source, {'NeitzNasalMonkey', 'RC1'})
                 obj.iplBound.GCL = sbfsem.builtin.GCLBoundary(obj.source, true);
                 obj.iplBound.INL = sbfsem.builtin.INLBoundary(obj.source, true);
             else
@@ -1139,7 +1139,7 @@ classdef RenderApp < handle
                 'Spacing', 5, 'Padding', 5);
             obj.createNeuronTab(uiLayout);
             
-            if ~strcmp(obj.source, 'RC1')
+            if ~ismember(obj.source, {'RC1', 'NeitzNasalMonkey'})
                 contextLayout = uix.VBox(...
                     'Parent', uitab(tabGroup, 'Title', 'Context'),...
                     'BackgroundColor', obj.BKGD_COLOR,...

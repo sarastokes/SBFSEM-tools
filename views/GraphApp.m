@@ -53,7 +53,7 @@ classdef GraphApp < handle
     
     properties (Constant = true, Hidden = true)
         COLORMAPS = {'parula', 'bone', 'hsv', 'cubicl', 'viridis', 'redblue', 'haxby'};
-        SOURCES = {'NeitzTemporalMonkey','NeitzInferiorMonkey','MarcRC1'};
+        SOURCES = {'NeitzTemporalMonkey', 'NeitzInferiorMonkey', 'NeitzNasalMonkey', 'MarcRC1'};
         BACKGROUND_COLOR = [0.96, 0.98, 1];
         UI_WIDTH = 130;
         MARGIN = 40;
@@ -773,7 +773,7 @@ classdef GraphApp < handle
             grid(obj.ax, 'on');
         end
         
-        function createTableTab(obj, tabHandle)
+        function createTableTab(obj, ~)
             % CREATETABLE  Initialize annotation table
 
             AnnotationTableView(obj);
@@ -790,6 +790,22 @@ classdef GraphApp < handle
                 'String', obj.getInstructions());
             uix.Empty('Parent', helpLayout);
             set(helpLayout, 'Heights', [-1 -0.1]);
+        end
+    end
+    
+    methods (Static)
+        function cData = getMatlabIcon(iconName)
+            % GETMATLABICON  Load CData for a builtin matlab icon
+            if strcmp(iconName(end-2:end), 'gif')
+                [img, map] = imread(fullfile(matlabroot,...
+                    'toolbox', 'matlab', 'icons', iconName));
+                if ~isempty(img) && ~isempty(map)
+                    cData = ind2rgb(img, map);
+                end
+            else
+                cData = im2double(imread(fullfile(matlabroot,...
+                    'toolbox', 'matlab', 'icons', iconName)));
+            end
         end
     end
     

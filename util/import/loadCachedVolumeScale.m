@@ -22,6 +22,8 @@ function volumeScale = loadCachedVolumeScale(source)
     switch source
         case 'NeitzInferiorMonkey'
             volumeScale = [7.5, 7.5, 90];
+        case 'NeitzNasalMonkey'
+            volumeScale = [5, 5, 50];
         case 'NeitzTemporalMonkey'
             volumeScale = [7.5, 7.5, 70];
         case {'MarcRC1', 'RC1'}

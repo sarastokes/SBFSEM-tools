@@ -2,7 +2,7 @@ classdef IPLDepthApp < handle
     
     properties (Constant = true, Hidden = true)
         TRANSFORM = sbfsem.core.Transforms.Viking;
-        SOURCES = {'NeitzTemporalMonkey','NeitzInferiorMonkey','MarcRC1'};
+        SOURCES = {'NeitzTemporalMonkey','NeitzInferiorMonkey', 'NeitzNasalMonkey', 'MarcRC1'};
     end
     
     properties (SetAccess = private)

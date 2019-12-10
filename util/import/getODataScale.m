@@ -19,10 +19,17 @@ function volumeScale = getODataScale(source, verbose)
 	%   1Oct2017 - SSP - Modified from VikingPlot
     %   3Nov2017 - SSP - Added concise output option
     %   5Mar2018 - SSP - New OData weboptions function
+    %   9Dec2019 - SSP - Added catch for incorrect volume scale for nasal
     % ---------------------------------------------------------------------
     
     if nargin < 2
         verbose = false;
+    end
+    
+    source = validateSource(source);
+    if strcmp(source, 'NeitzNasalMonkey')
+        volumeScale = [5, 5, 50];
+        return;
     end
 
 	endpoint = getODataURL([], source, 'scale');

@@ -1,13 +1,14 @@
 function endpoint = getODataURL(ID, source, urlType)
-	% GETODATAURL  Returns OData URL string
-	%
-	% Inputs:
-	%	ID              Unique ID number
-	%	source 			'inferior', 'temporal' ('i', 't')
-	% 	urlType 		'neuron', 'location', 'link', 'child', 'scale'
-	% Use:
-	%	urlString = getODataURL(127, 'i', 'location')
-	%
+% GETODATAURL  Returns OData URL string
+%
+% Inputs:
+%	ID              Unique ID number
+%	source 			'inferior', 'temporal', etc ('i', 't', etc)
+% 	urlType 		'neuron', 'location', 'link', 'child', 'scale'
+% Use:
+%	urlString = getODataURL(127, 'i', 'location')
+%
+% -------------------------------------------------------------------------
 
 		
 	baseURL = getServiceRoot(source);
