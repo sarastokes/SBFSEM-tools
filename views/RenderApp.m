@@ -589,6 +589,12 @@ classdef RenderApp < handle
             h = findobj(obj.figureHandle, 'Tag', 'CMaps');
             colormap(obj.ax, obj.getColormap(h.String{h.Value}, N));
         end
+
+        function onEditMaterial(obj, src, ~)
+            % ONEDITMATERIAL  Change render material
+            newMaterial = src.String{src.Value};
+            material(findall(obj.ax, 'Type', 'patch'), newMaterial);
+        end
     end
 
     % Non-neuron component callbacks
@@ -873,7 +879,9 @@ classdef RenderApp < handle
             h = findobj(obj.ax, 'Tag', obj.id2tag(neuron.ID));
             set(h, 'FaceVertexCData',... 
                 repmat(h.FaceColor, [size(h.Vertices,1), 1]));
-            
+            materialBox = findobj(obj.figureHandle, 'Tag', 'Material');
+            material(h, materialBox.String{materialBox.Value});
+
             % If all is successful, add to neuron lists
             obj.neurons(obj.id2tag(neuron.ID)) = neuron;
             obj.IDs = cat(2, obj.IDs, neuron.ID);
@@ -1151,7 +1159,7 @@ classdef RenderApp < handle
                 'Parent', uitab(tabGroup, 'Title', 'Plot'),...
                 'BackgroundColor', obj.BKGD_COLOR,...
                 'Spacing', 5, 'Padding', 5);
-            obj.createControlTab(ctrlLayout);
+            obj.createPlotTab(ctrlLayout);
 
             % Rotation/zoom/pan modes require container with pixels prop
             % Using Matlab's uipanel between render axes and HBoxFlex
@@ -1307,8 +1315,8 @@ classdef RenderApp < handle
             end
         end
 
-        function createControlTab(obj, ctrlLayout)
-            % CREATECONTROLTAB  Plot aesthetics tab
+        function createPlotTab(obj, ctrlLayout)
+            % CREATEPLOTTAB  Plot aesthetics tab
             LayoutManager = sbfsem.ui.LayoutManager;
             
             uicontrol(ctrlLayout,...
@@ -1383,6 +1391,17 @@ classdef RenderApp < handle
             uix.Empty('Parent', ctrlLayout,...
                 'BackgroundColor', obj.BKGD_COLOR);
 
+            % Render material control
+            LayoutManager.horizontalBoxWithLabel(...
+                ctrlLayout, 'Material:',...
+                'Style', 'popup',...
+                'String', {'default', 'dull', 'shiny', 'metal'},...
+                'TooltipString', 'Render material',...
+                'Tag', 'Material',...
+                'Callback', @obj.onEditMaterial);
+            uix.Empty('Parent', ctrlLayout,...
+                'BackgroundColor', obj.BKGD_COLOR);
+
             % View rotation control
             uicontrol(ctrlLayout,...
                 'Style', 'text', 'String', 'View points:',...
@@ -1419,7 +1438,7 @@ classdef RenderApp < handle
                 'Callback', @onAddScaleBar);
 
             set(ctrlLayout, 'Heights',...
-                [20, -1.75, -0.05, 20, 25, -1.75, -0.05, 20, 30, -0.05, 20, -2.6, 30]);
+                [20, -1.75, -0.05, 20, 25, -1.75, -0.05, 25, -0.05, 20, 30, -0.05, 20, -2.6, 30]);
         end
 
         function createToolbar(obj)

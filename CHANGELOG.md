@@ -1,10 +1,14 @@
 # Changelog
 
+### 20190104
+- Added option to change render material in `views\RenderApp.m` under the Plot tab.
+
 ### 20191209
 - Rolling out support for new volume: NeitzNasalMonkey
 
 ### 20191205
 - Added `util\analysis\getSynapseSomaDistance.m` which is just the calculation part of `views\SomaDistanceView.m`
+- Added `util\analysis\getSynapseDirection.m`
 
 ### 20191204
 - Updated exception handling in `sbfsem.io.SynapseOData` for Viking glitch where deleted synapses retain their StructureID and links but have no actual locations. Also made cmd line output less redundant. 
