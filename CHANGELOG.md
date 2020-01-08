@@ -1,5 +1,8 @@
 # Changelog
 
+### 20190106
+- Material stays constant while updating neurons in `views\RenderApp.m`
+
 ### 20190104
 - Added option to change render material in `views\RenderApp.m` under the Plot tab.
 

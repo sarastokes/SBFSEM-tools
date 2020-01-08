@@ -277,6 +277,10 @@ classdef RenderApp < handle
                     'FaceColor', oldColor);
             end
             set(newPatch, 'FaceLighting', oldLighting);
+            % Apply material setting 
+            materialBox = findobj(obj.figureHandle, 'Tag', 'Material');
+            material(newPatch, materialBox.String{materialBox.Value});
+
             % Return to the original view azimuth and elevation
             view(obj.ax, az, el);
             obj.updateStatus('');
