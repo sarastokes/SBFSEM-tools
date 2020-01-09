@@ -29,6 +29,18 @@ function synTable = getAllLinkedNeurons(neuron)
         synTable = [synTable; T];  %#ok
     end
     
-    synTable.Properties.VariableNames = {'NeuronID', 'SynapseID', 'SynapseXYZ', 'SynapseType'};
+    x = sbfsem.io.OData(neuron.source);
+    synTable.Label = repmat("", [height(synTable), 1]);
+    ind = find(~isnan(synTable.NeuronID));
+    
+    for i = 1:numel(ind)
+        lbl = x.getLabel(synTable.NeuronID(ind(i)));
+        if ~isempty(lbl)
+            synTable{ind(i), 'Label'} = string(lbl); %#ok
+        end
+    end
+    
+    synTable.Properties.VariableNames = {'NeuronID', 'SynapseID', 'SynapseXYZ', 'SynapseType', 'NeuronLabel'};
+    synTable = synTable(:, [1:2, 4:5, 3]);
     synTable = sortrows(synTable, 'NeuronID');
 end

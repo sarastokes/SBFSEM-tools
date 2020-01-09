@@ -2,6 +2,8 @@
 
 ### 20200109
 - Better plotting for `util\analysis\getSynapseStratification.m`
+- Added linked neuron label to synapse tables and rearranged output columns for `util\network\getAllLinkedNeurons.m`
+- Added query for a structure label to `sbfsem.io.OData.m`
 
 ### 20190106
 - Material stays constant while updating neurons in `views\RenderApp.m`

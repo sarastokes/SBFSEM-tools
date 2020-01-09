@@ -214,6 +214,22 @@ classdef OData < handle
             data = cat(1, data.value{:});
         end
         
+        function str = getLabel(obj, ID)
+            % GETLABEL
+            %
+            % Input:
+            %   ID              Structure ID
+            %
+            % Output:
+            %   str             Label in Viking
+            % -------------------------------------------------------------
+            
+            queryURL = [getServiceRoot(obj.source),...
+                'Structures(', num2str(ID), ')?$select=Label'];
+            data = webread(queryURL, obj.webOpt);
+            str = data.Label;
+        end
+        
         function [usernames, locationIDs] = getUsernames(obj, ID)
             % GETUSERNAMES
             %
