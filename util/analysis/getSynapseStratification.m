@@ -19,3 +19,7 @@ function ipl = getSynapseStratification(neuron, synapseType)
     
     figure(); hold on;
     [a, b] = histcounts(ipl, 25);
+    plot(b(2:end)-(b(2)-b(1))/2, a, '-ob', 'LineWidth', 1);
+    xlabel('IPL Depth (%)');
+    ylabel('Synapse Count');
+    

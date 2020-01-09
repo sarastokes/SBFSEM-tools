@@ -1,5 +1,8 @@
 # Changelog
 
+### 20200109
+- Better plotting for `util\analysis\getSynapseStratification.m`
+
 ### 20190106
 - Material stays constant while updating neurons in `views\RenderApp.m`
 
