@@ -15,6 +15,7 @@ function synTable = getAllLinkedNeurons(neuron)
     %
     % History:
     %   18Nov2018 - SSP
+    %   9Jan2020 - SSP - Added label query and reordered output
     % ---------------------------------------------------------------------
     assert(isa(neuron, 'sbfsem.core.NeuronAPI'), 'Input neuron object');
     
@@ -23,7 +24,7 @@ function synTable = getAllLinkedNeurons(neuron)
     synTable = [];
     
     for i = 1:numel(synList)
-        fprintf('Importing %s links...\n', char(synList(i)));
+        fprintf('\tImporting %s links...\n', char(synList(i)));
         T = getLinkedNeurons(neuron, synList(i));
         T.SynapseType = repmat(string(synList(i)), [height(T), 1]);
         synTable = [synTable; T];  %#ok

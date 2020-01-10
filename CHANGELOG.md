@@ -1,5 +1,8 @@
 # Changelog
 
+### 20100110
+- Fixed troubles handling "undirected" synapses stored with unpredictable directionality in `util\network\getLinkedNeurons.m`
+
 ### 20200109
 - Better plotting for `util\analysis\getSynapseStratification.m`
 - Added linked neuron label to synapse tables and rearranged output columns for `util\network\getAllLinkedNeurons.m`

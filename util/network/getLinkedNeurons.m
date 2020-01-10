@@ -35,6 +35,7 @@ function [linkedIDs, synapseIDs, synapseXYZ] = getLinkedNeurons(neuron, synapseT
 %   11Sept2018 - SSP - added argument to include/omit unlinked synapses
 %   16Apr2019 - SSP - Added table option and synapse location output
 %   6May2019 - SSP - Dealt with directionality in "undirected" synapses
+%   10Jan2020 - SSP - More optimization for "undirected" synapses
 % -------------------------------------------------------------------------
 
     assert(isa(neuron, 'sbfsem.core.NeuronAPI'), 'Input neuron object');
@@ -142,6 +143,7 @@ function [linkedIDs, finalSynapseIDs] = getUndirectedLinkedIDs(url, synapseIDs)
     linkedIDs = []; finalSynapseIDs = [];  % for now
     urlOne = [url, 'Structures(%u)/SourceOfLinks/'];
     urlTwo = [url, 'Structures(%u)/TargetOfLinks/'];
+    parentURL = [url, 'Structures(%u)?$select=ParentID'];
     
     for i = 1:numel(synapseIDs)
         try
@@ -149,13 +151,20 @@ function [linkedIDs, finalSynapseIDs] = getUndirectedLinkedIDs(url, synapseIDs)
             if isempty(importedData.value)
                 importedData = readOData(sprintf(urlTwo, synapseIDs(i)));
                 data = importedData.value{1};
-                iLinkedID = data.TargetID;
+                iLinkedID = data.SourceID;
             else
                 data = importedData.value{1};
-                iLinkedID = data.SourceID;
+                iLinkedID = data.TargetID;
             end
-            linkedIDs = cat(1, linkedIDs, iLinkedID);
+            try
+                data = readOData(sprintf(parentURL, iLinkedID));
+                linkedIDs = cat(1, linkedIDs, data.ParentID);
+            catch
+                warning('No ParentID found for %u', iLinkedID);
+                linkedIDs = cat(1, linkedIDs, NaN);
+            end
         catch
+            % Synapse is not linked to another structure
             linkedIDs = cat(1, linkedIDs, NaN);
         end
         finalSynapseIDs = cat(1, finalSynapseIDs, synapseIDs(i));
