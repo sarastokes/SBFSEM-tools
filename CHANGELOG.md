@@ -2,6 +2,7 @@
 
 ### 20100110
 - Fixed troubles handling "undirected" synapses stored with unpredictable directionality in `util\network\getLinkedNeurons.m`
+- Added links property and methods to `Neuron.m`.
 
 ### 20200109
 - Better plotting for `util\analysis\getSynapseStratification.m`

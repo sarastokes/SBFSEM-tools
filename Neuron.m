@@ -34,8 +34,13 @@ classdef Neuron < sbfsem.core.NeuronAPI
 %   16Feb2018 - SSP - Added the omittedIDs property, applied in obj.graph()
 %   6Mar2018  - SSP - NeuronCache compatibility
 %   19Jul2018 - SSP - Option to specify different XY transforms
+%   10Jan2020 - SSP - Links property to access getAllLinkedNeurons output
 % -------------------------------------------------------------------------
 
+    properties (SetAccess = private)
+        links
+    end
+    
     properties (Transient = true, Hidden = true)
         ODataClient
         GeometryClient
@@ -111,6 +116,7 @@ classdef Neuron < sbfsem.core.NeuronAPI
                 obj.SynapseClient = sbfsem.io.SynapseOData(obj.ID, obj.source);
             end
 
+            % Run query for the child structure annotations
             [obj.synapses, childNodes, childEdges] = obj.SynapseClient.pull();
             % Clear out any existing synapse nodes/edges
             obj.nodes(obj.nodes.ParentID ~= obj.ID,:) = [];
@@ -120,6 +126,26 @@ classdef Neuron < sbfsem.core.NeuronAPI
             obj.edges = [obj.edges; childEdges];
 
             obj.setupSynapses();
+        end
+
+        function getLinks(obj)
+            % GETLINKS
+            obj.checkSynapses();
+            
+            T = getAllLinkedNeurons(obj);
+            if isempty(T)
+                return;
+            end
+            obj.links = sortrows(T, 'NeuronID');
+            % for i = 1:height(obj.synapses)
+            %     iLinkedID = T{T.SynapseID == obj.synapses.ID(i), 'NeuronID'}';
+            %     obj.synapses.LinkedID1(i) = iLinkedID(1);
+            %     if numel(iLinkedID) == 1
+            %         obj.synapses.LinkedID2(i) = NaN;
+            %     else
+            %         obj.synapses.LinkedID2(i) = iLinkedID(2);
+            %     end
+            % end
         end
 
         function update(obj)
@@ -147,17 +173,19 @@ classdef Neuron < sbfsem.core.NeuronAPI
     end
     
     methods (Access = protected)
-                
         function pull(obj)
             pull@sbfsem.core.StructureAPI(obj)
             if obj.includeSynapses
                 obj.getSynapses();
             end
+            if ~isempty(obj.links)
+                fprintf('\tUpdating links for c%u\n', obj.ID);
+                obj.getLinks();
+            end
         end
     end
 
     methods (Access = protected)
-
         function setupSynapses(obj)
             % SETUPSYNAPSES
             % TODO: This should be done elsewhere
@@ -198,6 +226,9 @@ classdef Neuron < sbfsem.core.NeuronAPI
                 if ~strcmp(obj.source, 'RC1')
                     makeConsistent(obj);
                 end
+                % Leave linked neurons empty until quieried
+                % obj.synapses.LinkedID1 = nan(size(obj.synapses.LocalName));
+                % obj.synapses.LinkedID2 = nan(size(obj.synapses.LocalName));
             end
         end
     end
