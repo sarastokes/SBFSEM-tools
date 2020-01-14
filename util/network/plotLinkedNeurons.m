@@ -20,10 +20,11 @@ function h = plotLinkedNeurons(linkedIDs, synapseName, printN)
     %    '0' indicates no linked neuron.
     %
     % See also:
-    %   GETLINKEDNEURONS
+    %   GETLINKEDNEURONS, GETALLLINKEDNEURONS
     %
     % History:
     %   8Dec2018 - SSP
+    %   14Jan2020 - SSP - Added compatibility w/ neuron links property
     % ---------------------------------------------------------------------
 
     if nargin < 3
@@ -31,11 +32,18 @@ function h = plotLinkedNeurons(linkedIDs, synapseName, printN)
     end
     
     if nargin == 2
-        assert(isa(linkedIDs, 'sbfsem.core.NeuronAPI'), 'Input a Neuron object');
-        [linkedIDs, ~] = getLinkedNeurons(linkedIDs, synapseName);
-    else
+        assert(isa(linkedIDs, 'Neuron'), 'Input a Neuron object');
+        neuron = linkedIDs;
+        str = ['c', num2str(neuron.ID), ' - '];
+        if isempty(neuron.links)
+            [linkedIDs, ~] = getLinkedNeurons(neuron, synapseName);
+        else
+            linkedIDs = neuron.links{strcmp(neuron.links.SynapseType, synapseName), 'NeuronID'};
+        end
+    elseif nargin == 1
+        str = ''; synapseName = '';
         if istable(linkedIDs)
-            linkedIDs = linkedIDs{:, 1};
+            linkedIDs = linkedIDs{:, 'NeuronID'};
         end
     end
     
@@ -47,13 +55,19 @@ function h = plotLinkedNeurons(linkedIDs, synapseName, printN)
     [n, ind] = sort(n, 'descend');
     groupNames = groupNames(ind);
     
-    h = figure();
+    ax = axes('Parent', figure());
     pie(n, ones(size(n)), string(groupNames));
     
     % Quick hack to set unidentified neurons to white, if most numerous
     if groupNames(1) == 0
         colormap(flipud(haxby(256)));
     end
+
+    h = title(ax, [str, synapseName, ' (n = ', num2str(numel(n)), ')']);
+        %sprintf('%s - (n = %u)', synapseName, numel(n)));
+    % Title always overlaps with labels
+    ax.Position(2) = ax.Position(2) - 0.05;
+    h.Position(2) = h.Position(2) + 0.1;
     
     if printN
         fprintf('Total synapses = %u\n', sum(n));

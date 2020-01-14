@@ -128,8 +128,15 @@ classdef Neuron < sbfsem.core.NeuronAPI
             obj.setupSynapses();
         end
 
+        function checkLinks(obj)
+            % CHECKLINKS  Imports links if not present
+            if isempty(obj.links)
+                obj.getLinks();
+            end
+        end
+
         function getLinks(obj)
-            % GETLINKS
+            % GETLINKS  Loads in linked neurons
             obj.checkSynapses();
             
             T = getAllLinkedNeurons(obj);

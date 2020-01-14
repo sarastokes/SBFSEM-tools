@@ -1,6 +1,9 @@
 # Changelog
 
-### 20100110
+### 20200114
+- Updated `util\plot\showLinkededSynapses.m` and `util\network\plotLinkedNeurons.m` for `Neuron.links` property
+
+### 20200110
 - Fixed troubles handling "undirected" synapses stored with unpredictable directionality in `util\network\getLinkedNeurons.m`
 - Added links property and methods to `Neuron.m`.
 

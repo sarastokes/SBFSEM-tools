@@ -1,38 +1,38 @@
-function [ax, T] = showLinkedSynapses(neuron, synapseType, varargin)
+function [h1, h2] = showLinkedSynapses(neuron, synapseName, varargin)
     % SHOWLINKEDSYNAPSES
     %
     % Syntax:
-    %   [ax, T] = showLinkedSynapses(neuron, synapseType, varargin)
+    %   [ax, T] = showLinkedSynapses(neuron, synapseName, varargin)
     %
     % Inputs:
     %   neuron          sbfsem.core.NeuronAPI object
-    %   synapseType     Synapse name
-    %   Additional key/value inputs go to synapseSphere
+    %   synapseName     Synapse name
+    %   Additional key/value inputs go to sbfsem.util.plot3
     % Outputs:
-    %   ax              Axis handle
-    %   T               table of linked IDs and synapse IDs
+    %   h1              Handle to linked neuron markers
+    %   h2              Handle to unlinked neuron markers
     %
     % See also:
-    %   SYNAPSESPHERE, GETLINKEDNEURONS
+    %   SYNAPSESPHERE, GETLINKEDNEURONS, PLOT3, SBFSEM.UTIL.PLOT3
     %
     % History:
     %   6Aug2019 - SSP
+    %   14Jan2020 - SSP - Compatibility w/ link property, switched to plot3
     % ---------------------------------------------------------------------
 
     assert(isa(neuron, 'sbfsem.core.NeuronAPI'),...
         'Must import a neuron object');
 
-    ax = golgi(neuron);
-    [linkedIDs, synapseIDs] = getLinkedNeurons(neuron, synapseType);
+    neuron.checkLinks();
 
-    hasLinkedID = ~isnan(linkedIDs);
-    synapseSphere(neuron, synapseIDs(hasLinkedID),...
-        'ax', ax, 'FaceColor', rgb('emerald'),...
+    T = neuron.links(strcmp(neuron.links.SynapseType, synapseName), :);
+
+    ax = golgi(neuron);
+
+    h1 = sbfsem.util.plot3(T{~isnan(T.NeuronID), 'SynapseXYZ'}, ...
+        'ax', ax, 'Color', rgb('greenish'),...
         'Tag', 'LinkedSynapse', varargin{:});
-    synapseSphere(neuron, synapseIDs(~hasLinkedID),...
-        'ax', ax, 'Tag', 'UnlinkedSynapse', varargin{:});
-    
-    if nargout == 2
-        T = table(linkedIDs, synapseIDs);
-    end
+    h2 = sbfsem.util.plot3(T{isnan(T.NeuronID), 'SynapseXYZ'}, ...
+        'ax', ax, 'Color', rgb('salmon'),... 
+        'Tag', 'UnlinkedSynapse', varargin{:});
 
