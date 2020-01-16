@@ -64,7 +64,6 @@ function h = plotLinkedNeurons(linkedIDs, synapseName, printN)
     end
 
     h = title(ax, [str, synapseName, ' (n = ', num2str(numel(n)), ')']);
-        %sprintf('%s - (n = %u)', synapseName, numel(n)));
     % Title always overlaps with labels
     ax.Position(2) = ax.Position(2) - 0.05;
     h.Position(2) = h.Position(2) + 0.1;

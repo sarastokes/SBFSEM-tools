@@ -37,7 +37,7 @@ classdef Neuron < sbfsem.core.NeuronAPI
 %   10Jan2020 - SSP - Links property to access getAllLinkedNeurons output
 % -------------------------------------------------------------------------
 
-    properties (SetAccess = private)
+    properties
         links
     end
     

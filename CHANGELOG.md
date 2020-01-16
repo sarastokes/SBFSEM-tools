@@ -1,7 +1,12 @@
 # Changelog
 
+### 20200116
+- Added catch for older MATLAB versions that don't have `NumColumns` legend property in `util\analysis\iplDepth.m`
+
 ### 20200114
 - Updated `util\plot\showLinkededSynapses.m` and `util\network\plotLinkedNeurons.m` for `Neuron.links` property
+- Added command line output for number of linked synapses out of total to `util\renders\showLinkedNeurons.m`
+- Made `links` a public property of `Neuron.m` (so the output can be sorted in variable viewer).
 
 ### 20200110
 - Fixed troubles handling "undirected" synapses stored with unpredictable directionality in `util\network\getLinkedNeurons.m`

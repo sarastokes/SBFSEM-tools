@@ -212,5 +212,11 @@ function [iplPercent, stats] = iplDepth(Neuron, varargin)
         set(l, 'EdgeColor', 'none', 'FontSize', 10,...
             'Orientation', 'horizontal', 'Location', 'bestoutside',...
             'NumColumns', 2, 'Box', 'off');
+        % Older version of MATLAB don't have the NumColumns option
+        try
+            set(l, 'NumColumns', 2);
+        catch
+            set(l, 'FontSize', 8);
+        end
         fprintf('\n');
     end
