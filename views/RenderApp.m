@@ -180,6 +180,10 @@ classdef RenderApp < handle
             for i = 1:numel(str)
                 newID = str2double(str{i});
                 obj.updateStatus(sprintf('Adding c%u', newID));
+                if ismember(newID, obj.IDs)
+                    obj.updateStatus(sprintf('c%u already loaded', newID));
+                    continue;
+                end
                 didImport = obj.addNeuron(newID);
                 if ~didImport
                     fprintf('Skipped c%u\n', newID);

@@ -1,5 +1,8 @@
 # Changelog
 
+### 20200117
+- Added catch for adding a neuron that is already imported in `views\RenderApp.m`
+
 ### 20200116
 - Added catch for older MATLAB versions that don't have `NumColumns` legend property in `util\analysis\iplDepth.m`
 
