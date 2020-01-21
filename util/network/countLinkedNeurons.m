@@ -26,13 +26,18 @@ function T = countLinkedNeurons(linkedIDs, synapseName)
 
     if nargin == 2
         if isa(linkedIDs, 'sbfsem.core.NeuronAPI')
-            [linkedIDs, ~] = getLinkedNeurons(linkedIDs, synapseName);
-        else
-            linkedIDs = linkedIDs{strcmp(linkedIDs.SynapseType, synapseName), 1};
+            neuron = linkedIDs;
+            if isempty(neuron.links)
+                [linkedIDs, ~] = getLinkedNeurons(linkedIDs, synapseName);
+            else
+                linkedIDs = neuron.links{strcmp(neuron.links.SynapseType, synapseName), 'NeuronID'};
+            end
+        elseif istable(linkedIDs)
+            linkedIDs = linkedIDs{strcmp(linkedIDs.SynapseType, synapseName), 'NeuronID'};
         end
     elseif nargin == 1
         if istable(linkedIDs)
-            linkedIDs = linkedIDs{:, 1};
+            linkedIDs = linkedIDs{:, 'NeuronID'};
         end
     end
 

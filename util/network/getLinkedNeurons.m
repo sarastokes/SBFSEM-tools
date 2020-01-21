@@ -56,7 +56,7 @@ function [linkedIDs, synapseIDs, synapseXYZ] = getLinkedNeurons(neuron, synapseT
         return;
     end
 
-    if strcmp(char(synapseType), 'Unknown')
+    if ismember(char(synapseType), {'Unknown', 'Touch'}) 
         % What a mess... see getUndirectedLinkedIDs info below
         [linkedIDs, finalSynapseIDs] = getUndirectedLinkedIDs(...
             getServiceRoot(neuron.source), synapseIDs);

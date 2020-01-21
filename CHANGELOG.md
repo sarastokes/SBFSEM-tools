@@ -1,7 +1,11 @@
 # Changelog
 
+### 20200121
+- Account for secretly directed "undirected" Touch synapses similar to Unknown synapses (`util\network\getLinkedNeurons.m`)
+
 ### 20200117
 - Added catch for adding a neuron that is already imported in `views\RenderApp.m`
+- Updated `util\network\countLinkedNeurons.m` for `Neuron.links` property
 
 ### 20200116
 - Added catch for older MATLAB versions that don't have `NumColumns` legend property in `util\analysis\iplDepth.m`
