@@ -53,8 +53,9 @@ classdef GraphApp < handle
     
     properties (Constant = true, Hidden = true)
         COLORMAPS = {'parula', 'bone', 'hsv', 'cubicl', 'viridis', 'redblue', 'haxby'};
-        SOURCES = {'NeitzTemporalMonkey', 'NeitzInferiorMonkey', 'NeitzNasalMonkey', 'MarcRC1'};
+        SOURCES = enumStr('sbfsem.builtin.Volumes');
         BACKGROUND_COLOR = [0.96, 0.98, 1];
+        LOCATION_CIRCLE_RADIUS = 1/25;
         UI_WIDTH = 130;
         MARGIN = 40;
     end
@@ -184,6 +185,12 @@ classdef GraphApp < handle
                 drawnow;
             end
             obj.updateStatus('');
+        end
+
+        function deleteUserLocation(varargin)
+            % DELETEUSERLOCATIONS  Delete last modified location
+            obj = varargin{1};
+            delete(findall(obj.ax, 'Tag', 'UserLocation'));
         end
     end
     
@@ -410,6 +417,43 @@ classdef GraphApp < handle
             colormap(obj.ax, obj.getColormap(obj.cmap, 256));
         end
 
+        function onShowLocation(obj, src, ~)
+            % ONSHOWLOCATION  Draw bubble around location by ID
+            % Delete any existing location annotations
+            obj.deleteUserLocation();
+
+            try
+                locID = str2double(src.String);
+            catch
+                obj.updateStatus('Invalid entry');
+                return
+            end
+
+            if ~ismember(locID, obj.neuron.nodes.ID)
+                obj.updateStatus('Location ID not found');
+                return
+            end
+
+            XYZ = obj.neuron.id2xyz(locID);
+            axLims = obj.getLimits(obj.ax);
+            axSize = mean(abs(axLims(:, 2) - axLims(:, 1)));
+            radius = obj.LOCATION_CIRCLE_RADIUS * axSize;
+
+            % Make the sphere annotation then scale and translate
+            [X, Y, Z] = sphere();
+            X = radius * X; Y = radius * Y; Z = radius * Z;
+            X = X + XYZ(1); Y = Y + XYZ(2); Z = Z + XYZ(3);
+            
+            p = surf(X, Y, Z, 'Parent', obj.ax,...
+                'FaceColor', [0.5 0.5 0.5], 'EdgeColor', 'none',...
+                'FaceAlpha', 0.3, 'FaceLighting', 'gouraud',...
+                'Tag', 'UserLocation');
+
+            c = uicontextmenu();
+            uimenu(c, 'Label', 'Delete', 'Callback', @obj.deleteUserLocation);
+            p.UIContextMenu = c;
+        end
+
         function onCheckedColorSegments(obj, src, ~)
             % ONCOLORSEGMENTS  Randomly color to distinguish segments
             if src.Value == 1
@@ -474,6 +518,7 @@ classdef GraphApp < handle
             else
                 set(h, 'Visible', 'off');
             end
+            set(findall(obj.figureHandle, 'Tag', 'UserLocation'), 'Visible', 'on');
         end
     end
     
@@ -656,9 +701,9 @@ classdef GraphApp < handle
                 'Callback', @obj.onClickMode);
             uicontrol(cursorLayout,...
                 'Style', 'push',...
-                'String', 'C',...
                 'Tag', 'CopyLocation', ...
                 'Tooltip', 'Copy last selected ID',...
+                'CData', obj.getMatlabIcon('reficon.gif'),...
                 'Callback', @obj.onCopyLastLocation);
             set(cursorLayout, 'Widths', [-3, -1]);
             set(modeLayout, 'Heights', [-2, -1]);
@@ -728,6 +773,13 @@ classdef GraphApp < handle
                 'Callback', @obj.onCheckedColorSegments);
             uix.Empty('Parent', uiLayout,...
                 'BackgroundColor', obj.BACKGROUND_COLOR);
+            [~, p] = LayoutManager.horizontalBoxWithLabel(uiLayout, 'Find ID:',...
+                'Style', 'edit',...
+                'String', '',...
+                'Tag', 'FindID',...
+                'TooltipString', 'Set cursor to specific location ID',...
+                'BackgroundColor', 'w',...
+                'Callback', @obj.onShowLocation);
             uicontrol(uiLayout,...
                 'Style', 'push',...
                 'String', 'Update Neuron',...
@@ -744,7 +796,7 @@ classdef GraphApp < handle
             obj.createPlot();
             
             set(uiLayout, 'Heights',...
-                [-0.5, -1.2, -0.3, -0.5, -0.5, -0.5, -0.5, -0.5, -0.3, -1, -1, -0.5, -0.3, -0.8, -0.5]);
+                [-0.5, -1.2, -0.3, -0.5, -0.5, -0.5, -0.5, -0.5, -0.3, -1, -1, -0.5, -0.3, 30, -0.8, -0.5]);
         
             set(mainLayout, 'Widths', [-1 -3.5]);
 
@@ -806,6 +858,10 @@ classdef GraphApp < handle
                 cData = im2double(imread(fullfile(matlabroot,...
                     'toolbox', 'matlab', 'icons', iconName)));
             end
+        end
+
+        function lim = getLimits(ax)
+            lim = [get(ax, 'XLim'); get(ax, 'YLim'); get(ax, 'ZLim')];
         end
     end
     

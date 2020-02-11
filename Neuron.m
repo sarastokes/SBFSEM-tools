@@ -144,15 +144,6 @@ classdef Neuron < sbfsem.core.NeuronAPI
                 return;
             end
             obj.links = sortrows(T, 'NeuronID');
-            % for i = 1:height(obj.synapses)
-            %     iLinkedID = T{T.SynapseID == obj.synapses.ID(i), 'NeuronID'}';
-            %     obj.synapses.LinkedID1(i) = iLinkedID(1);
-            %     if numel(iLinkedID) == 1
-            %         obj.synapses.LinkedID2(i) = NaN;
-            %     else
-            %         obj.synapses.LinkedID2(i) = iLinkedID(2);
-            %     end
-            % end
         end
 
         function update(obj)
@@ -165,7 +156,6 @@ classdef Neuron < sbfsem.core.NeuronAPI
 
         function checkSynapses(obj)
             % SYNAPSECHECK  Try to import synapses, if missing
-
             if isempty(obj.synapses)
                 obj.getSynapses();
             end
@@ -230,12 +220,9 @@ classdef Neuron < sbfsem.core.NeuronAPI
                 end
                 obj.synapses.LocalName = vertcat(localNames{:});
                 % Make sure synapses match the new naming conventions
-                if ~strcmp(obj.source, 'RC1')
+                if ~strcmp(obj.source, 'RC1') | ~strcmp(obj.source, 'RPC1') | ~strcmp(obj.source, 'RC2')
                     makeConsistent(obj);
                 end
-                % Leave linked neurons empty until quieried
-                % obj.synapses.LinkedID1 = nan(size(obj.synapses.LocalName));
-                % obj.synapses.LinkedID2 = nan(size(obj.synapses.LocalName));
             end
         end
     end

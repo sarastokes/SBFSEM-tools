@@ -41,12 +41,19 @@ classdef LayoutManager < handle
 		
 		function [h, p] = verticalBoxWithBoldLabel(parentHandle, str, varargin)
 			% VERTICALBOXWITHBOLDLABEL
+			%
+			% Inputs:
+			%	parentHandle 		Where the ui component is initialized
+			%	str 				Text for the label
+			%	varargin 			Inputs to uicontrol for 2nd component
+			% ------------------------------------------------------------
+
 			p = uix.VBox('Parent', parentHandle,...
 				'BackgroundColor', 'w');
 			h = uicontrol(p, 'Style', 'text', 'String', str, 'FontWeight', 'bold');
 			uicontrol(p, varargin{:});
-			set(p, 'Heights', [-0.75, 1]);
-		end
+			set(p, 'Heights', [-0.75, -1]);
+        end
 
 		function [h, p] = horizontalBoxWithBoldLabel(parentHandle, str, varargin)
 			% HORIZONTALBOXWITHBOLDLABEL

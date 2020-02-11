@@ -238,6 +238,9 @@ classdef (Abstract) BoundaryMarker < handle
 			data = readOData([obj.baseURL,...
 				'Structures?$filter=TypeID eq ' num2str(obj.TYPEID),... 
 				'&$select=ID']);
+            if isempty(data.value)
+                error('No boundary markers found!');
+            end
             value = cat(1, data.value{:});
             markerIDs = vertcat(value.ID);
             xyz = [];

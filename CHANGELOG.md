@@ -1,5 +1,27 @@
 # Changelog
 
+### 20200204
+- Added `util\plots\toggleAxes.m`, now `util\plots\hideAxes.m` only hides
+- Added `util\renders\mark3D.m` and phasing out `sbfsem.util.plot3.m`
+- Added `util\plots\view2D.m` for easy formatting of figures and axes for 2D renders
+
+### 20200203
+- Fixed title overlap in `util\import\getContributions.m`
+- Changed x-axis labels in `util\analysis\iplDepth.m` plot
+- Added single neuron option for DAE file export to `views\RenderApp.m`
+- New 2D scalebar (`sbfsem.ui.ScaleBar2.m`), replaced 3D scalebar in `views\RenderApp.m`
+
+### 20200202
+- Wrote histogram UI `sbfsem.ui.HistogramView` and implemented for dendrite diameter in `views\RenderApp.m`
+
+### 20200201
+- Improved axis limit UI in `views\RenderApp.m`
+
+### 20200131
+- Added enumeration to cell array converter: `util\enumStr.m`
+- Source list in major functions now calls `sbfsem.builtin.Volumes.m`
+- Removed unused code: `util\import\getVikingURL.m`
+
 ### 20200121
 - Account for secretly directed "undirected" Touch synapses similar to Unknown synapses (`util\network\getLinkedNeurons.m`)
 

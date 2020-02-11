@@ -237,7 +237,11 @@ classdef StructureTypes
                 case VikingStructureTypes.GolgiPlaque
                     obj = StructureTypes.GolgiPlaque;
                 case VikingStructureTypes.GolgiNormal
-                    obj = StructureTypes.GolgiNormal;
+					obj = StructureTypes.GolgiNormal;
+				case VikingStructureTypes.INLIPLBoundary
+					obj = StructureTypes.INLIPLBoundary;
+				case VikingStructureTypes.IPLGCLBoundary
+    				obj = StructureTypes.IPLGCLBoundary;
                 case VikingStructureTypes.Loop
                     obj = StructureTypes.Loop;
                 case VikingStructureTypes.Lysosome

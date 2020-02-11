@@ -15,6 +15,7 @@ function volumeScale = loadCachedVolumeScale(source)
     %
     % History:
     %   25Nov2018 - SSP
+    %   31Jan2020 - SSP - Added 3 new Marc lab volumes
     % ---------------------------------------------------------------------
 
     source = validateSource(source);
@@ -26,6 +27,6 @@ function volumeScale = loadCachedVolumeScale(source)
             volumeScale = [5, 5, 50];
         case 'NeitzTemporalMonkey'
             volumeScale = [7.5, 7.5, 70];
-        case {'MarcRC1', 'RC1'}
+        otherwise
             volumeScale = [2.18 2.18 90];
     end

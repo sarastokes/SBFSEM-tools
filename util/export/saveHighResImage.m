@@ -1,4 +1,4 @@
-function saveHighResImage(fh, filePath, fileName)
+function saveHighResImage(figureHandle, filePath, fileName)
 	% SAVEHIGHRESIMAGE
 	%
 	% Inputs:
@@ -7,11 +7,20 @@ function saveHighResImage(fh, filePath, fileName)
 	%	fname 		file name
 	% -------------------------------------------------------
 
-	if nargin < 3
-		filePath = uiputfile();
-	else
-		filePath = [filePath, filesep, fileName];
-	end
+    if nargin < 3
+        filePath = uiputfile(...
+            {'*.png', '*.tif', '*.jpg'},...
+            'Save image');
+        if isempty(filePath)
+            return;
+        end
+    else
+        filePath = [filePath, filesep, fileName];
+    end
+    
+    if nargin < 1
+        figureHandle = gcf;
+    end
 
 	switch fileName(end-2:end)
 		case {'peg', 'jpg'}
@@ -22,6 +31,6 @@ function saveHighResImage(fh, filePath, fileName)
 			fileExt = '-dpng';
 	end
 
-	set(gcf, 'InvertHardcopy', 'off');
+	set(figureHandle, 'InvertHardcopy', 'off');
 
-	print(gcf, filePath, fileExt, '-r600');
+	print(figureHandle, filePath, fileExt, '-r600');

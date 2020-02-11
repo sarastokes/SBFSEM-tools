@@ -15,6 +15,7 @@ function T = getContributions(ID, source, visualize)
     % History:
     %   19Jul2018 - SSP
     %   19Nov2018 - SSP - Removed synapse option
+    %   3Feb2020 - SSP - Fixed title overlap
     % ---------------------------------------------------------------------
     
     if nargin < 3
@@ -38,9 +39,12 @@ function T = getContributions(ID, source, visualize)
     end
     
     if visualize
-        figure();
+        ax = axes('Parent', figure('Name', sprintf('c%u Users', ID)));
         pie(n, ones(size(n)), groupNames);
-        title(sprintf('c%u - %u annotations', ID, nAnnotations));
+        h = title(ax, sprintf('c%u - %u annotations', ID, nAnnotations));
+        % Title always overlaps with labels
+        ax.Position(2) = ax.Position(2) - 0.05;
+        h.Position(2) = h.Position(2) + 0.1;
         if numel(groupNames) > 1
             colormap(pmkmp(numel(groupNames), 'cubicl'));
         end

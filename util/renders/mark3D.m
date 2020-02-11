@@ -1,9 +1,12 @@
-function h = plot3(xyz, varargin)
-    % PLOT3
+function h = mark3D(xyz, varargin)
+    % MARK3D
     %
     % Description:
     %   Wrapper for Matlab plot3 function with SBFSEM-tools keys, defaults 
     %   and auto splitting of XYZ inputs for fast command line use
+    %
+    % Syntax:
+    %   h = mark3D(xyz, varargin);
     %
     % Inputs:
     %   xyz         X, Y and Z data for plot3 (N x 3)
@@ -17,7 +20,7 @@ function h = plot3(xyz, varargin)
     %   h           Handle to created line object
     %
     % See also:
-    %   PLOT3, SYNAPSEMARKER, SYNAPSESPHERE, MARK3D
+    %   PLOT3, SYNAPSEMARKER, SYNAPSESPHERE
     %
     % History:
     %   15Nov2019 - SSP

@@ -73,6 +73,7 @@ classdef DendriteDiameter < sbfsem.analysis.NeuronAnalysis
             addParameter(ip, 'nbins', [], @isnumeric);
             addParameter(ip, 'search', [2 5], @isvector);
             addParameter(ip, 'includeSoma', true, @islogical);
+            addParameter(ip, 'plot', true, @islogical);
             parse(ip, varargin{:});
             nbins = ip.Results.nbins;
             searchBins = ip.Results.search(1):ip.Results.search(2);
@@ -165,7 +166,9 @@ classdef DendriteDiameter < sbfsem.analysis.NeuronAnalysis
             obj.report('includeSoma', ip.Results.includeSoma);
             
             % Plot the results
-            obj.plot('includeSoma', ip.Results.includeSoma);
+            if ip.Results.plot
+                obj.plot('includeSoma', ip.Results.includeSoma);
+            end
         end
 
         function report(obj, varargin)

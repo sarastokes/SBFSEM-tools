@@ -20,7 +20,7 @@ classdef RenderApp < handle
     %   RenderApp('i', true);
     %
     % See also:
-    %   GRAPHAPP, IMAGESTACKAPP, IPLDEPTHAPP, NEURON
+    %   GRAPHAPP, IPLDEPTHAPP, NEURON
     %
     % History:
     %   5Jan2018 - SSP
@@ -32,6 +32,7 @@ classdef RenderApp < handle
     %   6Nov2018 - SSP - Color by stratification added
     %   19Nov2018 - SSP - Last modified location added
     %   16Dec2018 - SSP - Added flag for running in parallels on Mac
+    %   1Feb2020 - SSP - Rearranged UI, improved axes limits control
     % ---------------------------------------------------------------------
 
     properties (SetAccess = private)
@@ -75,9 +76,9 @@ classdef RenderApp < handle
         SYNAPSES = false;
         LAST_MODIFIED_CIRCLE_RADIUS = 1/30;
         BKGD_COLOR = [0.96, 0.98, 1];
-        SOURCES = {'NeitzTemporalMonkey', 'NeitzInferiorMonkey', 'NeitzNasalMonkey', 'RC1'};
+        SOURCES = enumStr('sbfsem.builtin.Volumes');
         CACHE = [fileparts(fileparts(mfilename('fullname'))), filesep, 'data'];
-        COLORMAPS = {'haxby', 'parula', 'spectral', 'hsv', 'antijet', 'rdylgn',...
+        COLORMAPS = {'spectral', 'haxby', 'parula', 'hsv', 'antijet', 'rdylgn',...
             'cubicl', 'viridis', 'redblue', 'bone', 'stepseq25', 'isolum (colorblind)',...
             'ametrine (colorblind)'};
     end
@@ -125,7 +126,7 @@ classdef RenderApp < handle
             end
 
             obj.neurons = containers.Map();
-            if ~ismember(obj.source, {'NeitzNasalMonkey', 'RC1'})
+            if ~ismember(obj.source, {'NeitzNasalMonkey', 'RC1', 'RPC1'})
                 obj.iplBound.GCL = sbfsem.builtin.GCLBoundary(obj.source, true);
                 obj.iplBound.INL = sbfsem.builtin.INLBoundary(obj.source, true);
             else
@@ -198,15 +199,21 @@ classdef RenderApp < handle
                 % Update the plot after each neuron imports
                 drawnow;
             end
+            obj.matchAxes();
         end
         
         function onAddNeuronJSON(obj, ~, ~)
             % ADDNEURONJSON  Load JSON neuron
             [fName, fPath] = uigetfile('.json',...
                 'Choose JSON file(s)', 'MultiSelect', 'on');
+            if isequal(fName, 0) && isequal(fPath, 0)
+                return
+            end
+            
             if ischar(fName)
                 fName = {fName};
             end
+            
             for i = 1:numel(fName)
                 jsonFile = fName{i};
                 newID = str2double(jsonFile(2:end-4));
@@ -358,6 +365,7 @@ classdef RenderApp < handle
                         'Visible', 'on');
                 end
             end
+            obj.matchAxes();
         end
         
         function onShowLastModified(obj, ~, evt)
@@ -503,6 +511,8 @@ classdef RenderApp < handle
 
         function onSetLimits(obj, src, evt)
             % ONSETLIMITS
+            assignin('base', 'evt', evt);
+            assignin('base', 'src', src);
             data = src.Data;
             ind = evt.Indices;
             % Whether to use custom or auto axis limits
@@ -514,9 +524,11 @@ classdef RenderApp < handle
             elseif ind(2) == 1
                 axis(obj.ax, 'tight');
                 newLimit = get(obj.ax, str);
-                data{ind(1), 2} = newLimit(1);
-                data{ind(1), 3} = newLimit(2);
+                % Round to avoid decimal places in UI
+                data{ind(1), 2} = floor(newLimit(1));
+                data{ind(1), 3} = ceil(newLimit(2));
                 src.Data = data;
+                obj.matchAxes();
             end
         end
 
@@ -628,15 +640,17 @@ classdef RenderApp < handle
                 if isempty(obj.vessels)
                     obj.updateStatus('Loading vessels...');
                     obj.vessels = sbfsem.builtin.Vasculature(obj.source);
-                    obj.vessels.render(obj.ax);
+                    obj.vessels.render(obj.ax, 'FaceAlpha', 0.6);
+                    % Apply material setting
+                    materialBox = findobj(obj.figureHandle, 'Tag', 'Material');
+                    material(obj.getBloodVessels(),... 
+                        materialBox.String{materialBox.Value});
                     obj.updateStatus('');
                 else
-                    set(findall(obj.figureHandle, 'Tag', 'BloodVessel'),...
-                        'Visible', 'on');
+                    set(obj.getBloodVessels(), 'Visible', 'on');
                 end
             else
-                set(findall(obj.figureHandle, 'Tag', 'BloodVessel'),...
-                    'Visible', 'off');
+                set(obj.getBloodVessels(), 'Visible', 'off');
             end
         end
 
@@ -646,7 +660,7 @@ classdef RenderApp < handle
 
             switch src.String
                 case 'Add ScaleBar'
-                    obj.scaleBar = sbfsem.ui.ScaleBar3(obj.ax);
+                    obj.scaleBar = sbfsem.ui.ScaleBar2(obj.ax);
                     src.String = 'Remove ScaleBar';
                 case 'Remove ScaleBar'
                     obj.scaleBar.delete();
@@ -717,16 +731,18 @@ classdef RenderApp < handle
             % ONGETDENDRITEDIAMETER  Show dendrite diameter histogram
             % See also: sbfsem.analysis.DendriteDiameter
             neuron = obj.evt2neuron(evt);
-            x = sbfsem.analysis.DendriteDiameter(neuron,...
-                'includeSoma', false);
+            nodes = neuron.getCellNodes();
+            sbfsem.ui.HistogramView(nodes.Rum);
         end
         
         function onGetDendriteDiameterNoSoma(obj, ~, evt)
             % ONGETDENDRITEDIAMETERNOSOMA  As above, but including soma
             % See also: sbfsem.analysis.DendriteDiameter
             neuron = obj.evt2neuron(evt);
-            x = sbfsem.analysis.DendriteDiameter(neuron,...
-                'includeSoma', true);
+            nodes = neuron.getCellNodes();
+            somaRadius = neuron.getSomaSize(false);
+            nodes(nodes.Rum > 0.8*somaRadius, :) = [];
+            sbfsem.ui.HistogramView(nodes.Rum);
         end
 
         function onGetContributions(obj, ~, evt)
@@ -745,7 +761,7 @@ classdef RenderApp < handle
             if ischar(neuronColor)
                 neuronColor = 'k';
             end
-            iplDepth(neuron, 'numBins', 25, 'includeSoma', true,...
+            iplDepth(neuron, 'numBins', 30, 'includeSoma', true,...
                      'Color', neuronColor);
             obj.updateStatus('');
         end
@@ -756,6 +772,16 @@ classdef RenderApp < handle
 
         function onExportImage(obj, ~, evt)
             % ONEXPORTIMAGE  Save renders as an image
+            
+            % Open a save dialog to get path, name and extension
+            [fName, fPath] = obj.uiputfile(...
+                {'*.png'; '*.tif'}, 'Save image');
+
+            % Catch when user cancels out of save dialog
+            if isequal(fName, 0) && isequal(fPath, 0)
+                return
+            end
+            obj.updateStatus('Exporting...');
 
             % Export figure to new window without uicontrols
             newAxes = obj.exportFigure();
@@ -769,43 +795,36 @@ classdef RenderApp < handle
                 end
             end
 
-            % Open a save dialog to get path, name and extension
-            [fName, fPath] = obj.uiputfile(...
-                {'*.png'; '*.tif'},...
-                'Save image as a PNG or TIFF');
-
-            % Catch when user cancels out of save dialog
-            if isempty(fName) || isempty(fPath)
-                return;
-            end
-
-            % Save by extension type
-            if ~contains(fName, 'png')
-                exten = '-dpng';
-            else
-                exten = '-dtiffn';
-            end
-            if contains(evt.Source.Text, 'high res')
-                print(newAxes.Parent, [fPath, fName], exten, '-r600');
-            else
-                print(newAxes.Parent, [fPath, fName], exten, '-r300');
-            end
+            saveHighResImage(newAxes.Parent, fPath, fName);
 
             fprintf('Saved as: %s\n', [fPath, fName]);
             delete(newAxes.Parent);
+            obj.updateStatus('');
         end
 
-        function onExportCollada(obj, ~, ~)
+        function onExportColladaScene(obj, ~, ~)
             % ONEXPORTCOLLADA  Export the scene as a .dae file
             % See also: EXPORTSCENEDAE
 
             % Prompt user for file name and path
             [fName, fPath] = obj.uiputfile('*.dae', 'Save as DAE file');
             % Catch when user cancels out of save dialog
-            if isempty(fName) || isempty(fPath)
+            if isequal(fName, 0) || isequal(fPath, 0)
                 return;
             end
             exportSceneDAE(obj.ax, [fPath, fName]);
+        end
+
+        function onExportJSON(obj, ~, evt)
+            % ONEXPORTJSON
+
+            neuron = obj.evt2neuron(evt);
+            fPath = uigetdir();
+            if isempty(fPath)
+                return;
+            end
+            x = sbfsem.io.JSON(obj.source, fPath);
+            x.export(neuron);
         end
 
         function onExportSTL(obj, ~, evt)
@@ -829,10 +848,18 @@ classdef RenderApp < handle
             % ONEXPORTDAE  Export neuron as .dae file
             neuron = obj.evt2neuron(evt);
             [fName, fPath] = obj.uiputfile('*.dae', 'Save as .dae file');
-            if isempty(fName) || isempty(fPath)
+            if isequal(fName, 0) || isequal(fPath, 0)
                 return;
             end
-            neuron.dae([fPath, fName]);
+            newAxes = obj.exportFigure();
+            patches = findall(newAxes, 'Type', 'patch');
+            for i = 1:numel(patches)
+                if ~strcmp(patches(i).Tag, evt.Source.Tag)
+                    delete(patches(i));
+                end
+            end
+            exportSceneDAE(newAxes, [fPath, fName]);
+            delete(newAxes.Parent);
         end
 
         function onExportFigure(obj, ~, evt)
@@ -992,18 +1019,18 @@ classdef RenderApp < handle
             uimenu(e, 'Label', 'Save as image',...
                 'Tag', obj.id2tag(ID),...
                 'Callback', @obj.onExportImage);
-            uimenu(e, 'Label', 'Save as image (high res)',...
+            uimenu(e, 'Label', 'Save as JSON',...
                 'Tag', obj.id2tag(ID),...
-                'Callback', @obj.onExportImage);
+                'Callback', @obj.onExportJSON);
             uimenu(e, 'Label', 'Save as .stl file',...
                 'Tag', obj.id2tag(ID),...
                 'Callback', @obj.onExportSTL);
             uimenu(e, 'Label', 'Save as .swc file',...
                 'Tag', obj.id2tag(ID),...
                 'Callback', @obj.onExportSWC);
-            % uimenu(e, 'Label', 'Save as .dae file',...
-            %     'Tag', obj.id2tag(ID),...
-            %     'Callback', @obj.onExportDAE);
+            uimenu(e, 'Label', 'Save as .dae file',...
+                'Tag', obj.id2tag(ID),...
+                'Callback', @obj.onExportDAE);
             
             set(newNode, 'UIContextMenu', c);
         end
@@ -1018,6 +1045,8 @@ classdef RenderApp < handle
             obj.IDs(obj.IDs == ID) = [];
             % Delete the patch from the render
             delete(findall(obj.ax, 'Tag', obj.id2tag(ID)));
+            % Reset axes limits not set by user
+            obj.matchAxes();
         end
     end
 
@@ -1068,6 +1097,16 @@ classdef RenderApp < handle
             % EVT2NEURON  Get neuron object from ID in event tag
             neuron = obj.neurons(evt.Source.Tag);
         end
+        
+        function vesselHandles = getBloodVessels(obj)
+            vesselHandles = [];
+            if ~isempty(obj.vessels)
+                for i = 1:numel(obj.vessels.IDs)
+                    vesselHandles = cat(1, vesselHandles,... 
+                        findobj(obj.ax, 'Tag', obj.id2tag(obj.vessels.IDs(i))));
+                end
+            end
+        end
 
         function updateStatus(obj, str)
             % UPDATESTATUS  Update status text
@@ -1086,7 +1125,12 @@ classdef RenderApp < handle
                 str = '';
             end
             if ~isempty(obj.saveDir) || obj.saveDir ~= 0
-                cd(obj.saveDir);
+                % The saved directory can be deleted or become corrupted
+                try
+                    cd(obj.saveDir);
+                catch
+                    obj.saveDir = [];
+                end
             end
             [fName, fPath] = uiputfile(exten, str);
             if ~isempty(fPath)
@@ -1096,14 +1140,20 @@ classdef RenderApp < handle
         
         function matchAxes(obj)
             % MATCHAXES  Reset axes limits to user specified values
+            axis(obj.ax, 'tight'); drawnow;
             h = findobj(obj.figureHandle, 'Type', 'uitable');
             data = get(h, 'Data');
             names = get(h, 'RowName');
             for i = 1:3
-                if data{i,1}
-                    set(obj.ax, [names{i}, 'Lim'], [data{i,2}, data{i,3}]);
+                if ~data{i,1}
+                    newLimit = get(obj.ax, [names{i}, 'Lim']);
+                    % Round to avoid extra decimals in UI
+                    data{i, 2} = floor(newLimit(1));
+                    data{i, 3} = ceil(newLimit(2));
                 end
+                set(obj.ax, [names{i}, 'Lim'], [data{i,2}, data{i,3}]);
             end
+            set(h, 'Data', data); drawnow;
         end
 
         function newAxes = exportFigure(obj)
@@ -1155,7 +1205,7 @@ classdef RenderApp < handle
                 'Spacing', 5, 'Padding', 5);
             obj.createNeuronTab(uiLayout);
             
-            if ~ismember(obj.source, {'RC1', 'NeitzNasalMonkey'})
+            if ~ismember(obj.source, {'RC1', 'RPC1', 'NeitzNasalMonkey'})
                 contextLayout = uix.VBox(...
                     'Parent', uitab(tabGroup, 'Title', 'Context'),...
                     'BackgroundColor', obj.BKGD_COLOR,...
@@ -1181,12 +1231,15 @@ classdef RenderApp < handle
                 'BackgroundColor', 'w');
             set(findall(obj.figureHandle, 'Style', 'popup'),...
                 'BackgroundColor', 'w');
+            
+            obj.figureHandle.Position = obj.figureHandle.Position + [0, -50, 0, 50];
         end
 
         function createAxes(obj, parentHandle)
             % CREATEAXES  Create the render plot axes
 
-            obj.ax = axes('Parent', parentHandle);
+            obj.ax = axes('Parent', parentHandle,...
+                'FontWeight', 'normal');
             hold(obj.ax, 'on');
 
             % Set the axis parameters
@@ -1196,7 +1249,7 @@ classdef RenderApp < handle
 
             % Set colormap parameters
             shading(obj.ax, 'interp');
-            colormap(obj.ax, haxby(256));
+            colormap(obj.ax, othercolor('Spectral10', 256));
             set(obj.ax, 'CLimMode', 'manual', 'CLim', [0, 1]);
 
             % Set the lighting
@@ -1282,17 +1335,33 @@ classdef RenderApp < handle
                 'TooltipString', 'Add GCL Boundary',...
                 'Tag', 'GCL',...
                 'Callback', @obj.onAddBoundary);
-            uicontrol(contextLayout,...
-                'Style', 'check',...
-                'String', '915 Gap',...
-                'TooltipString', 'Add 915-936 gap',...
-                'Callback', @obj.onAddGap);
+            heights = [25, 30, 30];
+            if strcmp(obj.source, 'NeitzInferiorMonkey')
+                uicontrol(contextLayout,...
+                    'Style', 'check',...
+                    'String', '915 Gap',...
+                    'TooltipString', 'Add 915-936 gap',...
+                    'Callback', @obj.onAddGap);
+                heights = [heights, 30];
+            end
             uix.Empty('Parent', contextLayout,...
                 'BackgroundColor', obj.BKGD_COLOR);
-            if strcmp(obj.source, 'NeitzTemporalMonkey')
-                uicontrol(contextLayout, 'Style', 'text',...
-                    'String', 'No cones for TemporalMonkey');
-            else
+            uicontrol(contextLayout,...
+                'Style', 'text', 'String', 'Extras:',...
+                'FontWeight', 'bold');
+            uicontrol(contextLayout, ...
+                'Style', 'check', 'String', 'Blood Vessels', ...
+                'TooltipString', 'Import blood vessels', ...
+                'Callback', @obj.onAddBloodVessels);
+            uicontrol(contextLayout, ...
+                'Style', 'push', ...
+                'String', 'Add ScaleBar', ...
+                'Callback', @obj.onAddScaleBar);
+            uix.Empty('Parent', contextLayout, ...
+                'BackgroundColor', obj.BKGD_COLOR);
+            heights = [heights, -0.5, 25, 30, 30, -0.5];
+
+            if strcmp(obj.source, 'NeitzInferiorMonkey')
                 uicontrol(contextLayout,...
                     'Style', 'text', 'String', 'Cone Mosaic:',...
                     'FontWeight', 'bold');
@@ -1305,22 +1374,18 @@ classdef RenderApp < handle
                     'Tag', 'addLM',...
                     'Callback', @obj.onAddCones);
                 uicontrol(contextLayout,...
-                    'Style', 'check', 'String', 'Unknown',...
+                    'Style', 'check', 'String', 'Unknown cones',...
                     'Tag', 'addU',...
                     'TooltipString', 'Add cones of unknown type',...
                     'Callback', @obj.onAddCones);
-                uicontrol(contextLayout,...
-                    'Style', 'check', 'String', 'Blood Vessels',...
-                    'TooltipString', 'Import blood vessels',...
-                    'Callback', @obj.onAddBloodVessels);
                 LayoutManager.verticalBoxWithLabel(contextLayout, 'Transform:',...
                     'Style', 'popup',...
                     'String', {'Viking', 'Local'},...
-                    'TooltipString', 'Change transform (MUST REIMPORT NEURONS)',...
+                    'TooltipString', 'Change transform (MUST REIMPORT EXISTING NEURONS)',...
                     'Callback', @obj.onSetTransform);
-                set(contextLayout, 'Heights',...
-                    [-0.5, -1, -1, -1, -1, -0.5, -1, -1, -1, -1, -1.2]);
+                heights = [heights, 25, 30, 30, 30, 40];
             end
+            set(contextLayout, 'Heights', heights);
         end
 
         function createPlotTab(obj, ctrlLayout)
@@ -1354,7 +1419,16 @@ classdef RenderApp < handle
                 'Callback', @obj.onToggleLights);
             set(g, 'Heights', [25, 25], 'Widths', [-1, -1]);
             
-            uix.Empty('Parent', ctrlLayout,...
+            % Render material control
+            LayoutManager.horizontalBoxWithLabel(...
+                ctrlLayout, 'Material:', ...
+                'Style', 'popup', ...
+                'String', {'default', 'dull', 'shiny', 'metal'}, ...
+                'Value', 2,...
+                'TooltipString', 'Render material', ...
+                'Tag', 'Material', ...
+                'Callback', @obj.onEditMaterial);
+            uix.Empty('Parent', ctrlLayout, ...
                 'BackgroundColor', obj.BKGD_COLOR);
             
             % Colormap layout
@@ -1399,17 +1473,6 @@ classdef RenderApp < handle
             uix.Empty('Parent', ctrlLayout,...
                 'BackgroundColor', obj.BKGD_COLOR);
 
-            % Render material control
-            LayoutManager.horizontalBoxWithLabel(...
-                ctrlLayout, 'Material:',...
-                'Style', 'popup',...
-                'String', {'default', 'dull', 'shiny', 'metal'},...
-                'TooltipString', 'Render material',...
-                'Tag', 'Material',...
-                'Callback', @obj.onEditMaterial);
-            uix.Empty('Parent', ctrlLayout,...
-                'BackgroundColor', obj.BKGD_COLOR);
-
             % View rotation control
             uicontrol(ctrlLayout,...
                 'Style', 'text', 'String', 'View points:',...
@@ -1431,22 +1494,18 @@ classdef RenderApp < handle
 
             % Axis limit control
             uicontrol(ctrlLayout,...
-                'Style', 'text', 'String', 'Axis Limits',...
+                'Style', 'text', 'String', 'Axis Limits:',...
                 'FontWeight', 'bold');
             uitable(ctrlLayout,...
                 'Data', {false, 0, 1; false, 0, 1; false, 0, 1},...
                 'ColumnEditable', true,...
-                'ColumnWidth', {20, 35, 35},...
+                'ColumnWidth', {35, 38, 38},...
                 'RowName', {'X', 'Y', 'Z'},...
-                'ColumnName', {'', 'Min', 'Max'},...
+                'ColumnName', {'Hold', 'Min', 'Max'},...
                 'CellEditCallback', @obj.onSetLimits);
-            uicontrol(ctrlLayout,...
-                'Style', 'push',...
-                'String', 'Add ScaleBar',...
-                'Callback', @onAddScaleBar);
 
             set(ctrlLayout, 'Heights',...
-                [20, -1.75, -0.05, 20, 25, -1.75, -0.05, 25, -0.05, 20, 30, -0.05, 20, -2.6, 30]);
+                [18, 55, 25, -0.05, 20, 20, 60, -0.05, 18, 30, -0.05, 18, 75]);
         end
 
         function createToolbar(obj)
@@ -1461,11 +1520,11 @@ classdef RenderApp < handle
             uimenu(mh.export, 'Label', 'Export as image',...
                 'Tag', 'GroupFcn',...
                 'Callback', @obj.onExportImage);
-            uimenu(mh.export, 'Label', 'Export as image (high res)',...
-                'Tag', 'GroupFcn',...
-                'Callback', @obj.onExportImage);
+            %uimenu(mh.export, 'Label', 'Export as image (high res)',...
+            %    'Tag', 'GroupFcn',...
+            %    'Callback', @obj.onExportImage);
             uimenu(mh.export, 'Label', 'Export as COLLADA',...
-                'Callback', @obj.onExportCollada);
+                'Callback', @obj.onExportColladaScene);
             uimenu(mh.export, 'Label', 'Send neurons to workspace',...
                 'Tag', 'GroupFcn',...
                 'Callback', @obj.onExportNeuron);
@@ -1477,9 +1536,9 @@ classdef RenderApp < handle
             uimenu(mh.help, 'Label', 'Neuron analysis',...
                 'Tag', 'neuron_info',...
                 'Callback', @obj.openHelpDlg);
-            uimenu(mh.help, 'Label', 'Annotation import',...
-                'Tag', 'import',...
-                'Callback', @obj.openHelpDlg);
+            % uimenu(mh.help, 'Label', 'Annotation import',...
+            %     'Tag', 'import',...
+            %     'Callback', @obj.openHelpDlg);
             uimenu(mh.help, 'Label', 'Scalebar',...
                 'Tag', 'scalebar',...
                 'Callback', @obj.openHelpDlg);

@@ -1,14 +1,31 @@
 function url = getServiceRoot(source)
+	% GETSERVICEROOT
+	%
+	% Description:
+	%	Get OData root
+	%
+	% Syntax:
+	%	url = getServiceRoot(source)
+	%
+	% Input:
+	%	source 			Volume name or abbreviation
+	%
+	% Output:
+	%	url 			URL ending in /OData/
+	%
+	% See also:
+	%	VALIDATESOURCE, SBFSEM.BUILTIN.VOLUMES
+	%
+	% History:
+	%	17Dec2017 - SSP
+	%	10Dec2019 - SSP - Added NasalMonkey
+	%	30Jan2020 - SSP - Simplified
+    % ---------------------------------------------------------------------
 
 	source = validateSource(source);
 
-	switch source
-		case 'NeitzInferiorMonkey'
-			url = 'http://websvc1.connectomes.utah.edu/NeitzInferiorMonkey/OData/';
-        case 'NeitzNasalMonkey'
-            url = 'http://websvc1.connectomes.utah.edu/NeitzNM/OData/';
-		case 'NeitzTemporalMonkey'
-			url = 'http://websvc1.connectomes.utah.edu/NeitzTemporalMonkey/OData/';
-		case 'RC1'
-			url = 'http://websvc1.connectomes.utah.edu/RC1/OData/';
+	if strcmp(source, 'NeitzNasalMonkey')
+		url = 'http://websvc1.connectomes.utah.edu/NeitzNM/OData/';
+	else
+		url = ['http://websvc1.connectomes.utah.edu/', source, '/OData/'];
 	end
