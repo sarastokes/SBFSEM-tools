@@ -21,10 +21,11 @@ function d = tortuosity(neuron, locationA, locationB, varargin)
 	%	d 			Tortuosity metric
 	%
     % See also:
-    %   TUTORIAL_TORTUOSITY
+    %   TUTORIAL_TORTUOSITY, SBFSEM.CORE.STRUCTUREAPI/GETBRANCHNODES
     %
 	% History:
 	%	26Sept2018 - SSP
+    %   13Feb2020 - SSP Edited for sbfsem.core.StructureAPI/getBranchNodes
 	% ---------------------------------------------------------------------
 
 	assert(isa(neuron, 'sbfsem.core.StructureAPI'),...
@@ -38,30 +39,9 @@ function d = tortuosity(neuron, locationA, locationB, varargin)
 	plotme = ip.Results.Plot;
 	ndim = ip.Results.Dim;
 
-	% Annotations as a digraph
-	[G, nodeIDs] = graph(neuron, 'directed', false);
-
-	% Convert from location ID to graph node ID
-	nodeA = find(nodeIDs == locationA);
-	nodeB = find(nodeIDs == locationB);
-
-	% Get the path between the nodes
-	nodePath = shortestpath(G, nodeA, nodeB);
-
-	% Misconnected nodes are common, check for them
-	if isempty(nodePath)
-		error('Nodes %u and %u are not connected!', nodeA, nodeB);
-	else
-		fprintf('Analyzing a %u node path between %u and %u\n',...
-			numel(nodePath), nodeA, nodeB);
-	end
-
-	% Get the XYZ location for each node
-	xyz = zeros(numel(nodePath), 3);
-	for i = 1:numel(nodePath)
-		locationID = nodeIDs(nodePath(i));
-		xyz(i, :) = neuron.nodes{neuron.nodes.ID == locationID, 'XYZum'};
-	end
+    % Get the annotations in the branch and pull the radius
+	branchNodes = neuron.getBranchNodes(locationA, locationB);
+    xyz = branchNodes.XYZum;
 
 	% The actual branch distance / start and end branch distance
 	% Basically deviation from a straight line drawn between the starting

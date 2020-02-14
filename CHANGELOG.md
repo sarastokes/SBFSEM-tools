@@ -1,5 +1,14 @@
 # Changelog
 
+### 20200213
+- Added `util\analyses\singleDendriteStratification.m`
+- Consolidated commonly used code for single dendrite analysis:
+    - Added `sbfsem.core.StructureAPI\getBranchNodes.m`
+    - Added `util\analyses\createStatsStructure.m`
+
+### 20200211
+- Added TypeID query and table output to `sbfsem.io.OData\getUserLastStructures.m`
+
 ### 20200204
 - Added `util\plots\toggleAxes.m`, now `util\plots\hideAxes.m` only hides
 - Added `util\renders\mark3D.m` and phasing out `sbfsem.util.plot3.m`

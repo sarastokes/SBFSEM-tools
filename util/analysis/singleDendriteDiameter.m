@@ -41,6 +41,7 @@ function radii = singleDendriteDiameter(neuron, locationA, locationB, varargin)
     %   2Mar2019 - SSP
     %   29May2019 - SSP - Added stats report to the command line
     %   22Jun2019 - SSP - Errors refer to location ID now, not node number
+    %   13Feb2019 - SSP - Added in sbfsem.core.StructureAPI/getBranchNodes
     % ---------------------------------------------------------------------
     
     assert(isa(neuron, 'sbfsem.core.StructureAPI'),...
@@ -65,31 +66,9 @@ function radii = singleDendriteDiameter(neuron, locationA, locationB, varargin)
     binLocations = ip.Results.BinLocations;
     numBins = ip.Results.NumBins;
 
-    % Annotations as a digraph
-    [G, nodeIDs] = graph(neuron, 'directed', false);
-
-    % Convert from location ID to graph node ID
-    nodeA = find(nodeIDs == locationA);
-    nodeB = find(nodeIDs == locationB);
-
-	% Get the path between the nodes
-	nodePath = shortestpath(G, nodeA, nodeB);
-    
-    % Misconnected nodes are common, check for them
-    if isempty(nodePath)
-        error('SBFSEM:SINGLEDENDRITEDIAMETER',...
-            'Nodes %u and %u are not connected!', locationA, locationB);
-    else
-        fprintf('Analyzing a %u node path between %u and %u\n',...
-            numel(nodePath), locationA, locationB);
-    end
-    
-    % Get the radius of each node
-    radii = zeros(numel(nodePath), 1);
-    for i = 1:numel(nodePath)
-        locationID = nodeIDs(nodePath(i));
-        radii(i) = neuron.nodes{neuron.nodes.ID == locationID, 'Rum'};
-    end
+    % Get the annotations in the branch and pull the radius
+    branchNodes = neuron.getBranchNodes(locationA, locationB);
+    radii = branchNodes.Rum;
 
     if ip.Results.ExcludeSoma
         largestRadius = max(radii);

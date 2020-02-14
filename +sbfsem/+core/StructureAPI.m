@@ -251,6 +251,36 @@ classdef (Abstract) StructureAPI < handle
                 edgeWeights = fastEuclid3d(aXYZ, bXYZ);
             end
         end
+
+        function nodes = getBranchNodes(obj, locationA, locationB)
+            % GETBRANCHNODES 
+
+
+            [G, nodeIDs] = graph(obj, 'directed', false);
+
+            % Convert from location ID to graph's node ID
+            nodeA = find(nodeIDs == locationA);
+            nodeB = find(nodeIDs == locationB);
+
+            % Get the path between the nodes
+            nodePath = shortestpath(G, nodeA, nodeB);
+
+            % Misconnected nodes are common, check for them
+            if isempty(nodePath)
+                error('SBFSEM:NEURON/GETBRANCHNODES', ...
+                    'Location IDs %u and %u are not connected!', locationA, locationB);
+            else
+                fprintf('Analyzing a %u node path between %u and %u\n',...
+                    numel(nodePath), locationA, locationB);
+            end
+
+            % Convert back from the graph's node IDs to location ID
+            locationIDs = nodeIDs(nodePath);
+
+            % Return only the 
+            [~, ~, ind] = intersect(locationIDs, obj.nodes.ID, 'stable');
+            nodes = obj.nodes(ind, :);
+        end
 	end
 
 	% Rendering methods

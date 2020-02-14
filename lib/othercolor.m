@@ -130,6 +130,9 @@ function c = othercolor(n,m)
 %
 %   Author: Joshua Atkins
 %   Date: March 1, 2011
+%
+% 11Feb2020 - Sara Patterson - changed 'cubic' to 'pchip' for interp1
+
 types = who('-file','colorData.mat');
 % if no colormap is choosen then display available colormaps
 if nargin < 1,
@@ -145,7 +148,7 @@ else
     if isempty(fieldnames(data))
         c = [];
     else
-        c = interp1(linspace(0,1,size(data.(n),1)),data.(n),linspace(0,1,m),'cubic');
+        c = interp1(linspace(0,1,size(data.(n),1)),data.(n),linspace(0,1,m),'pchip');
         c(c<0) = 0;
         c(c>1) = 1;
     end

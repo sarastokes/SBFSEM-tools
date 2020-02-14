@@ -195,7 +195,7 @@ classdef OData < handle
             data = cat(1, data.value{:});
         end
         
-        function data = getUserLastStructures(obj, username, numStructures)
+        function T = getUserLastStructures(obj, username, numStructures)
             % GETUSERLASTSTRUCTURES
             %
             % Input:
@@ -206,12 +206,14 @@ classdef OData < handle
             % -------------------------------------------------------------
             str = [getServiceRoot(obj.source), 'Structures?',...
                    '$filter=Username eq ''', username,...
-                   '''&$select=ID,ParentID&$orderby=LastModified desc'];
+                   '''&$select=ID,TypeID&$orderby=LastModified desc'];
             if nargin == 3
                 str = [str, '&$top=', num2str(numStructures)];
             end
             data = webread(str, obj.webOpt);
             data = cat(1, data.value{:});
+            T = table(vertcat(data.ID), vertcat(data.TypeID),...
+                'VariableNames', {'ID', 'TypeID'});
         end
         
         function str = getLabel(obj, ID)
