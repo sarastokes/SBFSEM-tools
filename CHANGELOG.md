@@ -1,5 +1,8 @@
 # Changelog
 
+### 20200218
+- Added `util\renders\annotationDotPlot.m`
+
 ### 20200213
 - Added `util\analyses\singleDendriteStratification.m`
 - Consolidated commonly used code for single dendrite analysis:
