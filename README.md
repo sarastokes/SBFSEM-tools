@@ -39,9 +39,9 @@ A full list of publications using SBFSEM-tools:
 * Request an invite to the [Slack workspace][slack] for tips and questions
 * Contact sarap44@uw.edu
 
-<img src="https://github.com/sarastokes/SBFSEM-tools/blob/master/docs/c6_render.png?raw=true" width=400>
-<img src="https://github.com/sarastokes/SBFSEM-tools/blob/master/docs/flatrender.png?raw=true" width="400">
-<img src="https://github.com/sarastokes/SBFSEM-tools/blob/master/docs/colorbystrata.png?raw=true" width="800">
+<p><img src="https://github.com/sarastokes/SBFSEM-tools/blob/master/docs/c6_render.png?raw=true"></p>
+<img src="https://github.com/sarastokes/SBFSEM-tools/blob/master/docs/flatrender.png?raw=true" width="350">
+<p><img src="https://github.com/sarastokes/SBFSEM-tools/blob/master/docs/colorbystrata.png?raw=true" width="750"></p>
 <img src="https://github.com/sarastokes/SBFSEM-tools/blob/master/docs/renderapp_hcs2.png?raw=true" width="400">
 <img src="https://github.com/sarastokes/SBFSEM-tools/blob/master/docs/c1441_graphapp.png?raw=true" width="400">
 

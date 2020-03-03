@@ -267,8 +267,8 @@ classdef (Abstract) StructureAPI < handle
 
             % Misconnected nodes are common, check for them
             if isempty(nodePath)
-                error('SBFSEM:NEURON/GETBRANCHNODES', ...
-                    'Location IDs %u and %u are not connected!', locationA, locationB);
+                error('Location IDs %u and %u are not connected!',... 
+                    locationA, locationB);
             else
                 fprintf('Analyzing a %u node path between %u and %u\n',...
                     numel(nodePath), locationA, locationB);
