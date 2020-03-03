@@ -1,5 +1,9 @@
 # Changelog
 
+### 20200303
+- Renamed `sbfsem.core.VikingStructureTypes` to `sbfsem.builtin.StructureTypes`.
+- Updated URLs and images in `README.md`.
+
 ### 20200218
 - Added `util\renders\annotationDotPlot.m`
 

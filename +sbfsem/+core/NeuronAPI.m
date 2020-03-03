@@ -275,7 +275,7 @@ classdef (Abstract) NeuronAPI < sbfsem.core.StructureAPI
             obj.checkSynapses();
             % Viking synapse names first
             [a, b] = findgroups(obj.synapses.TypeID);
-            b2 = sbfsem.core.VikingStructureTypes(b);
+            b2 = sbfsem.builtin.VikingStructureTypes(b);
             x = splitapply(@numel, obj.synapses.TypeID, a);
             fprintf('\n-------------------\nc%u synapses:', obj.ID);
             fprintf('\n-------------------\nViking synapse names:\n');

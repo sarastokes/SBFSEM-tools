@@ -211,7 +211,7 @@ classdef Neuron < sbfsem.core.NeuronAPI
                 obj.synapses.N = numSynapseNodes;
 
                 % Match the TypeID to the Viking StructureType
-                structures = sbfsem.core.VikingStructureTypes(obj.synapses.TypeID);
+                structures = sbfsem.builtin.VikingStructureTypes(obj.synapses.TypeID);
                 % Match to local StructureType
                 localNames = cell(numel(structures),1);
                 for i = 1:numel(structures)

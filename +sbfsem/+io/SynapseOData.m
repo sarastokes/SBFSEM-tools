@@ -212,7 +212,7 @@ classdef SynapseOData < sbfsem.io.OData
         function setStructureType(obj)
             % SETSTRUCTURETYPES  Match to TypeID the Viking StructureType
             
-            structures = sbfsem.core.VikingStructureTypes(obj.synapses.TypeID);
+            structures = sbfsem.builtin.VikingStructureTypes(obj.synapses.TypeID);
             % Match to local StructureType
             localNames = cell(numel(structures), 1);
             for i = 1:numel(structures)

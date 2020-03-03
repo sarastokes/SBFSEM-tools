@@ -168,10 +168,10 @@ classdef StructureTypes
 	methods (Static)
 		function obj = fromViking(vikingStructure, tags)
 			% FROMVIKING  Convert VikingStructureType to StructureType
-			assert(isa(vikingStructure, 'sbfsem.core.VikingStructureTypes'),...
+			assert(isa(vikingStructure, 'sbfsem.builtin.VikingStructureTypes'),...
 				'Input a Viking Structure Type');
 
-			import sbfsem.core.VikingStructureTypes;
+			import sbfsem.builtin.VikingStructureTypes;
 			import sbfsem.core.StructureTypes;
 
 			if nargin < 2 || isempty(tags)
