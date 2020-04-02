@@ -5,11 +5,12 @@ classdef Volumes < handle
     %   Standardizes frequently accessed volume features
     %
     % See also:
-    %   VALIDATESOURCE
+    %   VALIDATESOURCE, GETSERVICEROOT
     %
     % History:
     %   30Nov2018 - SSP
     %   9Dec2019 - SSP - Added NeitzNasalMonkey
+    %   31Jan2020 - SSP - Added 3 new Marc lab volumes
     % ---------------------------------------------------------------------
     
     enumeration
@@ -17,9 +18,21 @@ classdef Volumes < handle
         NeitzNasalMonkey
         NeitzTemporalMonkey
         MarcRC1
+        MarcRPC1
+        MarcRC2
+        MarcRPC2
+        DemoVolume
     end
     
     methods
+        function tf = isOData(obj)
+            if obj == sbfsem.builtin.Volumes.DemoVolume
+                tf = false;
+            else
+                tf = true;
+            end
+        end
+
         function url = getServiceRoot(obj)
             url = getServiceRoot(char(obj));
         end
@@ -35,10 +48,11 @@ classdef Volumes < handle
         
         function tf = hasBoundary(obj)
             % HASBOUNDARY  Whether IPL boundary markers exist
-            if obj == sbfsem.builtin.Volumes.MarcRC1 || obj.sbfsem.builtin.Volumes.NeitzNasalMonkey
-                tf = false;
-            else
+            import sbfsem.builtin.Volumes;
+            if obj == Volumes.NeitzTemporalMonkey || Volumes.NeitzInferiorMonkey || Volumes.MarcRPC1
                 tf = true;
+            else
+                tf = false;
             end
         end
     end
@@ -57,10 +71,13 @@ classdef Volumes < handle
                     obj = Volumes.NeitzTemporalMonkey;
                 case 'RC1'
                     obj = Volumes.MarcRC1;
-            end
-            
+                case 'RC2'
+                    obj = Volumes.MarcRC2;
+                case 'RPC1'
+                    obj = Volumes.MarcRPC1;
+                case 'RPC2'
+                    obj = Volumes.MarcRPC2;
+                end
         end
     end
-    
-    
 end

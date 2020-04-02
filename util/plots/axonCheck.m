@@ -3,6 +3,7 @@ function xy = axonCheck(neuron, dims)
 	%
 	%   13Aug2017 - SSP - created
     %   3Jan2017 - SSP - updated neuron methods
+    % ---------------------------------------------------------------------
     
     if nargin < 2
         dims = 2;

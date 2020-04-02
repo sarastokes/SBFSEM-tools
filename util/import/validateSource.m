@@ -14,6 +14,7 @@ function source = validateSource(source)
     %
     % History:
     %   9Dec2019 - SSP - Added Nasal volume
+    %   30Jan2020 - SSP - Added Marc lab volumes
     % ---------------------------------------------------------------------
     
    switch lower(source)
@@ -25,6 +26,12 @@ function source = validateSource(source)
             source = 'NeitzNasalMonkey';
         case {'rc1', 'marcrc1', 'r'}
             source = 'RC1';
+        case {'rpc1', 'marcrpc1'}
+            source = 'RPC1';
+        case {'rc2', 'marcrc2'}
+            source = 'RC2';
+        case {'rpc2', 'marcrpc2'}
+            source = 'RPC2';
         otherwise
             error('source not found!');
     end
