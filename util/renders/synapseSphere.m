@@ -41,7 +41,7 @@ function synapseSphere(neuron, synapse, varargin)
     % History:
     %   5Jan2018 - SSP
     %   28Feb2018 - SSP - Added synapse name to tag
-    %   
+    %   24Apr2020m - SSP - Edited input check to include FaceAlpha =1
     % ---------------------------------------------------------------------
     
     assert(isa(neuron, 'sbfsem.core.NeuronAPI'),...
@@ -69,7 +69,7 @@ function synapseSphere(neuron, synapse, varargin)
     addParameter(ip, 'FaceColor', rgb('light red'),...
         @(x) ischar(x) || isvector(x));
     addParameter(ip, 'FaceAlpha', 1,...
-        @(x) validateattributes(x, {'numeric'}, {'<',1, '>',0}));
+        @(x) validateattributes(x, {'numeric'}, {'<=',1, '>',0}));
     addParameter(ip, 'Tag', [], @ischar);
     parse(ip, varargin{:});
         

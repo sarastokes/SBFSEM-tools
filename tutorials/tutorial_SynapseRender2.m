@@ -1,11 +1,14 @@
-%% 20190717
 % Synapse Sphere tutorial (brief version, just essential info) 
-% --
+%
+% History:
+%   17Jul2019 - SSP 
+%   24Apr2020 - SSP - Increased synapse sizes, changed colors
+% -------------------------------------------------------------------------
 
 % First import the neuron with synapses
 c121 = Neuron(121, 't', true);
 % and render
-c121.render();
+c121.render('FaceColor', [0.62, 0.8, 0.8], 'FaceAlpha', 0.6);
 
 
 % SYNAPSE SPHERE COMMANDS
@@ -20,9 +23,9 @@ c121.render();
 % To render all synapses of a single type:
 synapseSphere(c121, 'RibbonPost',...
     'ax', gca,...
-    'MarkerSize', 0.5,...
-    'FaceColor', [0, 0, 0],...
-    'FaceAlpha', 1);
+    'MarkerSize', 1,...
+    'FaceColor', rgb('emerald'),...
+    'FaceAlpha', 0.9);
 
 % You can also specify specific synapse IDs. There is a tutorial on this on
 % Slack dated 20190417, but long story short, you just need to include the
@@ -33,5 +36,8 @@ synapseSphere(c121, 'RibbonPost',...
 synapseSphere(c121, [39171, 39168, 39167],...
     'ax', gca,...
     'MarkerSize', 1,...
-    'FaceColor', [0 1 1],...
+    'FaceColor', rgb('light red'),...
     'FaceAlpha', 1);
+
+% Sometimes makes synapses easier to see if not shiny
+material dull; 
