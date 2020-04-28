@@ -26,6 +26,7 @@ classdef Volumes < handle
     
     methods
         function tf = isOData(obj)
+            % ISODATA  Returns whether data source is OData compatible
             if obj == sbfsem.builtin.Volumes.DemoVolume
                 tf = false;
             else
@@ -34,6 +35,7 @@ classdef Volumes < handle
         end
 
         function url = getServiceRoot(obj)
+            % GETSERVICEROOT  Return base OData query URL
             url = getServiceRoot(char(obj));
         end
 
@@ -49,10 +51,11 @@ classdef Volumes < handle
         function tf = hasBoundary(obj)
             % HASBOUNDARY  Whether IPL boundary markers exist
             import sbfsem.builtin.Volumes;
-            if obj == Volumes.NeitzTemporalMonkey || Volumes.NeitzInferiorMonkey || Volumes.MarcRPC1
-                tf = true;
-            else
-                tf = false;
+            switch obj
+                case {Volumes.NeitzTemporalMonkey, Volumes.NeitzInferiorMonkey, Volumes.MarcRC1}
+                    tf = true;
+                otherwise
+                    tf = false;
             end
         end
     end
@@ -77,7 +80,7 @@ classdef Volumes < handle
                     obj = Volumes.MarcRPC1;
                 case 'RPC2'
                     obj = Volumes.MarcRPC2;
-                end
+            end
         end
     end
 end

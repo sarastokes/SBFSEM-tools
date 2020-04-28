@@ -33,6 +33,7 @@ classdef RenderApp < handle
     %   19Nov2018 - SSP - Last modified location added
     %   16Dec2018 - SSP - Added flag for running in parallels on Mac
     %   1Feb2020 - SSP - Rearranged UI, improved axes limits control
+    %   28Apr2020 - SSP - Added sbfsem.ui.ColorMaps, sbfsem.builtin.Volumes
     % ---------------------------------------------------------------------
 
     properties (SetAccess = private)
@@ -78,9 +79,7 @@ classdef RenderApp < handle
         BKGD_COLOR = [0.96, 0.98, 1];
         SOURCES = enumStr('sbfsem.builtin.Volumes');
         CACHE = [fileparts(fileparts(mfilename('fullname'))), filesep, 'data'];
-        COLORMAPS = {'spectral', 'haxby', 'parula', 'hsv', 'antijet', 'rdylgn',...
-            'cubicl', 'viridis', 'redblue', 'bone', 'stepseq25', 'isolum (colorblind)',...
-            'ametrine (colorblind)'};
+        COLORMAPS = enumStr('sbfsem.ui.ColorMaps');
     end
     
     properties (Hidden, Dependent = true)
@@ -101,22 +100,20 @@ classdef RenderApp < handle
             %   If no volume name is provided, a listbox of available
             %   volumes will appear before the main UI opens
             % -------------------------------------------------------------
-            if nargin > 0
-                obj.source = validateSource(source);
-            else
+            if nargin == 0
                 [selection, selectedSource] = listdlg(...
                     'PromptString', 'Select a source:',...
                     'Name', 'RenderApp Source Selection',...
                     'SelectionMode', 'single',...
                     'ListString', obj.SOURCES);
                 if selectedSource
-                    obj.source = obj.SOURCES{selection};
-                    fprintf('Running with %s\n', obj.source);
+                    source = obj.SOURCES{selection};
                 else
                     warning('No source selected... exiting');
                     return;
                 end
             end
+            obj.source = sbfsem.builtin.Volumes.fromChar(source);
             
             if nargin < 2
                 obj.isMac = false;
@@ -126,7 +123,7 @@ classdef RenderApp < handle
             end
 
             obj.neurons = containers.Map();
-            if ~ismember(obj.source, {'NeitzNasalMonkey', 'RC1', 'RPC1'})
+            if obj.source.hasBoundary()
                 obj.iplBound.GCL = sbfsem.builtin.GCLBoundary(obj.source, true);
                 obj.iplBound.INL = sbfsem.builtin.INLBoundary(obj.source, true);
             else
@@ -484,7 +481,7 @@ classdef RenderApp < handle
                 end
                 cbarHandle.TickLabels = 100 * cbarHandle.Ticks;
                 
-                if obj.ax.Color == [0, 0, 0]
+                if sum(obj.ax.Color) == 0
                     cbarHandle.Color = 'w';
                 end
             else
@@ -575,9 +572,9 @@ classdef RenderApp < handle
 
         function onChangeColormap(obj, src, ~)
             % ONCHANGECOLORMAP  Change colormap used for stratification
-            newMap = src.String{src.Value};
+            cmapObj = sbfsem.ui.ColorMaps.fromChar(src.String{src.Value});
             h = findobj(obj.figureHandle, 'Tag', 'MapLevels');
-            colormap(obj.ax, obj.getColormap(newMap, str2double(h.String)));
+            colormap(obj.ax, cmapObj.getColormap(str2double(h.String)));
         end
         
         function onInvertColormap(obj, src, ~)
@@ -607,7 +604,8 @@ classdef RenderApp < handle
                 N = 256;
             end
             h = findobj(obj.figureHandle, 'Tag', 'CMaps');
-            colormap(obj.ax, obj.getColormap(h.String{h.Value}, N));
+            cmapObj = sbfsem.ui.ColorMaps.fromChar(h.String{h.Value});
+            colormap(obj.ax, cmapObj.getColormap(N));
         end
 
         function onEditMaterial(obj, src, ~)
@@ -1205,7 +1203,8 @@ classdef RenderApp < handle
                 'Spacing', 5, 'Padding', 5);
             obj.createNeuronTab(uiLayout);
             
-            if ~ismember(obj.source, {'RC1', 'RPC1', 'NeitzNasalMonkey'})
+            if obj.source.hasBoundary() || obj.source.hasCones()
+            % if ~ismember(obj.source, {'RC1', 'RPC1', 'NeitzNasalMonkey'})
                 contextLayout = uix.VBox(...
                     'Parent', uitab(tabGroup, 'Title', 'Context'),...
                     'BackgroundColor', obj.BKGD_COLOR,...
@@ -1266,14 +1265,16 @@ classdef RenderApp < handle
 
             uicontrol(parentHandle,...
                 'Style', 'text',...
-                'String', obj.source,...
+                'String', char(obj.source),...
                 'BackgroundColor', obj.BKGD_COLOR);
 
             % Create the neuron table
+            warning('off', 'MATLAB:ui:javacomponent:FunctionToBeRemoved');
             obj.neuronTree = uiextras.jTree.CheckboxTree(...
                 'Parent', parentHandle,...
                 'RootVisible', false,...
                 'CheckboxClickedCallback', @obj.onNodeChecked);
+            warning('on', 'MATLAB:ui:javacomponent:FunctionToBeRemoved');
 
             % Add/remove neurons
             pmLayout = uix.HBox('Parent', parentHandle, 'Spacing', 5,...
@@ -1287,7 +1288,8 @@ classdef RenderApp < handle
                 'Style', 'edit',...
                 'Tag', 'InputBox',...
                 'TooltipString', 'Neuron ID(s) separated by commas',...
-                'String', '');
+                'String', '',...
+                'Callback', @obj.onAddNeuron);
             set(idLayout, 'Heights', [20, -1]);
             buttonLayout = uix.VBox('Parent', pmLayout);
             uicontrol(buttonLayout,...
@@ -1361,7 +1363,7 @@ classdef RenderApp < handle
                 'BackgroundColor', obj.BKGD_COLOR);
             heights = [heights, -0.5, 25, 30, 30, -0.5];
 
-            if strcmp(obj.source, 'NeitzInferiorMonkey')
+            if obj.source.hasCones()
                 uicontrol(contextLayout,...
                     'Style', 'text', 'String', 'Cone Mosaic:',...
                     'FontWeight', 'bold');
@@ -1520,9 +1522,6 @@ classdef RenderApp < handle
             uimenu(mh.export, 'Label', 'Export as image',...
                 'Tag', 'GroupFcn',...
                 'Callback', @obj.onExportImage);
-            %uimenu(mh.export, 'Label', 'Export as image (high res)',...
-            %    'Tag', 'GroupFcn',...
-            %    'Callback', @obj.onExportImage);
             uimenu(mh.export, 'Label', 'Export as COLLADA',...
                 'Callback', @obj.onExportColladaScene);
             uimenu(mh.export, 'Label', 'Send neurons to workspace',...
@@ -1622,7 +1621,7 @@ classdef RenderApp < handle
                         if isempty(obj.xyOffset)
                             dataDir = fileparts(fileparts(mfilename('fullpath')));
                             offsetPath = [dataDir,filesep,'data',filesep,...
-                                'XY_OFFSET_', upper(obj.source), '.txt'];
+                                'XY_OFFSET_', upper(char(obj.source)), '.txt'];
                             obj.xyOffset = dlmread(offsetPath);
                         end
                         posViking(3) = round(posViking(3));
@@ -1692,45 +1691,6 @@ classdef RenderApp < handle
                 pos(1), pos(2), round(pos(3)), ds);
         end
         
-        function cmap = getColormap(cmapName, N)
-            % GETCOLORMAP  Phase in sbfsem.ui.ColorMaps later
-            if nargin < 2
-                N = 256;
-            end
-            
-            switch lower(cmapName)
-                case 'parula'
-                    cmap = parula(N);
-                case 'stepseq25'
-                    warning('off', 'MATLAB:interp1:UsePCHIP');
-                    cmap = othercolor('StepSeq_25', N);
-                case 'spectral'
-                    warning('off', 'MATLAB:interp1:UsePCHIP');
-                    cmap = othercolor('Spectral10', N);
-                case 'rdylgn'
-                    warning('off', 'MATLAB:interp1:UsePCHIP');
-                    cmap = othercolor('RdYlGn9', N);
-                case 'bone'
-                    cmap = bone(N);
-                case 'hsv'
-                    cmap = hsv(N);
-                case 'antijet'
-                    cmap = antijet(N);
-                case 'viridis'
-                    cmap = viridis(N);
-                case 'cubicl'
-                    cmap = pmkmp(N, 'CubicL');
-                case 'haxby'
-                    cmap = haxby(N);
-                case 'redblue'
-                    cmap = lbmap(N, 'RedBlue');
-                case 'ametrine (colorblind)'
-                    cmap = ametrine(N);
-                case 'isolum (colorblind)'
-                    cmap = isolum(N);
-            end
-        end
-
         function [str, dlgTitle] = getInstructions(helpType)
             % GETINSTRUCTIONS  Return instructions as multiline string
             switch helpType

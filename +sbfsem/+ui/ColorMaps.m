@@ -1,9 +1,10 @@
-classdef ColorMaps
+classdef ColorMaps < handle
     
     enumeration
+        Spectral
         Bone
         CubicL
-        CubicYF
+        RdYlGn
         Gray
         Haxby
         Hsv
@@ -11,6 +12,7 @@ classdef ColorMaps
         Parula
         RedBlue
         Viridis
+        StepSeq
         Ametrine
         Isolum
     end
@@ -27,7 +29,7 @@ classdef ColorMaps
         
         function tf = colorblind(obj)
             % COLORBLIND  Is the colormap good for red-green colorblind?
-            import sbfsem.ui.Colormaps;
+            import sbfsem.ui.ColorMaps;
             if ismember(obj, {ColorMaps.Isolum, ColorMaps.Ametrine})
                 tf = true;
             else
@@ -35,7 +37,7 @@ classdef ColorMaps
             end
         end
         
-        function cmap = getMap(obj, N)
+        function cmap = getColormap(obj, N)
             % GETMAP  Returns N values for colormap
             if nargin < 2
                 N = 256;
@@ -67,26 +69,27 @@ classdef ColorMaps
                     if N > 256
                         N = 256;
                     end
-                    cmap = pmkmp('CubicL', N);
-                case ColorMaps.CubicYF
-                    if N > 256
-                        N = 256;
-                    end
-                    cmap = pmkmp('CubicYF', N);
+                    cmap = pmkmp(N, 'CubicL');
                 % Light-Bertlein
                 case ColorMaps.RedBlue
                     cmap = fliplr(lbmap('RedBlue', N));
                 % Ocean
                 case ColorMaps.Haxby
                     cmap = haxby(N);
+                % othercolor
+                case ColorMaps.Spectral
+                    cmap = othercolor('Spectral10', N);
+                case ColorMaps.RdYlGn
+                    cmap = othercolor('RdYlGn9', N);
+                case ColorMaps.StepSeq
+                    cmap = othercolor('StepSeq_25', N);
                 % Colorblind
                 case ColorMaps.Isolum
                     cmap = isolum(N);
                 case ColorMaps.Ametrine
                     cmap = ametrine(N);
                 otherwise
-                    warning('SBFSEM:UI:COLORMAPS',...
-                        'Unrecognized color map');
+                    warning('SBFSEM:UI:COLORMAPS', 'Unknown color map');
             end
         end
     end
@@ -110,8 +113,6 @@ classdef ColorMaps
                 % Perceptually distinct
                 case 'cubicl'
                     obj = ColorMaps.CubicL;
-                case 'cubicyf'
-                    obj = ColorMaps.CubicYF;
                 % Python
                 case 'viridis'
                     obj = ColorMaps.Viridis;
@@ -121,6 +122,13 @@ classdef ColorMaps
                 % Ocean
                 case 'haxby'
                     obj = ColorMaps.Haxby;
+                % Othercolor
+                case 'stepseq'
+                    obj = ColorMaps.StepSeq;
+                case 'spectral'
+                    obj = ColorMaps.Spectral;
+                case 'rdylgn'
+                    obj = ColorMaps.RdYlGn;
                 % Colorblind
                 case 'ametrine'
                     obj = ColorMaps.Ametrine;

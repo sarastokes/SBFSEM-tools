@@ -1,5 +1,11 @@
 # Changelog
 
+### 20200427
+- Added support for pressing `Enter` key to import neurons in `views\RenderApp.m`
+
+### 20200424
+- Added `sbfsem.ui.ColorMaps.m` and `sbfsem.builtin.Volumes.m` to `views\RenderApp.m`
+
 ### 20200303
 - Renamed `sbfsem.core.VikingStructureTypes` to `sbfsem.builtin.StructureTypes`.
 - Updated URLs and images in `README.md`.
