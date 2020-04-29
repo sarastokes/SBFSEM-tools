@@ -34,6 +34,7 @@ classdef RenderApp < handle
     %   16Dec2018 - SSP - Added flag for running in parallels on Mac
     %   1Feb2020 - SSP - Rearranged UI, improved axes limits control
     %   28Apr2020 - SSP - Added sbfsem.ui.ColorMaps, sbfsem.builtin.Volumes
+    %   29Apr2020 - SSP - Added import from workspace option
     % ---------------------------------------------------------------------
 
     properties (SetAccess = private)
@@ -182,11 +183,14 @@ classdef RenderApp < handle
                     obj.updateStatus(sprintf('c%u already loaded', newID));
                     continue;
                 end
-                didImport = obj.addNeuron(newID);
+                
+                [neuron, didImport] = obj.addNeuronFromOData(newID);
                 if ~didImport
                     fprintf('Skipped c%u\n', newID);
                     continue;
                 end
+                
+                obj.addNeuron(neuron);
 
                 newColor = findall(obj.ax, 'Tag', obj.id2tag(newID));
                 newColor = get(newColor(1), 'FaceColor');
@@ -197,6 +201,23 @@ classdef RenderApp < handle
                 drawnow;
             end
             obj.matchAxes();
+        end
+        
+        function onAddNeuronWorkspace(obj, ~, ~)
+            % ONADDNEURONWORKSPACE  Import a Neuron from workspace
+            [neuron, neuronName] = uigetvar('Neuron');
+            if isempty(neuron) || isempty(neuronName)
+                return;
+            end
+            obj.updateStatus(sprintf('Adding %s', neuronName));
+            
+            obj.addNeuron(neuron);
+            
+            newColor = findall(obj.ax, 'Tag', neuronName);
+            newColor = get(newColor(1), 'FaceColor');
+            
+            obj.addNeuronNode(obj.tag2id(neuronName), newColor, true);
+            obj.updateStatus();
         end
         
         function onAddNeuronJSON(obj, ~, ~)
@@ -216,11 +237,12 @@ classdef RenderApp < handle
                 newID = str2double(jsonFile(2:end-4));
                 obj.updateStatus(sprintf('Adding %u', newID));
                 
-                didImport = obj.addNeuron([fPath, jsonFile], 'JSON');
+                [neuron, didImport] = obj.addNeuronFromJSON([fPath, jsonFile]);
                 if ~didImport
                     fprintf('Skipped %u\n', newID);
                     continue;
                 end
+                obj.addNeuron(neuron);
                                
                 newColor = findall(obj.ax, 'Tag', obj.id2tag(newID));
                 newColor = get(newColor(1), 'FaceColor');
@@ -844,7 +866,7 @@ classdef RenderApp < handle
 
         function onExportDAE(obj, ~, evt)
             % ONEXPORTDAE  Export neuron as .dae file
-            neuron = obj.evt2neuron(evt);
+            % neuron = obj.evt2neuron(evt);
             [fName, fPath] = obj.uiputfile('*.dae', 'Save as .dae file');
             if isequal(fName, 0) || isequal(fPath, 0)
                 return;
@@ -878,24 +900,8 @@ classdef RenderApp < handle
 
     % Neuron private functions
     methods (Access = private)
-        function didImport = addNeuron(obj, newID, importType)
+        function addNeuron(obj, neuron)
             % ADDNEURON  Add a new neuron and render
-            % See also: NEURON
-            
-            if nargin < 3
-                importType = 'OData';
-            end
-            
-            switch importType
-                case 'OData'
-                    [neuron, didImport] = obj.addNeuronFromOData(newID);
-                case 'JSON'
-                    [neuron, didImport] = obj.addNeuronFromJSON(newID);
-            end
-            
-            if ~didImport
-                return;
-            end
 
             % Build and render the 3D model
             obj.updateStatus(sprintf('Rendering c%u', neuron.ID));
@@ -918,7 +924,6 @@ classdef RenderApp < handle
             % If all is successful, add to neuron lists
             obj.neurons(obj.id2tag(neuron.ID)) = neuron;
             obj.IDs = cat(2, obj.IDs, neuron.ID);
-            didImport = true;
         end
 
         function [neuron, didImport] = addNeuronFromOData(obj, newID)
@@ -1513,7 +1518,9 @@ classdef RenderApp < handle
         function createToolbar(obj)
             % CREATETOOLBAR  Setup the figure toolbar
             mh.import = uimenu(obj.figureHandle, 'Label', 'Import');
-            uimenu(mh.import, 'Label', 'Import .json',...
+            uimenu(mh.import, 'Label', 'Import from workspace',...
+                'Callback', @obj.onAddNeuronWorkspace);
+            uimenu(mh.import, 'Label', 'Import from JSON file',...
                 'Callback', @obj.onAddNeuronJSON);
             mh.export = uimenu(obj.figureHandle, 'Label', 'Export');
             uimenu(mh.export, 'Label', 'Open in new figure window',...
@@ -1648,11 +1655,11 @@ classdef RenderApp < handle
     end
     
     methods (Static = true)
-        function [neuron, didImport] = addNeuronFromJSON(~, newID)
+        function [neuron, didImport] = addNeuronFromJSON(filePath)
             % ADDNEURONFROMJSON  Import a neuron saved as a .json file
 
             try
-                neuron = NeuronJSON(newID);
+                neuron = NeuronJSON(filePath);
                 didImport = true;
             catch ME
                 disp(['addNeuronFromJSON failed with error message: ',...
