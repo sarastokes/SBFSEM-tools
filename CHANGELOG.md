@@ -3,6 +3,7 @@
 ### 20200429
 - Added option to import neurons from workspace to `views\RenderApp.m`
 - Added `lib\uigetvar.m`
+- Added log panel to `views\RenderApp.m`
 
 ### 20200427
 - Added support for pressing `Enter` key to import neurons in `views\RenderApp.m`

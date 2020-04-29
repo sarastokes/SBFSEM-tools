@@ -197,7 +197,8 @@ classdef RenderApp < handle
 
                 obj.addNeuronNode(newID, newColor, true);
                 obj.updateStatus();
-                % Update the plot after each neuron imports
+                obj.updateLog(sprintf('Added c%u from OData', newID));
+                
                 drawnow;
             end
             obj.matchAxes();
@@ -218,6 +219,7 @@ classdef RenderApp < handle
             
             obj.addNeuronNode(obj.tag2id(neuronName), newColor, true);
             obj.updateStatus();
+            obj.updateLog(['Added ', neuronName, ' from workspace']);
         end
         
         function onAddNeuronJSON(obj, ~, ~)
@@ -249,6 +251,7 @@ classdef RenderApp < handle
 
                 obj.addNeuronNode(newID, newColor, false);
                 obj.updateStatus();
+                obj.updateLog(['Added ', fName{i}]);
                 
                 drawnow;
             end
@@ -314,6 +317,8 @@ classdef RenderApp < handle
             % Return to the original view azimuth and elevation
             view(obj.ax, az, el);
             obj.updateStatus('');
+            
+            obj.updateLog(['Updated ', obj.id2tag(ID)]);
         end
 
         function onRemoveNeuron(obj, ~, evt)
@@ -329,6 +334,8 @@ classdef RenderApp < handle
             % Get the neuron ID
             ID = obj.tag2id(evt.Source.Tag);
             obj.removeNeuron(ID, node);
+            
+            obj.updateLog(['Removed ', evt.Source.Tag]);
         end
 
         function onExportNeuron(obj, ~, evt)
@@ -338,9 +345,11 @@ classdef RenderApp < handle
                 for i = 1:numel(tags)
                     assignin('base', sprintf(tags{i}), obj.neurons(tags{i}));
                 end
+                obj.updateLog('Sent all neurons to workspace');
             else
                 neuron = obj.evt2neuron(evt);
                 assignin('base', sprintf('c%u', neuron.ID), neuron);
+                obj.updateLog(sprintf('Sent c%u to workspace', neuron.ID)); 
             end
         end
 
@@ -355,6 +364,8 @@ classdef RenderApp < handle
                 case 'Local'
                     obj.transform = sbfsem.core.Transforms.SBFSEMTools;
             end
+            
+            obj.updateLog('Changed transform');
         end
     end
 
@@ -731,6 +742,7 @@ classdef RenderApp < handle
             obj.updateStatus('Opening view');
             GraphApp(neuron);
             obj.updateStatus('');
+            obj.updateLog(['Opened GraphApp for ', obj.id2tag(neuron.ID)]);
         end
 
         function onGetSomaStats(obj, ~, evt)
@@ -845,6 +857,7 @@ classdef RenderApp < handle
             end
             x = sbfsem.io.JSON(obj.source, fPath);
             x.export(neuron);
+            obj.updateLog(['Saved ', obj.id2tag(neuron.ID), ' as JSON file']);
         end
 
         function onExportSTL(obj, ~, evt)
@@ -855,6 +868,7 @@ classdef RenderApp < handle
                 return;
             end
             sbfsem.io.STL(neuron, [fPath, fName]);
+            obj.updateLog(['Saved ', obj.id2tag(neuron.ID), ' as STL file']);
         end
         
         function onExportSWC(obj, ~, evt)
@@ -862,6 +876,7 @@ classdef RenderApp < handle
             neuron = obj.evt2neuron(evt);
             x = sbfsem.io.SWC(neuron);
             x.save();
+            obj.updateLog(['Saved ', obj.id2tag(neuron.ID), ' as SWC file']);
         end
 
         function onExportDAE(obj, ~, evt)
@@ -1114,12 +1129,22 @@ classdef RenderApp < handle
         function updateStatus(obj, str)
             % UPDATESTATUS  Update status text
             if nargin < 2
-                str = '';
-            else
-                assert(ischar(str), 'Status updates must be char');
+                str = '';  % Clear status box
             end
             set(findobj(obj.figureHandle, 'Tag', 'StatusBox'), 'String', str);
             drawnow;
+        end
+        
+        function updateLog(obj, str)
+            % UPDATELOG  Adds text to log
+            logBox = findobj(obj.figureHandle, 'Tag', 'LogBox');
+            currentLog = get(logBox, 'String');
+            if ischar(currentLog)
+                currentLog = {currentLog};
+                disp('Converted to cell');
+            end
+            set(logBox, 'String',...
+                cat(1, currentLog, [obj.getLogTime(), str]));
         end
         
         function [fName, fPath] = uiputfile(obj, exten, str)
@@ -1209,7 +1234,6 @@ classdef RenderApp < handle
             obj.createNeuronTab(uiLayout);
             
             if obj.source.hasBoundary() || obj.source.hasCones()
-            % if ~ismember(obj.source, {'RC1', 'RPC1', 'NeitzNasalMonkey'})
                 contextLayout = uix.VBox(...
                     'Parent', uitab(tabGroup, 'Title', 'Context'),...
                     'BackgroundColor', obj.BKGD_COLOR,...
@@ -1223,10 +1247,18 @@ classdef RenderApp < handle
                 'Spacing', 5, 'Padding', 5);
             obj.createPlotTab(ctrlLayout);
 
-            % Rotation/zoom/pan modes require container with pixels prop
-            % Using Matlab's uipanel between render axes and HBoxFlex
-            axesPanel = uipanel(mainLayout, 'BackgroundColor', 'w');
+            % Tab group for axes and log
+            tabGroup2 = uitabgroup('Parent', mainLayout);
+            axesPanel = uipanel(...
+                'Parent', uitab(tabGroup2, 'Title', 'Render'),... 
+                'BackgroundColor', 'w');
             obj.createAxes(axesPanel);
+            
+            logLayout = uix.VBox(...
+                'Parent', uitab(tabGroup2, 'Title', 'Log'),...
+                'BackgroundColor', obj.BKGD_COLOR,...
+                'Spacing', 0, 'Padding', 5);
+            obj.createLogTab(logLayout);
 
             set(mainLayout, 'Widths', [-1 -2.75]);
             set(findall(obj.figureHandle, 'Type', 'uitab'),...
@@ -1514,6 +1546,16 @@ classdef RenderApp < handle
             set(ctrlLayout, 'Heights',...
                 [18, 55, 25, -0.05, 20, 20, 60, -0.05, 18, 30, -0.05, 18, 75]);
         end
+        
+        function createLogTab(obj, parentHandle)
+            % CREATELOGTAB  Displays log of user actions
+            uicontrol(parentHandle,...
+                'Style', 'text',...,...
+                'String', '',...
+                'HorizontalAlignment', 'left',...
+                'Tag', 'LogBox');
+            obj.updateLog('Initialized');
+        end
 
         function createToolbar(obj)
             % CREATETOOLBAR  Setup the figure toolbar
@@ -1671,6 +1713,11 @@ classdef RenderApp < handle
     end
 
     methods (Static = true)
+        
+        function str = getLogTime()
+            str = [datestr(now, 'hh:MM:ss'), ' - '];
+        end
+        
         function lim = getLimits(ax)
             lim = [get(ax, 'XLim'); get(ax, 'YLim'); get(ax, 'ZLim')];
         end
