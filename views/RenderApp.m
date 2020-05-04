@@ -838,9 +838,7 @@ classdef RenderApp < handle
             % ONEXPORTCOLLADA  Export the scene as a .dae file
             % See also: EXPORTSCENEDAE
 
-            % Prompt user for file name and path
             [fName, fPath] = obj.uiputfile('*.dae', 'Save as DAE file');
-            % Catch when user cancels out of save dialog
             if isequal(fName, 0) || isequal(fPath, 0)
                 return;
             end
@@ -1335,7 +1333,7 @@ classdef RenderApp < handle
                 'FontSize', 20,...
                 'TooltipString', 'Add neuron(s) in editbox',...
                 'BackgroundColor', 'w',...
-                'Callback', @obj.onAddNeuron);
+                'KeyReleaseFcn', @obj.onKeyReleaseEditBox);
             uicontrol(buttonLayout,...
                 'Style', 'push',...
                 'String', ' ',...
@@ -1499,7 +1497,7 @@ classdef RenderApp < handle
                 'TooltipString', 'Set # of colors (2-256), then press enter',...
                 'Callback', @obj.onEditColormapLevels);
             set(p, 'Widths', [-1, -0.8]);
-            uicontrol(cmapGrid,... % cmapSubLayout,...
+            uicontrol(cmapGrid,... 
                 'Style', 'check',...
                 'String', 'Invert',...
                 'TooltipString', 'Reverse color map',...
@@ -1689,6 +1687,13 @@ classdef RenderApp < handle
                     return;
             end
             view(obj.ax, obj.azel);
+        end
+
+        function onKeyReleaseEditBox(obj, ~, evt)
+            % ONKEYPRESSEDITBOX  Load neurons if 'enter' is pressed
+            if strcmp(evt.Key, 'enter')
+                obj.onAddNeuron();
+            end
         end
 
         function openHelpDlg(obj, src, ~)

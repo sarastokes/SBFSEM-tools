@@ -1,5 +1,8 @@
 # Changelog
 
+### 20200504
+- Improved 'enter' UI for `views\RenderApp.m` edit box
+
 ### 20200503
 - First approximation at a transform for NeitzNasalMonkey
 - Added `hasTransform` method to `sbfsem.builtin.Volumes.m`
