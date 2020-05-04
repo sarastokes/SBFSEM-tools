@@ -413,22 +413,25 @@ classdef (Abstract) StructureAPI < handle
 
         function nodes = setXYZum(obj, nodes)
             % SETXYZUM  Convert Viking pixels to microns
-            % if nnz(nodes.X) + nnz(nodes.Y) > 2
-            %    disp('Estimating synapse locations...');
-            %    nodes = estimateSynapseXY(obj, nodes);
-            % end
-            
-            % Apply transforms to NeitzInferiorMonkey
+
             if isempty(nodes)
                 return
             end
+                        
+            % Apply transforms, if needed (FIXME: Move to Transforms class)
             if obj.transform == sbfsem.core.Transforms.SBFSEMTools
-                xyDir = [fileparts(fileparts(fileparts(...
-                    mfilename('fullpath')))), '\data'];
-                xydata = dlmread([xyDir,...
-                    '\XY_OFFSET_NEITZINFERIORMONKEY.txt']);
-                volX = nodes.X + xydata(nodes.Z,2);
-                volY = nodes.Y + xydata(nodes.Z,3);
+                dataDir = [fileparts(fileparts(fileparts(...
+                    mfilename('fullpath')))), filesep, 'data'];
+                switch obj.source
+                    case 'NeitzInferiorMonkey'
+                        xydata = dlmread([dataDir, filesep,...
+                            'XY_OFFSET_NEITZINFERIORMONKEY.txt']);
+                        volX = nodes.X + xydata(nodes.Z,2);
+                        volY = nodes.Y + xydata(nodes.Z,3);
+                    case 'NeitzNasalMonkey'
+                        volX = nodes.VolumeX - (abs(nodes.Z-1177) .* (nodes.VolumeX/1335));
+                        volY = nodes.VolumeY - (abs(nodes.Z-1177) .* (nodes.VolumeY/1000));
+                end
             else
                 volX = nodes.VolumeX;
                 volY = nodes.VolumeY;

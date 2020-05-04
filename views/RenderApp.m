@@ -1141,7 +1141,6 @@ classdef RenderApp < handle
             currentLog = get(logBox, 'String');
             if ischar(currentLog)
                 currentLog = {currentLog};
-                disp('Converted to cell');
             end
             set(logBox, 'String',...
                 cat(1, currentLog, [obj.getLogTime(), str]));
@@ -1233,7 +1232,7 @@ classdef RenderApp < handle
                 'Spacing', 5, 'Padding', 5);
             obj.createNeuronTab(uiLayout);
             
-            if obj.source.hasBoundary() || obj.source.hasCones()
+            if obj.source.hasBoundary() || obj.source.hasCones() || obj.source.hasTransform()
                 contextLayout = uix.VBox(...
                     'Parent', uitab(tabGroup, 'Title', 'Context'),...
                     'BackgroundColor', obj.BKGD_COLOR,...
@@ -1417,12 +1416,16 @@ classdef RenderApp < handle
                     'Tag', 'addU',...
                     'TooltipString', 'Add cones of unknown type',...
                     'Callback', @obj.onAddCones);
+                heights = [heights, 25, 30, 30, 30];
+            end
+            
+            if obj.source.hasTransform()
                 LayoutManager.verticalBoxWithLabel(contextLayout, 'Transform:',...
                     'Style', 'popup',...
                     'String', {'Viking', 'Local'},...
                     'TooltipString', 'Change transform (MUST REIMPORT EXISTING NEURONS)',...
                     'Callback', @obj.onSetTransform);
-                heights = [heights, 25, 30, 30, 30, 40];
+                heights = [heights, 40];
             end
             set(contextLayout, 'Heights', heights);
         end

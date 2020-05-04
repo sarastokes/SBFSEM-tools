@@ -1,5 +1,10 @@
 # Changelog
 
+### 20200503
+- First approximation at a transform for NeitzNasalMonkey
+- Added `hasTransform` method to `sbfsem.builtin.Volumes.m`
+- Removed call to `validateTransform.m` from `Neuron.m`
+
 ### 20200429
 - Added option to import neurons from workspace to `views\RenderApp.m`
 - Added `lib\uigetvar.m`

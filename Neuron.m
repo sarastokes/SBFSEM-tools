@@ -73,17 +73,18 @@ classdef Neuron < sbfsem.core.NeuronAPI
                     'includeSynapses must be true or false');
                 obj.includeSynapses = includeSynapses;
             end
+            
             % Default transform is local sbfsem-tools XY offset
-            if nargin < 4
+            if nargin == 4
+                if ischar(transform)
+                    obj.transform = sbfsem.core.Transforms.fromStr(transform);
+                elseif isa(transform, 'sbfsem.core.Transforms')
+                    obj.transform = transform;
+                end
+            else
                 obj.transform = sbfsem.core.Transforms.Viking;
-            elseif ischar(transform)
-                obj.transform = sbfsem.core.Transforms.fromStr(transform);
-            elseif isa(transform, 'sbfsem.core.Transforms')
-                obj.transform = transform;
             end
 
-            source = validateSource(source);
-            obj.transform = validateTransform(obj.transform, source);
             fprintf('-----c%u-----\n', obj.ID);
 
             % Instantiate OData clients
@@ -219,8 +220,9 @@ classdef Neuron < sbfsem.core.NeuronAPI
                         structures(i), obj.synapses.Tags{i,:});
                 end
                 obj.synapses.LocalName = vertcat(localNames{:});
-                % Make sure synapses match the new naming conventions
-                if ~strcmp(obj.source, 'RC1') | ~strcmp(obj.source, 'RPC1') | ~strcmp(obj.source, 'RC2')
+                % Make sure synapses match the new naming conventions 
+                % FIXME: Add to sbfsem.builtin.Volumes
+                if ~ismember(obj.source, {'RC1', 'RPC1', 'RC2', 'RPC2'})
                     makeConsistent(obj);
                 end
             end
