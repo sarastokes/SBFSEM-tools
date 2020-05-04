@@ -2,6 +2,7 @@
 
 ### 20200504
 - Improved 'enter' UI for `views\RenderApp.m` edit box
+- Added new function: `util\network\getLinkedNeuronsByType.m`
 
 ### 20200503
 - First approximation at a transform for NeitzNasalMonkey
