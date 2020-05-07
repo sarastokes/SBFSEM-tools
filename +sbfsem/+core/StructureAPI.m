@@ -429,8 +429,18 @@ classdef (Abstract) StructureAPI < handle
                         volX = nodes.X + xydata(nodes.Z,2);
                         volY = nodes.Y + xydata(nodes.Z,3);
                     case 'NeitzNasalMonkey'
-                        volX = nodes.VolumeX - (abs(nodes.Z-1177) .* (nodes.VolumeX/1335));
-                        volY = nodes.VolumeY - (abs(nodes.Z-1177) .* (nodes.VolumeY/1000));
+                        % fac = [1250, 1182, 1]; disp(fac);  % 1320 1200
+                        fac = [1320, 1200, 1];
+                        zOffset = fac(3)*abs(nodes.Z-1177);
+                        volX = nodes.VolumeX - (zOffset .* (nodes.VolumeX/fac(1)));
+                        volY = nodes.VolumeY - (zOffset .* (nodes.VolumeY/fac(2)));
+                        
+                        % zOffset = abs(nodes.Z-1177);
+                        % volX = nodes.VolumeX - (32.26*zOffset);
+                        % volY = nodes.VolumeY - (19.53*zOffset);
+                        % zOffset = abs(nodes.Z-1177);
+                        % volX = nodes.VolumeX - (zOffset .* (0.0008459*nodes.VolumeX));
+                        % volY = nodes.VolumeY - (zOffset .* (0.001333*nodes.VolumeY));
                 end
             else
                 volX = nodes.VolumeX;

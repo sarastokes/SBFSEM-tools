@@ -596,7 +596,6 @@ classdef RenderApp < handle
         function onSetNextColor(~, src, ~)
             % ONSETNEXTCOLOR  Open UI to choose color, reflect change
 
-            % newColor = selectcolor('hCaller', obj.figureHandle);
             newColor = uisetcolor(get(src, 'BackgroundColor'));
             if ~isempty(newColor) && numel(newColor) == 3
                 set(src, 'BackgroundColor', newColor);

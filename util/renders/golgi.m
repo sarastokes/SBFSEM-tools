@@ -25,6 +25,7 @@ function ax = golgi(neuron, varargin)
 
     ip = inputParser();
     ip.CaseSensitive = false;
+    ip.KeepUnmatched = true;
     addParameter(ip, 'Ax', [], @ishandle);
     addParameter(ip, 'Invert', false, @islogical);
     addParameter(ip, 'Color', [], @(x) ischar(x) || isnumeric(x));
@@ -44,11 +45,11 @@ function ax = golgi(neuron, varargin)
     end
     
     if invertFigure && isempty(ip.Results.Color)
-        neuron.render('ax', ax, 'FaceColor', 'w');
+        neuron.render('ax', ax, 'FaceColor', 'w', ip.Unmatched);
     elseif ~invertFigure && isempty(ip.Results.Color)
-        neuron.render('ax', ax, 'FaceColor', 'k');
+        neuron.render('ax', ax, 'FaceColor', 'k', ip.Unmatched);
     else
-        neuron.render('ax', ax, 'FaceColor', ip.Results.Color);
+        neuron.render('ax', ax, 'FaceColor', ip.Results.Color, ip.Unmatched);
     end
     
     view(ax, 0, 90);
