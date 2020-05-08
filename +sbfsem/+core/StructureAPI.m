@@ -430,10 +430,15 @@ classdef (Abstract) StructureAPI < handle
                         volY = nodes.Y + xydata(nodes.Z,3);
                     case 'NeitzNasalMonkey'
                         % fac = [1250, 1182, 1]; disp(fac);  % 1320 1200
+                        xydata = dlmread([dataDir, filesep,...
+                            'XY_OFFSET_NEITZNASALMONKEY.txt']);
+                        volX = nodes.VolumeX + xydata(nodes.Z,2);
+                        volY = nodes.VolumeY + xydata(nodes.Z,3);
+                        
                         fac = [1320, 1200, 1];
                         zOffset = fac(3)*abs(nodes.Z-1177);
-                        volX = nodes.VolumeX - (zOffset .* (nodes.VolumeX/fac(1)));
-                        volY = nodes.VolumeY - (zOffset .* (nodes.VolumeY/fac(2)));
+                        volX = volX - (zOffset .* (volX/fac(1)));
+                        volY = volY - (zOffset .* (volY/fac(2)));
                         
                         % zOffset = abs(nodes.Z-1177);
                         % volX = nodes.VolumeX - (32.26*zOffset);
