@@ -1,5 +1,8 @@
 # Changelog
 
+### 20200515
+- `sbfsem.core.StructureAPI\graph` now builds graphs from string which is less error prone
+
 ### 20200504
 - Improved 'enter' UI for `views\RenderApp.m` edit box
 - Added new function: `util\network\getLinkedNeuronsByType.m`

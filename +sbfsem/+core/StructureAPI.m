@@ -206,21 +206,20 @@ classdef (Abstract) StructureAPI < handle
             parse(ip, varargin{:});
 
             if ip.Results.Synapses
-                edge_rows = obj.edges;
+                ind = obj.edges;
             else
-                edge_rows = obj.edges.ID == obj.ID;
+                ind = obj.edges.ID == obj.ID;
             end
+            
+            A = string(obj.edges.A(ind));
+            B = string(obj.edges.B(ind));
 
             if ip.Results.Directed
-                G = digraph(cellstr(num2str(obj.edges.A(edge_rows,:))),...
-                    cellstr(deblank(num2str(obj.edges.B(edge_rows,:)))));
+                G = digraph(A, B);
             else
-                G = graph(cellstr(num2str(obj.edges.A(edge_rows,:))),...
-                    cellstr(num2str(obj.edges.B(edge_rows,:))));
+                G = graph(A, B);
                 if ip.Results.Weighted
-                    G = graph(cellstr(num2str(obj.edges.A(edge_rows,:))),...
-                        cellstr(num2str(obj.edges.B(edge_rows,:))),...
-                        getEdgeWeights(obj));
+                    G = graph(A, B, getEdgeWeights(obj));
                 end
             end
 
@@ -281,7 +280,16 @@ classdef (Abstract) StructureAPI < handle
             [~, ~, ind] = intersect(locationIDs, obj.nodes.ID, 'stable');
             nodes = obj.nodes(ind, :);
         end
-	end
+        
+        function p = gplot(obj, varargin)
+            % GPLOT
+            %   Wrapper for neuronGraphPlot
+            % Inputs: (see neuronGraphPlot's inputs)
+            % -------------------------------------------------------------
+            p = neuronGraphPlot(obj, varargin{:});
+            
+        end
+    end
 
 	% Rendering methods
 	methods
@@ -290,7 +298,7 @@ classdef (Abstract) StructureAPI < handle
             %   Scales a plot by x,y,z dimensions
             % Optional inputs:
             %   ax      axesHandle to apply daspect
-            % ----------------------------------------------------------
+            % -------------------------------------------------------------
             % xyz = obj.volumeScale/max(abs(obj.volumeScale));
             xyz = max(obj.volumeScale)./obj.volumeScale;
             if nargin == 2
