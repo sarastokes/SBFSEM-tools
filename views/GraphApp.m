@@ -243,7 +243,7 @@ classdef GraphApp < handle
             for i = 1:numel(names)
                 xyz = obj.neuron.getSynapseXYZ(names(i));
                 h = line(obj.ax, xyz(:, 1), xyz(:, 2), xyz(:, 3),...
-                    'Marker', '.', 'MarkerSize', 10,...
+                    'Marker', '.', 'MarkerSize', 15,...
                     'MarkerFaceColor', names(i).StructureColor,...
                     'MarkerEdgeColor', names(i).StructureColor,...
                     'LineStyle', 'none',...
@@ -429,12 +429,13 @@ classdef GraphApp < handle
                 return
             end
 
-            if ~ismember(locID, obj.neuron.nodes.ID)
-                obj.updateStatus('Location ID not found');
-                return
+            if ismember(locID, obj.neuron.nodes.ID)
+                XYZ = obj.neuron.id2xyz(locID);
+            else
+                XYZ = obj.neuron.nodes{obj.neuron.nodes.ParentID == locID, 'XYZum'};
+                XYZ = XYZ(1, :);
             end
 
-            XYZ = obj.neuron.id2xyz(locID);
             axLims = obj.getLimits(obj.ax);
             axSize = mean(abs(axLims(:, 2) - axLims(:, 1)));
             radius = obj.LOCATION_CIRCLE_RADIUS * axSize;

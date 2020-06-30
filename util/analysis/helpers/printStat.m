@@ -16,6 +16,7 @@ function varargout = printStat(vec, useSD, showN)
     % History:
 	%   12Aug2017 - SSP - created
     %   18Jan2018 - SSP - changed default N, output options
+    %   27May2020 - SSP - changed to accept columnated data
     % ---------------------------------------------------------------------
 
     if nargin < 2 || isempty(useSD)
@@ -26,17 +27,21 @@ function varargout = printStat(vec, useSD, showN)
         showN = true;
     end
     
-    for i = 1:size(vec, 1)
-        template = '%.3f +- %.3f';
-        
+    if size(vec, 1) == 1
+        vec = vec';
+    end
+    
+    template = '%.3f +- %.3f';    
+    
+    for i = 1:size(vec, 2)
         if useSD
-            str = sprintf(template, mean(vec(i,:)), std(vec(i,:)));
+            str = sprintf(template, mean(vec(:, i)), std(vec(:, i)));
         else
-            str = sprintf(template, mean(vec(i,:)), sem(vec(i,:)));
+            str = sprintf(template, mean(vec(:, i)), sem(vec(:, i)));
         end
 
         if showN
-            fprintf([str, sprintf(' (n=%u)', numel(vec(i,:))), '\n']);
+            fprintf([str, sprintf(' (n=%u)', numel(vec(:, i))), '\n']);
         else
             fprintf([str, '\n']);
         end

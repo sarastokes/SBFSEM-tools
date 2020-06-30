@@ -6,6 +6,7 @@ function ipl = getSynapseStratification(neuron, synapseType)
     % 
     % History:
     %   10Nov2019 - SSP
+    %   15May2020 - SSP - Added plot title, print output
     % --------------------------------------------------------------------
     neuron.checkSynapses();
 
@@ -22,4 +23,6 @@ function ipl = getSynapseStratification(neuron, synapseType)
     plot(b(2:end)-(b(2)-b(1))/2, a, '-ob', 'LineWidth', 1);
     xlabel('IPL Depth (%)');
     ylabel('Synapse Count');
+    title(['c', num2str(neuron.ID), ' - ', synapseType]);
     
+    printStat(ipl', true);
