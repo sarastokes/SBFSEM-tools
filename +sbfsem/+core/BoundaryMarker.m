@@ -32,7 +32,6 @@ classdef (Abstract) BoundaryMarker < handle
 
     properties (Hidden, SetAccess = private)
         interpolatedSurface = []
-        markerLocations = []
         newXPts
         newYPts
     end
@@ -44,6 +43,7 @@ classdef (Abstract) BoundaryMarker < handle
     properties (SetAccess = private)
 		source
         queryDate
+        markerLocations = []
         units = 'microns'
     end
 

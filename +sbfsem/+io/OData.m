@@ -20,7 +20,7 @@ classdef OData < handle
     %   5Mar2018 - SSP - Updated for new JSON decoder
     % ---------------------------------------------------------------------
 
-	properties (Access = protected)
+	properties (Access = public)
 		source
 		baseURL
         webOpt
@@ -34,13 +34,24 @@ classdef OData < handle
                     'Must provide a volume name or abbreviation');
             end
 			obj.source = validateSource(source);
-			obj.baseURL = [getServerName(), '/', 'OData/'];
+			obj.baseURL = [getServerName(), 'OData/'];
             obj.webOpt = getODataOptions();
         end
         
         function str = getURL(obj)
             % GETURL  Returns the base URL
             str = obj.baseURL;
+        end
+    end
+
+    methods
+        function N = countCellsInVolume(obj)
+            url = [obj.baseURL, 'Structures?$filter=TypeID eq 1 &$count=true'];
+            data = webread(url, obj.webOpt);
+            N = data.x_odata_count;
+        end
+
+        function N = countLocationsInVolume(obj)
         end
     end
     

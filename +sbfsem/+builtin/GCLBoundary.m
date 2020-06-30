@@ -9,12 +9,12 @@ classdef GCLBoundary < sbfsem.core.BoundaryMarker
 			if nargin < 2
 				fromCache = true;
 			end
-
+            
             if fromCache
-            	obj.loadMarkers();
+                obj.loadMarkers();
             else
-	            obj.update();
-    	    end
+                obj.update();
+            end
     	    obj.doAnalysis(200);
 		end
 	end

@@ -35,6 +35,7 @@ classdef Neuron < sbfsem.core.NeuronAPI
 %   6Mar2018  - SSP - NeuronCache compatibility
 %   19Jul2018 - SSP - Option to specify different XY transforms
 %   10Jan2020 - SSP - Links property to access getAllLinkedNeurons output
+%   18Jun2020 - SSP - Added getLinksByType function
 % -------------------------------------------------------------------------
 
     properties
@@ -129,13 +130,6 @@ classdef Neuron < sbfsem.core.NeuronAPI
             obj.setupSynapses();
         end
 
-        function checkLinks(obj)
-            % CHECKLINKS  Imports links if not present
-            if isempty(obj.links)
-                obj.getLinks();
-            end
-        end
-
         function getLinks(obj)
             % GETLINKS  Loads in linked neurons
             obj.checkSynapses();
@@ -167,6 +161,23 @@ classdef Neuron < sbfsem.core.NeuronAPI
             if isempty(obj.geometries)
                 obj.getGeometries();
             end
+        end
+    
+        function checkLinks(obj)
+            % CHECKLINKS  Imports links if not present
+            if isempty(obj.links)
+                obj.getLinks();
+            end
+        end
+        
+        function T = getLinksByType(obj, synapseName)
+            % GETLINKSBYTYPE  Return links for one synapse type
+            %
+            % Syntax:
+            %   T = getLinksByType(obj, synapseName)
+            % -------------------------------------------------------------
+            obj.checkLinks();
+            T = obj.links(obj.links.SynapseType == synapseName, :);
         end
     end
     
