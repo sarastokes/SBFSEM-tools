@@ -71,7 +71,7 @@ classdef NeuronJSON < sbfsem.core.NeuronAPI
 			end
 
 			% Convert the enumerations
-			obj.transform = sbfsem.core.Transforms.fromStr(S.transform);
+			obj.transform = sbfsem.builtin.Transforms.fromStr(S.transform);
             if ~isempty(obj.synapses)
                 obj.synapses.LocalName = arrayfun(@(x) sbfsem.core.StructureTypes(x), obj.synapses.LocalName);
             end

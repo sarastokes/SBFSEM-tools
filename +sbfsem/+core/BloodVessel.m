@@ -33,9 +33,9 @@ classdef BloodVessel < sbfsem.core.StructureAPI
 			obj@sbfsem.core.StructureAPI(ID, source);
 
             if nargin < 3
-                obj.transform = sbfsem.core.Transforms.Viking;
+                obj.transform = sbfsem.builtin.Transforms.Standard;
             else
-                obj.transform = sbfsem.core.Transforms.fromStr(transform);
+                obj.transform = sbfsem.builtin.Transforms.fromStr(transform);
             end
 
         	% Instantiate OData clients

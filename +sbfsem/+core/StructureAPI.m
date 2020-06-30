@@ -426,48 +426,30 @@ classdef (Abstract) StructureAPI < handle
                 return
             end
                         
-            % Apply transforms, if needed (FIXME: Move to Transforms class)
-            if obj.transform == sbfsem.core.Transforms.SBFSEMTools
-                dataDir = [fileparts(fileparts(fileparts(...
-                    mfilename('fullpath')))), filesep, 'data'];
+            % Apply custom transforms, if needed 
+            if obj.transform == sbfsem.builtin.Transforms.Custom
                 switch obj.source
                     case 'NeitzInferiorMonkey'
-                        xydata = dlmread([dataDir, filesep,...
-                            'XY_OFFSET_NEITZINFERIORMONKEY.txt']);
-                        volX = nodes.X + xydata(nodes.Z,2);
-                        volY = nodes.Y + xydata(nodes.Z,3);
+                        [X, Y] = obj.transform.translate(...
+                            [nodes.X, nodes.Y, nodes.Z], obj.source);
                     case 'NeitzNasalMonkey'
-                        % fac = [1250, 1182, 1]; disp(fac);  % 1320 1200
-                        xydata = dlmread([dataDir, filesep,...
-                            'XY_OFFSET_NEITZNASALMONKEY.txt']);
-                        volX = nodes.VolumeX + xydata(nodes.Z,2);
-                        volY = nodes.VolumeY + xydata(nodes.Z,3);
-                        
-                        fac = [1320, 1200, 1];
-                        zOffset = fac(3)*abs(nodes.Z-1177);
-                        volX = volX - (zOffset .* (volX/fac(1)));
-                        volY = volY - (zOffset .* (volY/fac(2)));
-                        
-                        % zOffset = abs(nodes.Z-1177);
-                        % volX = nodes.VolumeX - (32.26*zOffset);
-                        % volY = nodes.VolumeY - (19.53*zOffset);
-                        % zOffset = abs(nodes.Z-1177);
-                        % volX = nodes.VolumeX - (zOffset .* (0.0008459*nodes.VolumeX));
-                        % volY = nodes.VolumeY - (zOffset .* (0.001333*nodes.VolumeY));
+                        [X, Y] = obj.transform.translate(...
+                            [nodes.VolumeX, nodes.VolumeY, nodes.Z], obj.source);
+                        [X, Y] = obj.transform.nasalMonkey(...
+                            [X, Y, nodes.Z], [1320, 1200, 1]);
                 end
             else
-                volX = nodes.VolumeX;
-                volY = nodes.VolumeY;
+                X = nodes.VolumeX;
+                Y = nodes.VolumeY;
             end
 
             % Create an XYZ in microns column
             nodes.XYZum = zeros(height(nodes), 3);
-            % TODO: There's an assumption about the units in here...
-            nodes.XYZum = bsxfun(@times,...
-                [volX, volY, nodes.Z],...
-                (obj.volumeScale./1e3));
+            nodes.XYZum = obj.transform.scale([X, Y, nodes.Z], obj.volumeScale);
             % Create a column for radius in microns
-            nodes.Rum = nodes.Radius * obj.volumeScale(1)./1000;
+            nodes.Rum = obj.transform.scale(nodes.Radius, obj.volumeScale);
+            % TODO: There's an assumption about the units in here...
+            % Assumes data is in nm and needs to be converted to microns
         end
     end
 end

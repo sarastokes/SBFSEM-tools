@@ -59,8 +59,8 @@ classdef Volumes < handle
             end
         end
         
-        function tf = hasTransform(obj)
-            % HASTRANSFORM  Whether volume has a transform
+        function tf = hasCustomTransform(obj)
+            % HASCUSTOMTRANSFORM  Whether volume has a transform
             import sbfsem.builtin.Volumes;
             switch obj
                 case {Volumes.NeitzInferiorMonkey, Volumes.NeitzNasalMonkey}

@@ -1,7 +1,11 @@
 # Changelog
 
+### 20200630
+- Moved base transform calculations from `sbfsem.core.StructureAPI` to `sbfsem.builtin.Transforms` to make underlying code more reusable
+
 ### 20200629
 - Fixed bug in `util\renders\iePlot.m` where 2D projection didn't render to user-specified axes.
+- Moved transforms class to `sbfsem.builtin.Transforms`, updated all dependent code
 
 ### 20200627
 - Added option to find synapse location in `views\GraphApp.m`

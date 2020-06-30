@@ -116,8 +116,9 @@ function [xyOffset, offsetList] = branchRegistration(source, sections, varargin)
     end
 
     if writeToLog
+        fName = ['XY_OFFSET_', upper(source), '.txt'];
         fPath = [fileparts(fileparts(fileparts(mfilename('fullpath')))),...
-            '\data\XY_OFFSET_NEITZINFERIORMONKEY.txt'];
+            filesep, 'data', filesep, fName];
         data = dlmread(fPath);
         if shiftVitread
             Z = max(sections);

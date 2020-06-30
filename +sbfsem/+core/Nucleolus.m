@@ -11,7 +11,7 @@ classdef Nucleolus < sbfsem.core.StructureAPI
     %   ParentID        Parent Structure ID number
     %   source          Volume name or abbreviation
     % Optional inputs:
-    %   Transform       sbfsem.core.Transforms (default = Viking)
+    %   Transform       sbfsem.builtin.Transforms (default = Scale)
     %
     % See also:
     %   NEURON, SBFSEM.CORE.STRUCTUREAPI
@@ -41,9 +41,9 @@ classdef Nucleolus < sbfsem.core.StructureAPI
 			obj.ParentID = parentID;
 
 			if nargin < 3
-				obj.transform = sbfsem.core.Transforms.Viking;
+				obj.transform = sbfsem.builtin.Transforms.Standard;
 			else
-				obj.transform = sbfsem.core.Transforms.fromStr(transform);
+				obj.transform = sbfsem.builtin.Transforms.fromStr(transform);
 			end
 
 			% Instantiate OData clients

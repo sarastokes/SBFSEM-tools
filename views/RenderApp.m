@@ -64,7 +64,7 @@ classdef RenderApp < handle
         xyOffset = [];      % Loaded on first use, if needed
 
         % Transformation to XY offsets
-        transform = sbfsem.core.Transforms.Viking;
+        transform = sbfsem.builtin.Transforms.Standard;
 
         % Last saved folder (cd to start)
         saveDir
@@ -359,10 +359,10 @@ classdef RenderApp < handle
                 warndlg('Changing the Transform with existing neurons is not recommended.');
             end
             switch src.String{src.Value}
-                case 'Viking'
-                    obj.transform = sbfsem.core.Transforms.Viking;
-                case 'Local'
-                    obj.transform = sbfsem.core.Transforms.SBFSEMTools;
+                case 'Standard'
+                    obj.transform = sbfsem.builtin.Transforms.Standard;
+                case 'Custom'
+                    obj.transform = sbfsem.builtin.Transforms.Custom;
             end
             
             obj.updateLog('Changed transform');
@@ -1229,7 +1229,7 @@ classdef RenderApp < handle
                 'Spacing', 5, 'Padding', 5);
             obj.createNeuronTab(uiLayout);
             
-            if obj.source.hasBoundary() || obj.source.hasCones() || obj.source.hasTransform()
+            if obj.source.hasBoundary() || obj.source.hasCones() || obj.source.hasCustomTransform()
                 contextLayout = uix.VBox(...
                     'Parent', uitab(tabGroup, 'Title', 'Context'),...
                     'BackgroundColor', obj.BKGD_COLOR,...
@@ -1416,10 +1416,10 @@ classdef RenderApp < handle
                 heights = [heights, 25, 30, 30, 30];
             end
             
-            if obj.source.hasTransform()
+            if obj.source.hasCustomTransform()
                 LayoutManager.verticalBoxWithLabel(contextLayout, 'Transform:',...
                     'Style', 'popup',...
-                    'String', {'Viking', 'Local'},...
+                    'String', {'Standard', 'Custom'},...
                     'TooltipString', 'Change transform (MUST REIMPORT EXISTING NEURONS)',...
                     'Callback', @obj.onSetTransform);
                 heights = [heights, 40];
@@ -1666,7 +1666,7 @@ classdef RenderApp < handle
 
                     % Reverse the xyOffset applied on Neuron creation
                     if strcmp(obj.source, 'NeitzInferiorMonkey') && ...
-                            obj.transform == sbfsem.core.Transforms.SBFSEMTools
+                            obj.transform == sbfsem.builtin.Transforms.Custom
                         if isempty(obj.xyOffset)
                             dataDir = fileparts(fileparts(mfilename('fullpath')));
                             offsetPath = [dataDir,filesep,'data',filesep,...
