@@ -1,5 +1,19 @@
 # Changelog
 
+### 20200629
+- Fixed bug in `util\renders\iePlot.m` where 2D projection didn't render to user-specified axes.
+
+### 20200627
+- Added option to find synapse location in `views\GraphApp.m`
+
+### 20200619
+- Added `getLinksByType` function to `Neuron.m`
+- Added `util\renders\ieScatter.m`
+
+### 20200527
+- `util\analysis\helpers\printStat.m` now takes columnated input
+- Make title for `util\network\getLinkedNeuronsByType.m` more generic
+
 ### 20200515
 - `sbfsem.core.StructureAPI\graph` now builds graphs from string which is less error prone
 

@@ -1,4 +1,4 @@
-function randomColors(gObj, varargin)
+function rgb = randomColors(gObj, varargin)
     % RANDOMCOLORS
     %
     % Description:
@@ -21,6 +21,11 @@ function randomColors(gObj, varargin)
     % History:
     %   21May2019 - SSP
     % ---------------------------------------------------------------------
+    
+    if nargin == 0
+        rgb = rand([1, 3]);
+        return
+    end
 
     patches = findall(gObj, 'Type', 'patch');
     for i = 1:numel(patches)

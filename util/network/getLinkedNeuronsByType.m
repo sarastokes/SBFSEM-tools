@@ -5,7 +5,7 @@ function [typeTable, T] = getLinkedNeuronsByType(neuron, synapseName)
 %   [typeTable, neuronTable] = getLinkedNeuronsByType(neuron, synapseName);
 %
 % Inputs:
-%   neuron          Neuron object
+%   neuron          Neuron object or links table
 %   synapseName     char, synapse to analyze (e.g. 'RibbonPost')
 %
 % Outputs:
@@ -17,10 +17,15 @@ function [typeTable, T] = getLinkedNeuronsByType(neuron, synapseName)
 %
 % History:
 %   22Apr2020 - SSP 
-% ------------------------------------------------------------------------
-    neuron.checkLinks();
-
-    T0 = neuron.links(strcmpi(neuron.links.SynapseType, synapseName), :);
+%   27May2020 - SSP - Changed title from "presynaptic" to "linked"
+% -------------------------------------------------------------------------
+    if isa(neuron, 'sbfsem.core.StructureAPI')
+        neuron.checkLinks();
+        T0 = neuron.links(strcmpi(neuron.links.SynapseType, synapseName), :);
+    else
+        T0 = neuron(strcmpi(neuron.SynapseType, synapseName), :);
+    end
+    
     if isempty(T0)
         error('SBFSEM/GETLINKEDNEURONSBYTYPE: No match for %s', synapseName);
     end
@@ -57,7 +62,11 @@ function [typeTable, T] = getLinkedNeuronsByType(neuron, synapseName)
 
     figure();
     p = pie(typeTable.NumSynapses);
-    addTitleToPieChart(gca, ['c', num2str(neuron.ID), ' ', synapseName, ' Synapses by Presynaptic Neuron Type']);
+    try
+        addTitleToPieChart(gca, ['c', num2str(neuron.ID), ' ', synapseName, ' Synapses by Linked Neuron Type']);
+    catch
+        addTitleToPieChart(gca, [synapseName, 'Synapses by Linked Neuron Type']);
+    end
     set(findall(p, 'Type', 'text'), 'FontSize', 12);
     legend(pieLabels, 'Location', 'eastoutside');
     colormap(othercolor('Spectral10', numel(pieLabels)));

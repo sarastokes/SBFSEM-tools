@@ -1,4 +1,4 @@
-function T = colorByUser(neuron)
+function p = colorByUser(neuron)
     % COLORBYUSER
     %
     % History:
