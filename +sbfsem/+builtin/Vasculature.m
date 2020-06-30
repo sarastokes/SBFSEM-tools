@@ -53,7 +53,7 @@ classdef Vasculature < sbfsem.core.StructureGroup
 			for i = 1:numel(obj.IDs)
                 try
                     obj.vessels = cat(1, obj.vessels,...
-                        sbfsem.core.BloodVessel(obj.IDs(i), obj.source));
+                        sbfsem.builtin.BloodVessel(obj.IDs(i), obj.source));
                     obj.vessels(i).build();
                 catch 
                     fprintf('Import failed for %u\n', obj.IDs(i));

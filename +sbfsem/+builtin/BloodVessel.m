@@ -1,11 +1,11 @@
-classdef BloodVessel < sbfsem.core.StructureAPI
+classdef BloodVessel < sbfsem.builtin.StructureAPI
 % BLOODVESSEL
 %
 % Description:
 %	A class representing Blood Vessel annotations in Viking
 %
 % Constructor:
-%	obj = sbfsem.core.BloodVessel(ID, source, transform)
+%	obj = sbfsem.builtin.BloodVessel(ID, source, transform)
 %
 % History:
 %	25Sept2018 - SSP
@@ -59,7 +59,7 @@ classdef BloodVessel < sbfsem.core.StructureAPI
 			for i = 1:numel(data)
 				childIDs = cat(1, childIDs, data(i).ID);
 				obj.vesselAdjacencies = cat(1, obj.vesselAdjacencies,...
-					sbfsem.core.VesselAdacency(childIDs(end), obj.source));
+					sbfsem.builtin.VesselAdacency(childIDs(end), obj.source));
 			end
 		end
 

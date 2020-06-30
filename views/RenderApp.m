@@ -664,7 +664,7 @@ classdef RenderApp < handle
         
         function onAddBloodVessels(obj, src, ~)
             % ONADDBLOODVESSELS
-            % See also: SBFSEM.BUILTIN.VASCULATURE, SBFSEM.CORE.BLOODVESSEL
+            % See also: SBFSEM.BUILTIN.VASCULATURE, SBFSEM.BUILTIN.BLOODVESSEL
             
             if src.Value
                 if isempty(obj.vessels)
