@@ -51,6 +51,7 @@ classdef DendriteDiameter < sbfsem.analysis.NeuronAnalysis
     %                  updated to make more user-friendly
     % 28May2019 - SSP - Fixed issue where `includeSoma` parameter wasn't
     %                   automatically passed to the `report` function
+    % 3Jul2019 - SSP - Changed output from radius to diameter
     % --------------------------------------------------------------------
     
     properties (Constant = true, Hidden = true)
@@ -114,7 +115,7 @@ classdef DendriteDiameter < sbfsem.analysis.NeuronAnalysis
             end
             
             % Get the dendrite sizes
-            dendrite = nodes.Rum;
+            dendrite = 2 * nodes.Rum;
             
                         
             % Statistics on raw data before binning
@@ -200,10 +201,9 @@ classdef DendriteDiameter < sbfsem.analysis.NeuronAnalysis
             % sprintf('search window = %.2f to %.2f\n', obj.data.searchWindow);
             fprintf('\t N = %u annotations\n',...
                 size(obj.data.data, 1) - obj.data.totals.omitted);
-            fprintf('\t mean radius = %.3f +- %.3f (SEM), +- %.3f (SD)\n',...
+            fprintf('\t mean diameter = %.3f +- %.3f (SEM), +- %.3f (SD)\n',...
                 obj.data.totals.avg, obj.data.totals.sem, obj.data.totals.std);
-            fprintf('\t median radius = %.4g  (diameter = %.4g)\n',... 
-                obj.data.totals.median, 2*obj.data.totals.median);
+            fprintf('\t median diameter = %.4g\n', obj.data.totals.median);
         end
 
         function T = table(obj)

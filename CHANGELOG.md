@@ -1,5 +1,8 @@
 # Changelog
 
+### 20200703
+- Changed output of `sbfsem.analysis.DendriteDiameter` from radius to diameter to be more consistent with name
+
 ### 20200630
 - Moved base transform calculations from `sbfsem.core.StructureAPI` to `sbfsem.builtin.Transforms` to make underlying code more reusable
 
