@@ -1,7 +1,7 @@
 classdef IPLDepthApp < handle
     
     properties (Constant = true, Hidden = true)
-        TRANSFORM = sbfsem.core.Transforms.Viking;
+        TRANSFORM = sbfsem.builtin.Transforms.Standard;
         SOURCES = {'NeitzTemporalMonkey','NeitzInferiorMonkey', 'NeitzNasalMonkey', 'MarcRC1'};
     end
     
@@ -84,12 +84,14 @@ classdef IPLDepthApp < handle
             
             dataLayout = uix.HBox('Parent', mainLayout,...
                 'BackgroundColor', 'w');
-            
-            obj.axHandle = axes(dataLayout,...
+            p = uipanel(dataLayout,...
+                'BackgroundColor', 'w');
+            obj.axHandle = axes(p);
+            obj.axHandle.Tag = 'Graph';
+            set(obj.axHandle,...
                 'YTick', [0, 25, 50, 75, 100],...
                 'YTickLabel', {'INL', 'off', '', 'on', 'GCL'},...
-                'XColor', 'w',...
-                'Tag', 'Graph');
+                'XColor', 'w');
             hold(obj.axHandle, 'on');
             
             ylim(obj.axHandle, [-25, 125]);
@@ -97,13 +99,15 @@ classdef IPLDepthApp < handle
             ylabel(obj.axHandle, 'IPL Depth');
             grid(obj.axHandle, 'on');
             
-            obj.mapHandle = axes(dataLayout,...
+            p = uipanel(dataLayout,...
+                'BackgroundColor', 'w');
+            obj.mapHandle = axes(p,...
                 'Tag', 'Map');
-            plot(0, 0, 'xk',... 
+            plot(obj.mapHandle, 0, 0, 'xk',... 
                 'MarkerSize', 5, 'LineWidth', 0.85, 'Tag', 'xyLocation');
             
             set(dataLayout, 'Widths', [-1, -1.5],...
-                'Padding', 3);
+                'Padding', 3, 'Spacing', 3);
             set(mainLayout, 'heights', [-0.6, -0.6, -1, -2.5],...
                 'Padding', 0, 'Spacing', 0);
         end

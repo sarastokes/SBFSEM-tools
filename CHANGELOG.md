@@ -1,5 +1,10 @@
 # Changelog
 
+### 20200804
+- Changed `sbfsem.core.BoundaryMarker` to accomodate "NeitzNM" not following the same naming scheme as other volumes
+- Added cached boundary markers for Nasal Monkey
+- Updated `sbfsem.builtin.Volumes/hasBoundary` to return true for NeitzNasalMonkey
+
 ### 20200703
 - Changed output of `sbfsem.analysis.DendriteDiameter` from radius to diameter to be more consistent with name
 

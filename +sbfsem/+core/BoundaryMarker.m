@@ -24,6 +24,8 @@ classdef (Abstract) BoundaryMarker < handle
     %   11Nov2017 - SSP
     %   4Jan2018 - SSP - standardized function names
     %   7Feb2018 - SSP - better plotting, add and remove from scene methods
+    %   4Aug2020 - SSP - changed code to accomodate "NeitzNM" following a 
+    %                    different naming scheme from other volumes
     % ---------------------------------------------------------------------
 	
 	properties (Hidden, Access = private)
@@ -54,7 +56,7 @@ classdef (Abstract) BoundaryMarker < handle
 	methods
 		function obj = BoundaryMarker(source)
 			obj.source = validateSource(source);
-			obj.baseURL = [getServerName(), obj.source, '/OData/'];
+			obj.baseURL = getServiceRoot(source);
         end
 
         function [X, Y] = meshgrid(obj)

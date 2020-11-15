@@ -52,7 +52,7 @@ classdef Volumes < handle
             % HASBOUNDARY  Whether IPL boundary markers exist
             import sbfsem.builtin.Volumes;
             switch obj
-                case {Volumes.NeitzTemporalMonkey, Volumes.NeitzInferiorMonkey, Volumes.MarcRC1}
+                case {Volumes.NeitzTemporalMonkey, Volumes.NeitzInferiorMonkey, Volumes.MarcRC1, Volumes.NeitzNasalMonkey}
                     tf = true;
                 otherwise
                     tf = false;

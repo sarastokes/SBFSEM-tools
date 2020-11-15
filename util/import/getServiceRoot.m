@@ -24,7 +24,7 @@ function url = getServiceRoot(source)
 
 	source = validateSource(source);
 
-	if strcmp(source, 'NeitzNasalMonkey')
+	if strcmp(source, 'NeitzNasalMonkey')        
 		url = 'http://websvc1.connectomes.utah.edu/NeitzNM/OData/';
 	else
 		url = ['http://websvc1.connectomes.utah.edu/', source, '/OData/'];
