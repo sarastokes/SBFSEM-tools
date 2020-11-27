@@ -796,6 +796,15 @@ classdef RenderApp < handle
                      'Color', neuronColor);
             obj.updateStatus('');
         end
+        
+        function onGetStratificationUI(obj, ~, evt)
+            % ONGETSTRATIFICATIONUI
+            neuron = obj.evt2neuron(evt);
+            x = sbfsem.ui.HistogramView(...
+                100 * micron2ipl(neuron.getCellXYZ(), obj.source));
+            xlabel(x.axHandle, 'Stratification Depth (%)');
+            ylabel(x.axHandle, 'Number of Annotations');
+        end
     end
     
     % Export callbacks
@@ -1007,6 +1016,9 @@ classdef RenderApp < handle
                 uimenu(a, 'Label', 'Get Stratification',...
                     'Tag', obj.id2tag(ID),...
                     'Callback', @obj.onGetStratification);
+                uimenu(a, 'Label', 'Get Stratification UI',...
+                    'Tag', obj.id2tag(ID),...
+                    'Callback', @obj.onGetStratificationUI);
             end
             uimenu(a, 'Label', 'Get Dendrite Diameter',...
                 'Tag', obj.id2tag(ID),...

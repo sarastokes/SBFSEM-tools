@@ -1,5 +1,11 @@
 # Changelog
 
+### 20201127
+- `util\renders\clipMeshByStratification.m` to clip points over/under a specific percent stratification - similar to `util\renders\clipMesh.m`
+
+### 20201017
+- Added new colormaps to `sbfsem.ui.ColorMaps`
+
 ### 20200804
 - Changed `sbfsem.core.BoundaryMarker` to accomodate "NeitzNM" not following the same naming scheme as other volumes
 - Added cached boundary markers for Nasal Monkey
@@ -7,6 +13,8 @@
 
 ### 20200703
 - Changed output of `sbfsem.analysis.DendriteDiameter` from radius to diameter to be more consistent with name
+- Added option for `sbfsem.ui.HistogramView` to `views\RenderApp.m`
+- Renamed boundary marker data files for RC1
 
 ### 20200630
 - Moved base transform calculations from `sbfsem.core.StructureAPI` to `sbfsem.builtin.Transforms` to make underlying code more reusable

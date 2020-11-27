@@ -6,9 +6,9 @@ function FV = clipMesh(FV, Z, over)
     %
     % Inputs:
     %   FV      Struct with 'faces' and 'vertices' OR patch handle
-    %   pt      Cutoff point
+    %   Z       Cutoff point (microns)
     % Optional inputs:
-    %   over    Set true to keep points greater than pt (default = true)
+    %   over    Set true to keep points greater than Z (default = true)
     %
     % Outputs:
     %   FV      New struct with 'faces' and 'vertices'
@@ -16,6 +16,9 @@ function FV = clipMesh(FV, Z, over)
     %
     % Note:
     %   For sbfsem-tools, over=true means keeping the sclerad faces.
+    %
+    % See also:
+    %   CLIPMESHBYSTRATIFICATION
     %
     % History:
     %   9Jan2018 - SSP

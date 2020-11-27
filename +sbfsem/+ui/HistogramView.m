@@ -227,10 +227,6 @@ classdef HistogramView < handle
         function [counts, binCenters] = getHist(x, numBins)
             % GETHIST  Get bin centers from histcounts
             if nargin < 2
-                numBins = [];
-            end
-
-            if isempty(numBins)
                 [counts, bins] = histcounts(x);
             else
                 [counts, bins] = histcounts(x, numBins);

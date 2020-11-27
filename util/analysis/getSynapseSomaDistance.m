@@ -23,7 +23,7 @@ function d = getSynapseSomaDistance(neuron, synapseName)
     end
 
     if ~isempty(xyz)
-        d = fastEuclid3d(neuron.getSomaXYZ, xyz);
+        d = fastEuclid3d(neuron.getSomaXYZ(), xyz);
     else
         d = [];
     end
