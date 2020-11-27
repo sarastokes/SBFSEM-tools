@@ -8,6 +8,10 @@ classdef ColorMaps < handle
         Gray
         Haxby
         Hsv
+        Roma
+        Batlow
+        Hawaii
+        Devon
         AntiJet
         Parula
         RedBlue
@@ -58,6 +62,15 @@ classdef ColorMaps < handle
                     cmap = parula(N);
                 case ColorMaps.Hsv
                     cmap = hsv(N);
+                % Crameri
+                case ColorMaps.RomaO
+                    cmap = crameri('roma', N);
+                case ColorMaps.Batlow
+                    cmap = crameri('batlow', N);
+                case ColorMaps.Hawaii
+                    cmap = crameri('hawaii', N);
+                case ColorMaps.Devon
+                    cmap = crameri('devon', N);
                 % Improved version of jet
                 case ColorMaps.AntiJet
                     cmap = antijet(N);
@@ -107,6 +120,15 @@ classdef ColorMaps < handle
                     obj = ColorMaps.Gray;
                 case 'hsv'
                     obj = ColorMaps.Hsv;
+                % Crameri
+                case 'batlow'
+                    obj = ColorMaps.Batlow;
+                case 'roma'
+                    obj = ColorMaps.Roma;
+                case 'hawaii'
+                    obj = ColorMaps.Hawaii;
+                case 'devon'
+                    obj = ColorMaps.Devon;
                 % Improved version of jet
                 case {'jet', 'antijet'}
                     obj = ColorMaps.AntiJet;
