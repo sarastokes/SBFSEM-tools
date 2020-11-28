@@ -101,6 +101,11 @@ classdef RenderApp < handle
             %   If no volume name is provided, a listbox of available
             %   volumes will appear before the main UI opens
             % -------------------------------------------------------------
+            if isdeployed
+                fprintf('Initializing RenderApp...\n');
+                warning('off', 'MATLAB:javaclasspath:jarAlreadySpecified');
+            end
+            
             if nargin == 0
                 [selection, selectedSource] = listdlg(...
                     'PromptString', 'Select a source:',...
@@ -141,6 +146,10 @@ classdef RenderApp < handle
 
             obj.xyOffset = [];
             obj.saveDir = cd;
+            
+            if isdeployed
+                fprintf('RenderApp ready to go!\n');
+            end
         end
         
         function defaultAlpha = get.defaultAlpha(obj)
@@ -463,16 +472,16 @@ classdef RenderApp < handle
                 % Apply to all neurons (from toolbar)
                 newAlpha = str2double(src.Label);
                 set(findall(obj.ax, 'Type', 'patch'),...
-                    'FaceAlpha', newAlpha);
+                    'FaceAlpha', newAlpha, 'EdgeAlpha', newAlpha);
             elseif strcmp(src.Tag, 'SurfAlpha')
                 newAlpha = str2double(src.String{src.Value});
                 set(findall(obj.ax, 'Type', 'surface'),...
-                    'FaceAlpha', newAlpha);
+                    'FaceAlpha', newAlpha, 'EdgeAlpha', newAlpha);
             else
                 % Apply to a single neuron
                 newAlpha = str2double(src.Label);
                 set(findall(obj.ax, 'Tag', evt.Source.Tag),...
-                    'FaceAlpha', newAlpha);
+                    'FaceAlpha', newAlpha, 'EdgeAlpha', newAlpha);
             end
         end        
     end
@@ -480,17 +489,15 @@ classdef RenderApp < handle
     % Plot callback methods
     methods (Access = private)
 
-        function onToggleGrid(obj, src, ~)
-            % TOGGLEGRID  Show/hide the grid
+        function onToggleAxes(obj, src, ~)
+            % ONTOGGLEAXES  Show/hide axes and grid
+
             if src.Value == 1
                 grid(obj.ax, 'on');
             else
                 grid(obj.ax, 'off');
             end
-        end
 
-        function onToggleAxes(obj, ~, ~)
-            % ONTOGGLEAXES  Show/hide axes
             if sum(obj.ax.XColor) == 3
                 newColor = [0 0 0];
             else
@@ -519,6 +526,14 @@ classdef RenderApp < handle
                 end
             else
                 colorbar(obj.ax, 'off');
+            end
+        end
+
+        function onCheckFlipZ(obj, src, ~)
+            if src.Value
+                set(obj.ax, 'ZDir', 'reverse');
+            else
+                set(obj.ax, 'ZDir', 'normal');
             end
         end
 
@@ -755,7 +770,20 @@ classdef RenderApp < handle
             % ONGETDENDRITICFIELDHULL  Run dendritic field hull analysis
             % See also: SBFSEM.ANALYSIS.DENDRITICFIELDHULL
             neuron = obj.evt2neuron(evt);
-            sbfsem.analysis.DendriticFieldHull(neuron);
+            x = sbfsem.analysis.DendriticFieldHull(neuron, [], false);
+            % Set render to match current style
+            neuronColor = get(findobj(obj.ax, 'Tag', evt.Source.Tag), 'FaceColor');
+            neuronAlpha = get(findobj(obj.ax, 'Tag', evt.Source.Tag), 'FaceAlpha');
+            set(findobj(x.axHandle, 'Tag', evt.Source.Tag),...
+                'FaceColor', neuronColor, 'FaceAlpha', neuronAlpha, 'EdgeAlpha', neuronAlpha);
+            % Set axes to match current style
+            if isempty(findall(obj.ax, 'Type', 'light'))
+                delete(findall(x.axHandle, 'Type', 'light'));
+            end
+            if strcmp(obj.ax.ZDir, 'reverse')
+                set(x.axHandle, 'ZDir', 'reverse');
+                view(x.axHandle, 180, -90);
+            end
         end
 
         function onGetDendriteDiameter(obj, ~, evt)
@@ -1454,11 +1482,10 @@ classdef RenderApp < handle
                 'String', 'Invert',...
                 'TooltipString', 'Invert background (white/black)',...
                 'Callback', @obj.onToggleInvert);
-            uicontrol(g, 'String', 'Grid',...
-                'Style', 'check',...
-                'Value', 1,...
-                'TooltipString', 'Show/hide grid',...
-                'Callback', @obj.onToggleGrid);
+            uicontrol(g, 'String', 'Flip Z', ...
+                'Style', 'check', ...
+                'TooltipString', 'Flip Z axis', ...
+                'Callback', @obj.onCheckFlipZ);
             uicontrol(g, 'String', 'Axes',...
                 'Style', 'check',...
                 'Value', 1,...

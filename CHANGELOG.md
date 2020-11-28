@@ -1,5 +1,10 @@
 # Changelog
 
+### 20201128
+- Added option to reverse Z direction and special initialization instructions for deployed app to `views\RenderApp.m`
+- Improved plotting for `sbfsem.analysis.DendriticFieldHull` and call from `views\RenderApp.m`
+- Fixed bug in `sbfsem.ui.ColorMaps`
+
 ### 20201127
 - `util\renders\clipMeshByStratification.m` to clip points over/under a specific percent stratification - similar to `util\renders\clipMesh.m`
 

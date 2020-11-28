@@ -63,7 +63,7 @@ classdef ColorMaps < handle
                 case ColorMaps.Hsv
                     cmap = hsv(N);
                 % Crameri
-                case ColorMaps.RomaO
+                case ColorMaps.Roma
                     cmap = crameri('roma', N);
                 case ColorMaps.Batlow
                     cmap = crameri('batlow', N);
@@ -85,7 +85,7 @@ classdef ColorMaps < handle
                     cmap = pmkmp(N, 'CubicL');
                 % Light-Bertlein
                 case ColorMaps.RedBlue
-                    cmap = fliplr(lbmap('RedBlue', N));
+                    cmap = fliplr(lbmap(N, 'RedBlue'));
                 % Ocean
                 case ColorMaps.Haxby
                     cmap = haxby(N);
