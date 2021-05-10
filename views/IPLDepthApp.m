@@ -172,10 +172,10 @@ classdef IPLDepthApp < handle
             
             % Stratification map
             cla(obj.mapHandle);
-            stratificationMap(data.Z, obj.source, 'ax', obj.mapHandle);
-            plot(XYZ(1), XYZ(2), 'xk', 'MarkerSize', 5, 'LineWidth', 0.75);
-            % set(findobj(obj.mapHandle, 'Tag', 'xyLocation'),...
-            %     'XData', XYZ(1), 'YData', XYZ(2));
+            stratificationMap(data.Z, obj.source, 'ax', obj.mapHandle,...
+                'FaceAlpha', 0.6);
+            plot(obj.mapHandle, XYZ(1), XYZ(2), 'xk',... 
+                'MarkerSize', 5, 'LineWidth', 1.5);
             title(obj.mapHandle, '');
             colorbar(obj.mapHandle, 'off');
             set(obj.mapHandle, 'XTick', [], 'YTick', []);

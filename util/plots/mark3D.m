@@ -29,7 +29,13 @@ function h = mark3D(xyz, varargin)
     % History:
     %   15Nov2019 - SSP
     %   16Jun2020 - SSP - Added option to use scatter3
+    %   06Apr2021 - SSP - Added empty return value when xyz is empty
     % ---------------------------------------------------------------------
+    
+    if isempty(xyz)
+        h = [];
+        return
+    end
 
     ip = inputParser();
     ip.KeepUnmatched = true;
@@ -79,3 +85,4 @@ function h = mark3D(xyz, varargin)
             'MarkerEdgeColor', ip.Results.EdgeColor, ...
             'LineStyle', 'none', ip.Unmatched);
     end
+    drawnow;

@@ -122,8 +122,8 @@ classdef DendriteDiameter < sbfsem.analysis.NeuronAnalysis
             if ip.Results.includeSoma
                 ind = 1:numel(dendrite);
             else
-                ind = dendrite < 0.8*max(dendrite);
-                fprintf('80p of soma includes %u of %u data points\n',...
+                ind = dendrite < 0.6*max(dendrite);
+                fprintf('70p of soma includes %u of %u data points\n',...
                     nnz(ind), numel(dendrite));
             end
             h.totals.avg = mean(dendrite(ind));

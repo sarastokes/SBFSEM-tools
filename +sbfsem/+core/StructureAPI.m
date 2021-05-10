@@ -24,6 +24,8 @@ classdef (Abstract) StructureAPI < handle
         omittedIDs = [];
         % Transform applied	
         transform = [];
+        % Any notes in neuron's data from Viking
+        notes = [];
     end
     
     properties (Access = public)
@@ -251,10 +253,12 @@ classdef (Abstract) StructureAPI < handle
             end
         end
 
-        function nodes = getBranchNodes(obj, locationA, locationB)
+        function nodes = getBranchNodes(obj, locationA, locationB, verbose)
             % GETBRANCHNODES 
-
-
+            if nargin < 4
+                verbose = false;
+            end
+            
             [G, nodeIDs] = graph(obj, 'directed', false);
 
             % Convert from location ID to graph's node ID
@@ -268,7 +272,8 @@ classdef (Abstract) StructureAPI < handle
             if isempty(nodePath)
                 error('Location IDs %u and %u are not connected!',... 
                     locationA, locationB);
-            else
+            end
+            if verbose
                 fprintf('Analyzing a %u node path between %u and %u\n',...
                     numel(nodePath), locationA, locationB);
             end
@@ -276,7 +281,7 @@ classdef (Abstract) StructureAPI < handle
             % Convert back from the graph's node IDs to location ID
             locationIDs = nodeIDs(nodePath);
 
-            % Return only the 
+            % Return only the nodes along that path
             [~, ~, ind] = intersect(locationIDs, obj.nodes.ID, 'stable');
             nodes = obj.nodes(ind, :);
         end
@@ -417,6 +422,9 @@ classdef (Abstract) StructureAPI < handle
                     obj.omittedIDs = [obj.omittedIDs; obj.nodes(row,:).ID];
                 end
             end
+
+            % Make notes easily visible with notes property
+            obj.notes = obj.viking.Notes;
         end
 
         function nodes = setXYZum(obj, nodes)

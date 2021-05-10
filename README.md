@@ -30,7 +30,9 @@ A full list of publications using SBFSEM-tools:
 - Bordt et al (2019) [Synaptic inputs from identified bipolar and amacrine cells to a sparsely branched ganglion cell in rabbit retina.][bordt2019] *Visual Neuroscience*, 36, E006
 - Patterson et al (2019) [An S-cone circuit for edge detection in the primate retina.][patterson2019] *Scientific Reports*, 9, 11913
 - Patterson, Bordt et al (2019) [Wide-field amacrine cell inputs to ON parasol ganglion cells in macaque retina.][pattersonbordt2019] *Journal of Comparative Neurology*
-- Patterson et al (2020) [A color vision circuit for non-image-forming vision in the primate retina.][patterson2020] *Current Biology*, 30, 1-6
+- Patterson et al (2020) [A color vision circuit for non-image-forming vision in the primate retina.][patterson2020] *Current Biology*, 30(7), 1269-1273
+- Patterson et al (2020) [Another blue-ON ganglion cell in the primate retina.][patterson2020b] *Current Biology*, 30(23), R1409-R1410
+- Bordt et al (2021) [Synaptic inputs to broad thorny ganglion cells in macaque retina.][bordt2021] *Journal of Comparative Neurology*
 
 #### More information:
 * [Documentation][docs]
@@ -54,4 +56,6 @@ A full list of publications using SBFSEM-tools:
 [bordt2019]: <https://www.cambridge.org/core/journals/visual-neuroscience/article/synaptic-inputs-from-identified-bipolar-and-amacrine-cells-to-a-sparsely-branched-ganglion-cell-in-rabbit-retina/E12F6CFA003864B36E6A12375847B8CE>
 [pattersonbordt2019]: <https://onlinelibrary.wiley.com/doi/10.1002/cne.24840>
 [patterson2020]: <https://www.cell.com/current-biology/fulltext/S0960-9822(20)30084-1>
+[patterson2020b]: <https://www.cell.com/current-biology/fulltext/S0960-9822(20)31514-1>
+[bordt2021]: <https://onlinelibrary.wiley.com/doi/abs/10.1002/cne.25156>
 [mysite]: <https://sarastokes.github.io>

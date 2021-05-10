@@ -26,6 +26,7 @@ classdef Cylinder < handle
     %   History:
     %       11Dec2017 - SSP 
     %       21Dec2017 - SSP - cleaned up, dae export, improved lighting
+    %       30Dec2020 - SSP - updated some defaults for render method
     %
     % Examples:
     %{
@@ -141,7 +142,7 @@ classdef Cylinder < handle
             ip.CaseSensitive = false;
             addParameter(ip, 'FaceColor', [0.5, 0, 1],...
                 @(x) isvector(x) || ischar(x));
-            addParameter(ip, 'FaceAlpha', 1, @isnumeric);
+            addParameter(ip, 'FaceAlpha', 0.6, @isnumeric);
             addParameter(ip, 'FaceVertexCData', [],... 
                 @(x) isvector(x) || ischar(x));
             addParameter(ip, 'ax', [], @ishandle);
@@ -170,9 +171,6 @@ classdef Cylinder < handle
             if isempty(ip.Results.ax)
                 fh = sbfsem.ui.FigureView(1);
                 ax = fh.ax;
-                lightangle(45,30);
-                lightangle(225,30);
-                hold(ax, 'on');
             else
                 ax = ip.Results.ax;
             end
@@ -209,6 +207,7 @@ classdef Cylinder < handle
             axis(ax, 'equal');
             axis(ax, 'tight');
             lighting phong;
+            material dull;
             
             if nargout == 1
                 p = findobj(ax, 'Tag', sprintf('c%u', obj.ID));

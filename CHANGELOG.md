@@ -1,5 +1,32 @@
 # Changelog
 
+### 2021000406
+- Added empty return value to `util\plots\mark3D.m`
+
+### 20210315
+- Added `notes` property to `sbfsem.core.StructureAPI`
+
+### 20210215
+- `sbfsem.io.OBJ` imports .obj files like from TrakEM
+
+### 20210126
+- Status updates for SWC export and capitalized file extensions in `RenderApp`
+
+### 20210109
+- Made verbose output optional and off by default for `sbfsem.core.StructureAPI\getBranchNodes`
+
+### 20210103
+- `sbfsem.ui.PolarHistogramViewer.m` to interactively view different polar histogram bins
+
+### 20201231
+- `getNearestAnnotation.m` - finds nearest cell annotation to a given XYZ location
+- `getPathDistance.m` - path distance between two IDs in microns
+- Updated `util\analysis\helpers\fastEuclid2d.m` to match `fastEuclid3d.m`
+- Added `violinplot` and `Violin` from File Exchange
+
+### 20201230
+- Updated default render settings to reflect most common figure style
+
 ### 20201128
 - Added option to reverse Z direction and special initialization instructions for deployed app to `views\RenderApp.m`
 - Improved plotting for `sbfsem.analysis.DendriticFieldHull` and call from `views\RenderApp.m`

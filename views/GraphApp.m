@@ -552,26 +552,35 @@ classdef GraphApp < handle
                 case 'OffEdge'
                     xyz = obj.neuron.id2xyz(obj.neuron.offEdges);
                     ind = find(sum(pos, 2) == sum(xyz, 2));
-                    locID = obj.neuron.offEdges(ind); %#ok
+                    locID = obj.neuron.offEdges(ind); 
                     Z = obj.neuron.nodes{obj.neuron.nodes.ID == locID, 'Z'};
                 case 'Terminal'
                     xyz = obj.neuron.id2xyz(obj.neuron.terminals);
                     ind = find(sum(pos, 2) == sum(xyz, 2));
-                    locID = obj.neuron.terminals(ind); %#ok
+                    locID = obj.neuron.terminals(ind);
                     Z = obj.neuron.nodes{obj.neuron.nodes.ID == locID, 'Z'};
                 case 'Unfinished'
                     xyz = obj.neuron.id2xyz(obj.neuron.unfinished);
                     ind = find(sum(pos, 2) == sum(xyz, 2));
-                    locID = obj.neuron.unfinished(ind); %#ok
+                    locID = obj.neuron.unfinished(ind);
                     Z = obj.neuron.nodes{obj.neuron.nodes.ID == locID, 'Z'};
                 case 'Synapse'
                     T = obj.neuron.getSynapseNodes();
                     xyz = T.XYZum;
                     ind = find(sum(pos,2) == sum(xyz, 2));
                     locID = T{ind(1), 'ID'};
-                    Z = T{ind(1), 'Z'};     
+                    Z = T{ind(1), 'Z'};    
+                    synapseID = T{ind(1), 'ParentID'};
                     
-                    txt = {['SynapseID: ', num2str(T{ind(1), 'ParentID'})]};
+                    txt = {['SynapseID: ', num2str(synapseID)]};
+                    if ~isempty(obj.neuron.links)
+                        linkedID = obj.neuron.links{obj.neuron.links.SynapseID == synapseID, 'NeuronID'};
+                        if ~isnan(linkedID)
+                            txt = cat(2, txt, {['Link: c', num2str(linkedID)]});
+                        else
+                            txt = cat(2, txt, {'Link: none'});
+                        end
+                    end
                 otherwise
                     [locID, Z] = obj.id2xyz(pos, str2double(evt.Target.Tag));
             end
@@ -774,7 +783,7 @@ classdef GraphApp < handle
                 'Callback', @obj.onCheckedColorSegments);
             uix.Empty('Parent', uiLayout,...
                 'BackgroundColor', obj.BACKGROUND_COLOR);
-            [~, p] = LayoutManager.horizontalBoxWithLabel(uiLayout, 'Find ID:',...
+            LayoutManager.horizontalBoxWithLabel(uiLayout, 'Find ID:',...
                 'Style', 'edit',...
                 'String', '',...
                 'Tag', 'FindID',...

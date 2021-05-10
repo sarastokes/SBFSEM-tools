@@ -10,12 +10,15 @@ function [X1, Y1, ipl] = stratificationMap(section, source, varargin)
     addParameter(ip, 'ax', [], @ishandle);
     addParameter(ip, 'contourPoints', [], @isvector);
     addParameter(ip, 'useViking', false, @islogical);
+    addParameter(ip, 'faceAlpha', 1, @isnumeric);
     addParameter(ip, 'INL', [], @(x) isa(x, 'sbfsem.builtin.INLBoundary'));
     addParameter(ip, 'GCL', [], @(x) isa(x, 'sbfsem.builtin.GCLBoundary'));
     parse(ip, varargin{:});
+    
     ax = ip.Results.ax;
     contourPoints = ip.Results.contourPoints;
     useViking = ip.Results.useViking;
+    faceAlpha = ip.Results.faceAlpha;
     GCL = ip.Results.GCL;
     INL = ip.Results.INL;
     
@@ -55,7 +58,7 @@ function [X1, Y1, ipl] = stratificationMap(section, source, varargin)
     end
     
     hold(ax, 'on');
-    surf(ax, X1, Y1, ipl);
+    surf(ax, X1, Y1, ipl, 'FaceAlpha', faceAlpha);
     shading(ax, 'interp'); 
     axis(ax, 'equal', 'tight');
     colormap(ax, pmkmp(10, 'cubicl'));

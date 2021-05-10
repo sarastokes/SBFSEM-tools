@@ -173,8 +173,9 @@ classdef (Abstract) NeuronAPI < sbfsem.core.StructureAPI
             end
             
             if isa(syn, 'sbfsem.core.StructureTypes')                
-                row = obj.synapses.LocalName == syn;
-                IDs = obj.synapses.ID(row,:);
+                % row = obj.synapses.LocalName == syn;
+                % IDs = obj.synapses.ID(row,:);
+                IDs = obj.synapseIDs(syn);
             elseif isnumeric(syn)
                 IDs = syn;
             end

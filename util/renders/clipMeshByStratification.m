@@ -7,6 +7,7 @@ function FV = clipMeshByStratification(FV, source, zCutoff, keepAbove)
     %
     % Inputs:
     %   FV          Struct with 'faces' and 'vertices' OR patch handle
+    %   source      Volume name or abbreviation
     %   zCutoff     Cutoff point (in % stratification depth)
     % Optional inputs:
     %   keepAbove   logical [default = true]
@@ -25,7 +26,7 @@ function FV = clipMeshByStratification(FV, source, zCutoff, keepAbove)
 
 
     if nargin < 3
-        over = true;
+        keepAbove = true;
     end
     renderNow = false;
 

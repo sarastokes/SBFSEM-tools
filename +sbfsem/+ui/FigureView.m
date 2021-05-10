@@ -31,6 +31,7 @@ classdef FigureView < handle
 % History:
 %   ? - SSP
 %   7Feb2018 - Constructor now takes matlab figures as input
+%   30Dec2020- Added standard 3D render settings to axes
 % -------------------------------------------------------------------------
     
     properties (SetAccess = protected, GetAccess = public)
@@ -187,10 +188,16 @@ classdef FigureView < handle
             obj.figureHandle = figure();
             if obj.numAxes == 1
                 obj.ax = axes('Parent', obj.figureHandle);
+                lightangle(obj.ax, 45, 30);
+                lightangle(obj.ax, 225, 30);
+                hold(obj.ax, 'on');
             elseif obj.numAxes > 1
                 obj.ax = struct();
                 for i = 1:obj.numAxes
                     obj.ax(i) = axes('Parent', obj.figureHandle);
+                    lightangle(obj.ax(i), 45, 30);
+                    lightangle(obj.ax(i), 225, 30);
+                    hold(obj.ax, 'on');
                 end
             end
         end

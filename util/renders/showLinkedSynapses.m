@@ -5,7 +5,7 @@ function [h1, h2] = showLinkedSynapses(neuron, synapseName, varargin)
     %   Shows location of synapses colored by whether they are linked
     %
     % Syntax:
-    %   [ax, T] = showLinkedSynapses(neuron, synapseName, varargin)
+    %   [h1, h2] = showLinkedSynapses(neuron, synapseName, varargin)
     %
     % Inputs:
     %   neuron          sbfsem.core.NeuronAPI object
