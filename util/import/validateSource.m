@@ -15,6 +15,7 @@ function source = validateSource(source)
     % History:
     %   9Dec2019 - SSP - Added Nasal volume
     %   30Jan2020 - SSP - Added Marc lab volumes
+    %   8May2021 - JAK - Added NeitzCped volume
     % ---------------------------------------------------------------------
     
     if isa(source, 'sbfsem.builtin.Volumes')
@@ -27,6 +28,8 @@ function source = validateSource(source)
                 source = 'NeitzInferiorMonkey';
             case {'nasal', 'n', 'neitznasal', 'neitznasalmonkey'}
                 source = 'NeitzNasalMonkey';
+            case {'cped', 'c', 'neitzcped'}
+                source = 'NeitzCped';
             case {'rc1', 'marcrc1', 'r'}
                 source = 'RC1';
             case {'rpc1', 'marcrpc1'}

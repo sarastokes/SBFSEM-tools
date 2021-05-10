@@ -11,12 +11,14 @@ classdef Volumes < handle
     %   30Nov2018 - SSP
     %   9Dec2019 - SSP - Added NeitzNasalMonkey
     %   31Jan2020 - SSP - Added 3 new Marc lab volumes
+    %   8May2021 - JAK - Added NeitzCped
     % ---------------------------------------------------------------------
     
     enumeration
         NeitzInferiorMonkey
         NeitzNasalMonkey
         NeitzTemporalMonkey
+        NeitzCped
         MarcRC1
         MarcRPC1
         MarcRC2
@@ -52,7 +54,7 @@ classdef Volumes < handle
             % HASBOUNDARY  Whether IPL boundary markers exist
             import sbfsem.builtin.Volumes;
             switch obj
-                case {Volumes.NeitzTemporalMonkey, Volumes.NeitzInferiorMonkey, Volumes.MarcRC1, Volumes.NeitzNasalMonkey}
+                case {Volumes.NeitzTemporalMonkey, Volumes.NeitzInferiorMonkey, Volumes.MarcRC1}
                     tf = true;
                 otherwise
                     tf = false;
@@ -83,6 +85,8 @@ classdef Volumes < handle
                     obj = Volumes.NeitzNasalMonkey;
                 case 'NeitzTemporalMonkey'
                     obj = Volumes.NeitzTemporalMonkey;
+                case 'NeitzCped'
+                    obj = Volumes.NeitzCped;
                 case 'RC1'
                     obj = Volumes.MarcRC1;
                 case 'RC2'
