@@ -9,9 +9,9 @@ classdef Volumes < handle
     %
     % History:
     %   30Nov2018 - SSP
-    %   9Dec2019 - SSP - Added NeitzNasalMonkey
+    %   09Dec2019 - SSP - Added NeitzNasalMonkey
     %   31Jan2020 - SSP - Added 3 new Marc lab volumes
-    %   8May2021 - JAK - Added NeitzCped
+    %   08May2021 - JAK - Added NeitzCped
     % ---------------------------------------------------------------------
     
     enumeration
@@ -54,7 +54,7 @@ classdef Volumes < handle
             % HASBOUNDARY  Whether IPL boundary markers exist
             import sbfsem.builtin.Volumes;
             switch obj
-                case {Volumes.NeitzTemporalMonkey, Volumes.NeitzInferiorMonkey, Volumes.MarcRC1}
+                case {Volumes.NeitzTemporalMonkey, Volumes.NeitzInferiorMonkey, Volumes.NeitzNasalMonkey, Volumes.MarcRC1}
                     tf = true;
                 otherwise
                     tf = false;
@@ -69,6 +69,20 @@ classdef Volumes < handle
                     tf = true;
                 otherwise
                     tf = false;
+            end
+        end
+        
+        function n = nSections(obj)
+            import sbfsem.builtin.Volumes;
+            switch obj
+                case Volumes.NeitzInferiorMonkey
+                    n = 1893;
+                case Volumes.NeitzNasalMonkey
+                    n = 2354;
+                case Volumes.NeitzTemporalMonkey
+                    n = 837;
+                otherwise
+                    error('Section count not yet implemented for %s', char(obj));
             end
         end
     end

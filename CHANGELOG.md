@@ -1,5 +1,19 @@
 # Changelog
 
+### 20210605
+- Added custom translation for nasal monkey (`data\NeitzNasalMonkeyRegistration.m`)
+
+### 20210602
+- Added boundary marker flag for NeitzNasalMonkey to `sbfsem.builtin.Volumes`
+- Improved code for `util\register\branchRegistration.m`
+
+### 20210527
+- Added gcf as default input to `util\renders\renderWhos.m`
+
+### 20210510
+- Added Jim's addition of a new volume
+- Fixed closed curve output when loading a new neuron
+
 ### 2021000406
 - Added empty return value to `util\plots\mark3D.m`
 

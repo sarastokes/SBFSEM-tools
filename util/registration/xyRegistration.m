@@ -25,7 +25,8 @@ function [data, S] = xyRegistration(source, sections, visualize)
 %
 % History:
 %   12Dec2017 - SSP
-%   5Mar2017 - SSP - Updated for new JSON decoder
+%   05Mar2017 - SSP - Updated for new JSON decoder
+%   02Jun2021 - SSP - Added option for NeitzNasalMonkey
 % -------------------------------------------------------------------------
     source = validateSource(source);
     if nargin < 3
@@ -35,9 +36,16 @@ function [data, S] = xyRegistration(source, sections, visualize)
     str = sprintf('/Locations?$filter=Z le %u and Z ge %u and TypeCode eq 1',...
         max(sections), min(sections));
 
-    data = webread([getServiceRoot(source), str,...
-        '&$select=ID,ParentID,VolumeX,VolumeY,Z,Radius'],...
-        getODataOptions());
+    switch source
+        case 'NeitzNasalMonkey'
+            data = webread([getServiceRoot(source), str,...
+                '&$select=ID,ParentID,X,Y,Z,Radius'],...
+                getODataOptions());
+        otherwise
+            data = webread([getServiceRoot(source), str,...
+                '&$select=ID,ParentID,VolumeX,VolumeY,Z,Radius'],...
+                getODataOptions());
+    end
     value = cat(1, data.value{:});
 
     % Convert to a table
@@ -74,12 +82,16 @@ function [data, S] = xyRegistration(source, sections, visualize)
     T.YShift = zeros(height(T), 1);
 
     for i = 1:numel(neuronIDs)
-        T(T.ParentID == neuronIDs(i), :).XShift = ...
-            zRef{zRef.ParentID == neuronIDs(i), 'X'} -...
-            T{T.ParentID == neuronIDs(i), 'X'};
-        T(T.ParentID == neuronIDs(i), :).YShift = ...
-            zRef{zRef.ParentID == neuronIDs(i), 'Y'} -...
-            T{T.ParentID == neuronIDs(i), 'Y'};
+        try
+            T(T.ParentID == neuronIDs(i), :).XShift = ...
+                zRef{zRef.ParentID == neuronIDs(i), 'X'} -...
+                T{T.ParentID == neuronIDs(i), 'X'};
+            T(T.ParentID == neuronIDs(i), :).YShift = ...
+                zRef{zRef.ParentID == neuronIDs(i), 'Y'} -...
+                T{T.ParentID == neuronIDs(i), 'Y'};
+        catch
+            warning('c%u had mismatched dimensions', neuronIDs(i));
+        end
     end
 
     % Analyze by section

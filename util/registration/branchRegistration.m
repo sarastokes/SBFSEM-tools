@@ -1,8 +1,8 @@
-function [xyOffset, offsetList] = branchRegistration(source, sections, varargin)
+function [xyOffset, offsetList, data] = branchRegistration(source, sections, varargin)
     % BRANCHREGISTRATION
     %
     % Description:
-    %   Align vitread slice with sclerad slice based on median offset of
+    %   Align lower slice with higher slice based on median offset of
     %   all annotations linked between the two sections.
     %
     % Syntax:
@@ -16,10 +16,18 @@ function [xyOffset, offsetList] = branchRegistration(source, sections, varargin)
     %   Save            Write to XY_OFFSET file (default = false)
     %   ShiftVitread    Align sclerad to vitread slice (default = false)
     %
+    % Outputs:
+    %   xyOffset        Median X and Y offset between two sections
+    %   offsetList      All offsets used to determine xyOffset
+    %   data            Output matching that of xyRegistration
+    %
     % Example:
     %   branchRegistration('i', [1121 1122]);
     %   branchRegistration('i', [1121 1122], 'Save', true);
     %   branchRegistration('i', [1121 1122], 'ShiftVitread', true);
+    %
+    % See also:
+    %   xyRegistration, updateRegistration
     %
     % History:
     %	22Jan2018 - SSP
@@ -38,9 +46,13 @@ function [xyOffset, offsetList] = branchRegistration(source, sections, varargin)
     visualize = ip.Results.View;
     shiftVitread = ip.Results.ShiftVitread;
 
-	source = validateSource(source);
-	template = ['/Locations?$filter=Z eq %u and TypeCode eq 1',...
-				'&$select=ID,ParentID,VolumeX,VolumeY,Z'];
+    if strcmp(source, 'NeitzNasalMonkey')
+    	template = ['/Locations?$filter=Z eq %u and TypeCode eq 1',...
+        			'&$select=ID,ParentID,X,Y,Z'];
+    else
+    	template = ['/Locations?$filter=Z eq %u and TypeCode eq 1',...
+        			'&$select=ID,ParentID,VolumeX,VolumeY,Z'];
+    end
 	propNames = {'ID', 'ParentID', 'X', 'Y', 'Z'};
 
 	% Query and process data from vitread (min) section
@@ -113,6 +125,7 @@ function [xyOffset, offsetList] = branchRegistration(source, sections, varargin)
         x = get(ax, 'XLim'); y = get(ax, 'YLim');
         plot(ax, [x(1), x(2)], [0, 0], '--', 'Color', [0.5, 0.5, 0.5]);
         plot(ax, [0, 0], [y(1), y(2)], '--', 'Color', [0.5, 0.5, 0.5]);
+        drawnow;
     end
 
     if writeToLog
@@ -122,6 +135,10 @@ function [xyOffset, offsetList] = branchRegistration(source, sections, varargin)
         data = dlmread(fPath);
         if shiftVitread
             Z = max(sections);
+            % Add in a catch for missing sections like 1315-1319 in 'n'
+            if abs(diff(sections)) ~= 1
+                Z = min(sections) + 1;
+            end
             data(Z:end, 2) = data(Z:end, 2) + xyOffset(1);
             data(Z:end, 3) = data(Z:end, 3) + xyOffset(2);
         else
@@ -131,6 +148,10 @@ function [xyOffset, offsetList] = branchRegistration(source, sections, varargin)
         end
         dlmwrite(fPath, data);
     end
+    
+    data = zeros(2, 3);
+    data(:, 1) = sections';
+    data(1, 2:3) = xyOffset;
 end
 
 function T = catchFalse(T)

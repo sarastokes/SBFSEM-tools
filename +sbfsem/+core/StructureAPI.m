@@ -410,7 +410,7 @@ classdef (Abstract) StructureAPI < handle
             if nnz(obj.nodes.Geometry == 6)
                 obj.getGeometries();
                 fprintf('   %u closed curves in c%u\n',...
-                    obj.ID, height(obj.geometries));
+                    height(obj.geometries), obj.ID);
             end
 
             % Search for omitted nodes by location ID and section number
@@ -442,9 +442,7 @@ classdef (Abstract) StructureAPI < handle
                             [nodes.X, nodes.Y, nodes.Z], obj.source);
                     case 'NeitzNasalMonkey'
                         [X, Y] = obj.transform.translate(...
-                            [nodes.VolumeX, nodes.VolumeY, nodes.Z], obj.source);
-                        [X, Y] = obj.transform.nasalMonkey(...
-                            [X, Y, nodes.Z], [1320, 1200, 1]);
+                            [nodes.X, nodes.Y, nodes.Z], obj.source);
                 end
             else
                 X = nodes.VolumeX;
