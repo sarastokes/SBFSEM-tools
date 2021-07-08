@@ -1,5 +1,11 @@
 # Changelog
 
+### 20210708
+- Finished new custom nasal monkey translation. 
+
+### 20210626
+- Dendrite diameter analysis in `views\RenderApp.m` now actually shows dendrite diameter, not radius. 
+
 ### 20210605
 - Added custom translation for nasal monkey (`data\NeitzNasalMonkeyRegistration.m`)
 

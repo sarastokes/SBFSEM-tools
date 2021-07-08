@@ -791,7 +791,7 @@ classdef RenderApp < handle
             % See also: sbfsem.analysis.DendriteDiameter
             neuron = obj.evt2neuron(evt);
             nodes = neuron.getCellNodes();
-            sbfsem.ui.HistogramView(nodes.Rum);
+            sbfsem.ui.HistogramView(2 * nodes.Rum);
         end
         
         function onGetDendriteDiameterNoSoma(obj, ~, evt)
@@ -801,7 +801,7 @@ classdef RenderApp < handle
             nodes = neuron.getCellNodes();
             somaRadius = neuron.getSomaSize(false);
             nodes(nodes.Rum > 0.8*somaRadius, :) = [];
-            sbfsem.ui.HistogramView(nodes.Rum);
+            sbfsem.ui.HistogramView(2 * nodes.Rum);
         end
 
         function onGetContributions(obj, ~, evt)

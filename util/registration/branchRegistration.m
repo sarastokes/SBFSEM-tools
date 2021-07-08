@@ -31,7 +31,8 @@ function [xyOffset, offsetList, data] = branchRegistration(source, sections, var
     %
     % History:
     %	22Jan2018 - SSP
-    %   7Sept2018 - SSP - input parsing, vitread shift, plotting zero lines
+    %   07Sep2018 - SSP - input parsing, vitread shift, plotting zero lines
+    %   08Jul2021 - SSP - updated for NeitzNasalMonkey volume
     % ---------------------------------------------------------------------
 
     source = validateSource(source);
@@ -93,7 +94,7 @@ function [xyOffset, offsetList, data] = branchRegistration(source, sections, var
         data = readOData(sprintf(linkQuery, sclerad.ID(i)));
         locationLinksA = cat(1, data.LocationLinksA{:});
         for j = 1:numel(locationLinksA)
-            % Get the vitread location ID and 
+            % Get the vitread location ID and calculate offset 
             linkedID = locationLinksA(j).B;
             linkedLoc = vitread{vitread.ID == linkedID,{'X', 'Y'}};
             if ~isempty(linkedLoc)
@@ -123,8 +124,7 @@ function [xyOffset, offsetList, data] = branchRegistration(source, sections, var
             'or', 'MarkerFaceColor', 'r');
         title(ax, sprintf('X = %.3g and Y = %.3g', xyOffset));
         x = get(ax, 'XLim'); y = get(ax, 'YLim');
-        plot(ax, [x(1), x(2)], [0, 0], '--', 'Color', [0.5, 0.5, 0.5]);
-        plot(ax, [0, 0], [y(1), y(2)], '--', 'Color', [0.5, 0.5, 0.5]);
+        grid(ax, 'on');
         drawnow;
     end
 
