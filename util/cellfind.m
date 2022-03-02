@@ -6,9 +6,12 @@ function ind = cellfind(stringsInCells, targetString)
 	% Outputs:
 	%	ind 					index of target string
 	%
-	% 23Dec2016 - SSP
+	% History:
+    %   23Dec2016 - SSP
+    %   01Nov2021 - SSP - Updated to use "contains"
+    % ---------------------------------------------------------------------
 
 	assert(ischar(targetString), 'targetString = char');
 	assert(iscell(stringsInCells), 'stringsInCells = cell');
 
-	ind = find(not(cellfun('isempty', strfind(stringsInCells, targetString))));	
+	ind = find(contains(stringsInCells, targetString));	

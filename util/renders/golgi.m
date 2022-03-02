@@ -29,6 +29,7 @@ function ax = golgi(neuron, varargin)
     addParameter(ip, 'Ax', [], @ishandle);
     addParameter(ip, 'Invert', false, @islogical);
     addParameter(ip, 'Color', [], @(x) ischar(x) || isnumeric(x));
+    addParameter(ip, 'FaceAlpha', 1, @isnumeric);
     parse(ip, varargin{:});
     
     invertFigure = ip.Results.Invert;

@@ -800,7 +800,7 @@ classdef RenderApp < handle
             neuron = obj.evt2neuron(evt);
             nodes = neuron.getCellNodes();
             somaRadius = neuron.getSomaSize(false);
-            nodes(nodes.Rum > 0.8*somaRadius, :) = [];
+            nodes(nodes.Rum > 0.4*somaRadius, :) = [];
             sbfsem.ui.HistogramView(2 * nodes.Rum);
         end
 
