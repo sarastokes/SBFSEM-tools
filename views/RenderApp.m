@@ -35,6 +35,7 @@ classdef RenderApp < handle
     %   1Feb2020 - SSP - Rearranged UI, improved axes limits control
     %   28Apr2020 - SSP - Added sbfsem.ui.ColorMaps, sbfsem.builtin.Volumes
     %   29Apr2020 - SSP - Added import from workspace option
+    %   30Jun2022 - SSP - Lighting control, useful for flipped Z rabbit
     % ---------------------------------------------------------------------
 
     properties (SetAccess = private)
@@ -556,8 +557,6 @@ classdef RenderApp < handle
 
         function onSetLimits(obj, src, evt)
             % ONSETLIMITS
-            assignin('base', 'evt', evt);
-            assignin('base', 'src', src);
             data = src.Data;
             ind = evt.Indices;
             % Whether to use custom or auto axis limits
@@ -579,7 +578,6 @@ classdef RenderApp < handle
 
         function onToggleLights(obj, src, ~)
             % ONTOGGLELIGHTS  Turn lighting on/off
-
             if src.Value == 0
                 set(findall(obj.ax, 'Type', 'patch'),...
                     'FaceLighting', 'gouraud');
@@ -655,6 +653,22 @@ classdef RenderApp < handle
             colormap(obj.ax, cmapObj.getColormap(N));
         end
 
+        function onEditLightAngle(obj, src, ~)
+            % ONEDITLIGHTANGLE  Change lighting location
+            try
+                % Validate input, throw warning if not numeric
+                N = str2double(src.String);
+            catch
+                warndlg('Invalid input, must be integer from 0 to 360');
+                set(src, 'String', '');
+                return;
+            end
+            
+            az = str2double(get(findByTag(obj.figureHandle, ['az', src.Tag(end)]), 'String'));
+            el = str2double(get(findByTag(obj.figureHandle, ['el', src.Tag(end)]), 'String'));
+            lightangle(obj.lights(str2double(src.Tag(end))), az, el);
+        end
+
         function onEditMaterial(obj, src, ~)
             % ONEDITMATERIAL  Change render material
             newMaterial = src.String{src.Value};
@@ -664,7 +678,6 @@ classdef RenderApp < handle
 
     % Non-neuron component callbacks
     methods (Access = private)
-
         function onAddCones(obj, src, ~)
             % ONIMPORTCONES
             % See also: SBFSEM.BUILTIN.CONEMOSAIC, SBFSEM.CORE.CLOSEDCURVE
@@ -747,7 +760,6 @@ classdef RenderApp < handle
 
     % Analysis callbacks
     methods (Access = private)
-
         function onOpenGraphApp(obj, ~, evt)
             % ONOPENVIEW  Open a single neuron analysis view
             % See also: GRAPHAPP
@@ -837,7 +849,6 @@ classdef RenderApp < handle
     
     % Export callbacks
     methods (Access = private)
-
         function onExportImage(obj, ~, evt)
             % ONEXPORTIMAGE  Save renders as an image
             
@@ -1572,6 +1583,33 @@ classdef RenderApp < handle
             uix.Empty('Parent', ctrlLayout,...
                 'BackgroundColor', obj.BKGD_COLOR);
 
+            % Lighting control
+            uicontrol(ctrlLayout,...
+                'Style', 'text', 'String', 'Light angles:',...
+                'FontWeight', 'bold');
+            lightGrid = uix.Grid('Parent', ctrlLayout,...
+                'BackgroundColor', obj.BKGD_COLOR);
+            uicontrol(lightGrid,...
+                'Style', 'text', 'String', 'Azimuth:');
+            uicontrol(lightGrid,...
+                'Style', 'text', 'String', 'Elevation:');
+            uicontrol(lightGrid,...
+                'Style', 'edit', 'String', '45', 'Tag', 'az1',...
+                'Callback', @obj.onEditLightAngle);
+            uicontrol(lightGrid,...
+                'Style', 'edit', 'String', '30', 'Tag', 'el1',...
+                'Callback', @obj.onEditLightAngle);
+            uicontrol(lightGrid,...
+                'Style', 'edit', 'String', '225', 'Tag', 'az2',...
+                'Callback', @obj.onEditLightAngle);
+            uicontrol(lightGrid,...
+                'Style', 'edit', 'String', '30', 'Tag', 'el2',...
+                'Callback', @obj.onEditLightAngle);
+            set(lightGrid, 'Heights', [20 20], 'Widths', [-1.75 -1 -1]);
+            
+            uix.Empty('Parent', ctrlLayout,...
+                'BackgroundColor', obj.BKGD_COLOR);
+
             % Axis limit control
             uicontrol(ctrlLayout,...
                 'Style', 'text', 'String', 'Axis Limits:',...
@@ -1585,7 +1623,7 @@ classdef RenderApp < handle
                 'CellEditCallback', @obj.onSetLimits);
 
             set(ctrlLayout, 'Heights',...
-                [18, 55, 25, -0.05, 20, 20, 60, -0.05, 18, 30, -0.05, 18, 75]);
+                [18, 50, 22, -0.05, 18, 18, 60, -0.05, 18, 22, -0.05, 18, 42, -0.05, 18, 75]);
         end
         
         function createLogTab(obj, parentHandle)
@@ -1744,7 +1782,7 @@ classdef RenderApp < handle
         end
     end
     
-    methods (Static = true)
+    methods (Static)
         function [neuron, didImport] = addNeuronFromJSON(filePath)
             % ADDNEURONFROMJSON  Import a neuron saved as a .json file
 
@@ -1760,8 +1798,7 @@ classdef RenderApp < handle
         end
     end
 
-    methods (Static = true)
-        
+    methods (Static)        
         function str = getLogTime()
             str = [datestr(now, 'hh:MM:ss'), ' - '];
         end
