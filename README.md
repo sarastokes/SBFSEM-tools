@@ -8,7 +8,7 @@ SBFSEM-tools provides Matlab API for analysis and visualization of connectomics 
 Importantly, this program is designed around an interest in open sourcing the data and code used in scientific research. See the [wiki][docs] for information on resources to enable sharing the data and code used by this program for publications.
 
 #### Requirements:
-The code in this repository is being developed in Matlab 2018b, but will run with 2015b or higher. A standalone compiled version of the user interface that does not require Matlab is available by request (sarap44@uw.edu). 
+The code in this repository is being developed in Matlab 2018b, but will run with 2015b or higher. A standalone compiled version of the user interface that does not require Matlab is available by request (spatte16@ur.rochester.edu). 
 
 #### Key features:
 - Object-oriented framework and code base for connectomics datasets
@@ -22,24 +22,30 @@ The code in this repository is being developed in Matlab 2018b, but will run wit
 
 See the [wiki documentation][docs] for more details.
 
-#### References:
-If you use SBFSEM-Tools in your research, please cite:
-Patterson et al (2019) [An S-cone circuit for edge detection in the primate retina.][patterson2019] *Scientific Reports*, 9, 11913
-
-A full list of publications using SBFSEM-tools:
-- Bordt et al (2019) [Synaptic inputs from identified bipolar and amacrine cells to a sparsely branched ganglion cell in rabbit retina.][bordt2019] *Visual Neuroscience*, 36, E006
-- Patterson et al (2019) [An S-cone circuit for edge detection in the primate retina.][patterson2019] *Scientific Reports*, 9, 11913
-- Patterson, Bordt et al (2019) [Wide-field amacrine cell inputs to ON parasol ganglion cells in macaque retina.][pattersonbordt2019] *Journal of Comparative Neurology*
-- Patterson et al (2020) [A color vision circuit for non-image-forming vision in the primate retina.][patterson2020] *Current Biology*, 30(7), 1269-1273
-- Patterson et al (2020) [Another blue-ON ganglion cell in the primate retina.][patterson2020b] *Current Biology*, 30(23), R1409-R1410
-- Bordt et al (2021) [Synaptic inputs to broad thorny ganglion cells in macaque retina.][bordt2021] *Journal of Comparative Neurology*
+#### Citation:
+If you use SBFSEM-tools in your research, please cite: Patterson et al. (2019) [An S-cone circuit for edge detection in the primate retina.][patterson2019] *Scientific Reports*, 9, 11913
+SBFSEM-tools also an RRID: SCR_017350
 
 #### More information:
 * [Documentation][docs]
 * [Viking][viking] annotation software
 * [Neitz lab][neitz] at University of Washington
 * Request an invite to the [Slack workspace][slack] for tips and questions
-* Contact sarap44@uw.edu
+* Contact spatte16@ur.rochester.edu
+
+#### Publications using SBFSEM-tools
+- Bordt et al. (2019) [Synaptic inputs from identified bipolar and amacrine cells to a sparsely branched ganglion cell in rabbit retina.][bordt2019] *Visual Neuroscience*, 36, E006
+- Patterson et al. (2019) [An S-cone circuit for edge detection in the primate retina.][patterson2019] *Scientific Reports*, 9, 11913
+- Patterson, Bordt et al. (2019) [Wide-field amacrine cell inputs to ON parasol ganglion cells in macaque retina.][pattersonbordt2019] *Journal of Comparative Neurology*
+- Patterson et al. (2020) [A color vision circuit for non-image-forming vision in the primate retina.][patterson2020] *Current Biology*, 30(7), 1269-1273
+- Patterson et al. (2020) [Another blue-ON ganglion cell in the primate retina.][patterson2020b] *Current Biology*, 30(23), R1409-R1410
+- Bordt et al. (2021) [Synaptic inputs to broad thorny ganglion cells in macaque retina.][bordt2021], *Journal of Comparative Neurology*, 529(11), 3098--3111
+- Patterson et al (2022) [Conserved circuits for direction selectivity in the primate retina.][patterson2022] *Current Biology*, 32(11), 2529--2538
+- Bordt et al. (2022) [Synaptic inputs to displaced intrinsically photosensitive ganglion cells in macaque retina.][bordt2022] *Scientific Reports*, 12, 15160
+- Goyal et al. (2023) [Trogocytosis of neurons and glial cells by microglia in a healthy adult macaque retina.][goyal2023] *Scientific Reports*, 13, 633
+
+You can also find reconstructions processed through SBFSEM-tools on Neuromorpho under ["Patterson_Neitz archive"][neuromorpho]. 
+
 
 <img src="https://github.com/sarastokes/SBFSEM-tools/blob/master/docs/c6_render.png?raw=true" width="400">
 <img src="https://github.com/sarastokes/SBFSEM-tools/blob/master/docs/flatrender.png?raw=true" width="350">
@@ -58,4 +64,6 @@ A full list of publications using SBFSEM-tools:
 [patterson2020]: <https://www.cell.com/current-biology/fulltext/S0960-9822(20)30084-1>
 [patterson2020b]: <https://www.cell.com/current-biology/fulltext/S0960-9822(20)31514-1>
 [bordt2021]: <https://onlinelibrary.wiley.com/doi/abs/10.1002/cne.25156>
+[goyal2023]: <https://doi.org/10.1038/s41598-023-27453-2>
+[neuromorpho]: <https://neuromorpho.org/NeuroMorpho_ArchiveLinkout.jsp?ARCHIVE=Patterson_Neitz&DATE=2022-08-01>
 [mysite]: <https://sarastokes.github.io>
