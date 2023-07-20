@@ -13,6 +13,7 @@ function flattenRender(h, source)
     % History:
     %   12Dec2020 - SSP
     %   02Mar2022 - SSP - Added better documentation
+    %   20Jul2022 - SSP - Fixed bug in patch class identification
     % ---------------------------------------------------------------------
 
     validatestring(class(h),... 
@@ -26,14 +27,18 @@ function flattenRender(h, source)
     if isa(h, 'matlab.graphics.axis.Axes')
         ax = h;
         h = findall(gca, 'Type', 'patch');
-    elseif isa(h, 'patch')
+    elseif isa(h, 'matlab.graphics.primitive.patch')
         ax = h.Parent;
+    else
+        ax = [];
     end
 
     for i = 1:numel(h)
         doFlattening(GCL, INL, h(i));
     end
-    axis(ax, 'equal', 'tight');
+    if ~isempty(ax)
+        axis(ax, 'equal', 'tight');
+    end
 end
 
 function doFlattening(GCL, INL, h)

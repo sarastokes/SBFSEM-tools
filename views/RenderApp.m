@@ -36,6 +36,7 @@ classdef RenderApp < handle
     %   28Apr2020 - SSP - Added sbfsem.ui.ColorMaps, sbfsem.builtin.Volumes
     %   29Apr2020 - SSP - Added import from workspace option
     %   30Jun2022 - SSP - Lighting control, useful for flipped Z rabbit
+    %   20Jul2023 - SSP - Added better lighting UI and render flattening
     % ---------------------------------------------------------------------
 
     properties (SetAccess = private)
@@ -53,7 +54,6 @@ classdef RenderApp < handle
         figureHandle        % Parent figure handle
         ax                  % Render axis
         neuronTree          % Checkbox tree
-        lights              % Light handles
         scaleBar            % Scale bar (empty until loaded)
 
         % UI view controls
@@ -67,11 +67,18 @@ classdef RenderApp < handle
         % Transformation to XY offsets
         transform = sbfsem.builtin.Transforms.Standard;
 
+        % Flag for computationally flattening renders
+        flatten             
+
         % Last saved folder (cd to start)
         saveDir
         
         % To accomodate for changes in rendering when running in parallels
         isMac
+    end
+
+    properties (Hidden, SetAccess = {?RenderApp, ?LightConfig})
+        lights              % Light handles
     end
 
     properties (Constant = true, Hidden = true)      
@@ -146,6 +153,7 @@ classdef RenderApp < handle
             end
 
             obj.xyOffset = [];
+            obj.flatten = false;
             obj.saveDir = cd;
             
             if isdeployed
@@ -268,13 +276,17 @@ classdef RenderApp < handle
         end
 
         function onUpdateNeuron(obj, ~, evt)
-            % ONUPDATENEURON  Update the underlying OData and render
+            obj.doUpdate(evt.Source.Tag);
+        end
 
+        function doUpdate(obj, neuronTag)
+            % ONUPDATENEURON  Update the underlying OData and render
+            
             % Save the view azimuth and elevation
             [az, el] = view(obj.ax);
 
             % Get the target ID and neuron
-            ID = obj.tag2id(evt.Source.Tag);
+            ID = obj.tag2id(neuronTag);
             neuron = obj.neurons(obj.id2tag(ID));
 
             % Update the OData and the 3D model
@@ -297,16 +309,17 @@ classdef RenderApp < handle
             neuron.build();
             
             % Save the properties of existing render and axes
-            oldPatch = findobj(obj.ax, 'Tag', evt.Source.Tag);
+            oldPatch = findobj(obj.ax, 'Tag', neuronTag);
             oldColor = get(oldPatch, 'FaceColor');
             oldAlpha = get(oldPatch, 'FaceAlpha');
             oldLighting = get(oldPatch, 'FaceLighting');
+
             % Delete the old one and render a new one
             delete(oldPatch);
             obj.updateStatus('Updating render');
             neuron.render('ax', obj.ax,...
                 'FaceAlpha', oldAlpha);
-            newPatch = findobj(obj.ax, 'Tag', evt.Source.Tag);
+            newPatch = findobj(obj.ax, 'Tag', neuronTag);
             
             % Apply vertex cdata mapping
             if strcmp(oldColor, 'interp')
@@ -320,9 +333,15 @@ classdef RenderApp < handle
                     'FaceColor', oldColor);
             end
             set(newPatch, 'FaceLighting', oldLighting);
+
             % Apply material setting 
             materialBox = findobj(obj.figureHandle, 'Tag', 'Material');
             material(newPatch, materialBox.String{materialBox.Value});
+
+            % Flatten, if necessary
+            if obj.flatten 
+                flattenRender(newPatch, obj.source);
+            end
 
             % Return to the original view azimuth and elevation
             view(obj.ax, az, el);
@@ -430,6 +449,8 @@ classdef RenderApp < handle
             [X, Y, Z] = sphere();
             X = radius * X; Y = radius * Y; Z = radius * Z;
             X = X + XYZ(1); Y = Y + XYZ(2); Z = Z + XYZ(3);
+
+            % TODO: Flatten, if necessary
             
             p = surf(X, Y, Z, 'Parent', obj.ax,...
                 'FaceColor', [0.5, 0.5, 0.5], 'EdgeColor', 'none',...
@@ -674,6 +695,35 @@ classdef RenderApp < handle
             newMaterial = src.String{src.Value};
             material(findall(obj.ax, 'Type', 'patch'), newMaterial);
         end
+
+        function onToggleFlatten(obj, src, ~)
+            if ~src.Value 
+                obj.updateStatus('Un-flattening renders...');
+                obj.flatten = false;
+                h = findall(obj.ax, 'Type', 'patch');
+                if isempty(h)
+                    return
+                end
+                for i = 1:numel(h)
+                    obj.doUpdate(h.Tag);
+                    drawnow;
+                end
+                obj.updateStatus('');
+            else
+                obj.flatten = true;
+                obj.updateStatus('Flattening renders...');
+
+                h = findall(obj.ax, 'Type', 'patch');
+                if isempty(h)
+                    return
+                end
+                for i = 1:numel(h)
+                    flattenRender(h(i), obj.source);
+                    drawnow;
+                end
+                obj.updateStatus('');
+            end
+        end
     end
 
     % Non-neuron component callbacks
@@ -755,6 +805,13 @@ classdef RenderApp < handle
             else
                 delete(findall(obj.ax, 'Tag', 'Gap'));
             end
+        end
+    end
+
+    % Configuration callbacks
+    methods (Access = private)
+        function onOpenLightConfig(obj, ~, ~)
+            LightConfig(obj);
         end
     end
 
@@ -982,6 +1039,9 @@ classdef RenderApp < handle
                 repmat(h.FaceColor, [size(h.Vertices,1), 1]));
             materialBox = findobj(obj.figureHandle, 'Tag', 'Material');
             material(h, materialBox.String{materialBox.Value});
+            if obj.flatten 
+                flattenRender(h, obj.source);
+            end
 
             % If all is successful, add to neuron lists
             obj.neurons(obj.id2tag(neuron.ID)) = neuron;
@@ -1115,6 +1175,10 @@ classdef RenderApp < handle
             delete(findall(obj.ax, 'Tag', obj.id2tag(ID)));
             % Reset axes limits not set by user
             obj.matchAxes();
+            % If empty, unchecking flattenRender is allowed
+            if isempty(obj.IDs)
+                set(findobj(obj.figureHandle, 'Enable', true));
+            end
         end
     end
 
@@ -1423,14 +1487,23 @@ classdef RenderApp < handle
                 'TooltipString', 'Add GCL Boundary',...
                 'Tag', 'GCL',...
                 'Callback', @obj.onAddBoundary);
-            heights = [25, 30, 30];
+            heights = [25, 28, 28];
+            if obj.source.hasBoundary()
+                uicontrol(contextLayout,...
+                'Style', 'check', 'String', 'Flatten renders',...
+                'Tag', 'FlattenCheckbox',...
+                'TooltipString', 'Flatten renders for IPL',...
+                'Callback', @obj.onToggleFlatten);
+                heights = [heights, 28];
+            end
+
             if strcmp(obj.source, 'NeitzInferiorMonkey')
                 uicontrol(contextLayout,...
                     'Style', 'check',...
                     'String', '915 Gap',...
                     'TooltipString', 'Add 915-936 gap',...
                     'Callback', @obj.onAddGap);
-                heights = [heights, 30];
+                heights = [heights, 28];
             end
             uix.Empty('Parent', contextLayout,...
                 'BackgroundColor', obj.BKGD_COLOR);
@@ -1507,6 +1580,7 @@ classdef RenderApp < handle
             uicontrol(g, 'String', '2D',...
                 'Style', 'check',...
                 'TooltipString', 'Toggle b/w 3D and flat 2D',...
+                'Tag', 'ToggleLights',...
                 'Callback', @obj.onToggleLights);
             set(g, 'Heights', [25, 25], 'Widths', [-1, -1]);
             
@@ -1643,6 +1717,7 @@ classdef RenderApp < handle
                 'Callback', @obj.onAddNeuronWorkspace);
             uimenu(mh.import, 'Label', 'Import from JSON file',...
                 'Callback', @obj.onAddNeuronJSON);
+
             mh.export = uimenu(obj.figureHandle, 'Label', 'Export');
             uimenu(mh.export, 'Label', 'Open in new figure window',...
                 'Tag', 'GroupFcn',...
@@ -1655,6 +1730,11 @@ classdef RenderApp < handle
             uimenu(mh.export, 'Label', 'Send neurons to workspace',...
                 'Tag', 'GroupFcn',...
                 'Callback', @obj.onExportNeuron);
+            
+            mh.config = uimenu(obj.figureHandle, 'Label', 'Config');
+            uimenu(mh.config, 'Label', 'Lighting',...
+                'Tag', 'lighting',...
+                'Callback', @obj.onOpenLightConfig);
 
             mh.help = uimenu(obj.figureHandle, 'Label', 'Help');
             uimenu(mh.help, 'Label', 'Keyboard controls',...
@@ -1776,7 +1856,6 @@ classdef RenderApp < handle
 
         function openHelpDlg(obj, src, ~)
             % OPENHELPDLG  Opens instructions dialog
-
             [helpStr, dlgTitle] = obj.getInstructions(src.Tag);
             helpdlg(helpStr, dlgTitle);
         end
