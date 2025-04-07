@@ -115,6 +115,7 @@ function [iplPercent, stats] = iplDepth(Neuron, varargin)
     fprintf('Mode = %.3g (for %u bins)\n', binMode, numBins);
     
     
+
     if ~ip.Results.Plot
         return;
     end
@@ -134,6 +135,22 @@ function [iplPercent, stats] = iplDepth(Neuron, varargin)
         'MarkerSize', 4.5, 'LineWidth', 1,...
         'Display', sprintf('c%u', Neuron.ID));
 
+    
+    valuesB = b(1:end-1) + (b(2) - b(1));
+    fprintf('Values X:\n');
+    for i = 1:length(valuesB)
+        fprintf('%.3f ', valuesB(i));
+    end
+    fprintf('\n');
+
+    valuesA = a;
+    fprintf('Values Y:\n');
+    for i = 1:length(valuesA)
+        fprintf('%.3f ', valuesA(i));
+    end
+    fprintf('\n');
+
+    
     if ip.Results.PlotAll
         plot(stats.median, 0.1*max(a), 'Marker', '^',...
             'LineWidth', 1,...
