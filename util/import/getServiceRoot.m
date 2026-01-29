@@ -25,13 +25,13 @@ function url = getServiceRoot(source)
 	source = validateSource(source);
 
 	if strcmp(source, 'NeitzTemporalMonkey')
-	    url = 'http://vpn.codepharm.net/NeitzTemporalMonkey/OData/';
+	    url = 'https://websvc.codepharm.net/NeitzTemporalMonkey/OData/';
 	elseif strcmp(source, 'NeitzInferiorMonkey')
-	    url = 'http://vpn.codepharm.net/NeitzInferiorMonkey/OData/';
+	    url = 'https://websvc.codepharm.net/NeitzInferiorMonkey/OData/';
 	elseif strcmp(source, 'NeitzNasalMonkey')
-	    url = 'http://vpn.codepharm.net/NeitzNM/OData/';
+	    url = 'https://websvc.codepharm.net/NeitzNM/OData/';
 	elseif strcmp(source, 'NeitzCped')
-	    url = 'http://vpn.codepharm.net/NeitzCPED/OData/';
+	    url = 'https://websvc.codepharm.net/NeitzCPED/OData/';
 	else
 	    error('Unknown source: %s', source);
 	end
