@@ -35,9 +35,3 @@ function url = getServiceRoot(source)
 	else
 	    error('Unknown source: %s', source);
 	end
-
-	%if strcmp(source, 'NeitzNasalMonkey')        
-	%	url = 'http://websvc1.connectomes.utah.edu/NeitzNM/OData/';
-	%else
-	%	url = ['http://websvc1.connectomes.utah.edu/', source, '/OData/'];
-	%end
